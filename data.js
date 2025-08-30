@@ -45,17 +45,17 @@ const exercises = [
         text: "tri",
         type: "trigger",
         rule: "aspirate",
-        explanation: "The numeral <em>tri</em> (three, masculine) triggers the aspirate mutation on the following noun",
+        explanation: "The numeral <em>tri</em> (three, masculine) is one of a small set of triggers (tri, chwe, tua) that cause the aspirate mutation on nouns beginning with <em>c</em>, <em>p</em> or <em>t</em>【169933956085742†L1461-L1487】",
       },
       {
         text: "char",
         radical: "car",
         type: "mutated",
         rule: "aspirate",
-        explanation: "<em>car</em> becomes <em>char</em> after <em>tri</em> by the aspirate mutation",
+        explanation: "<em>car</em> becomes <em>char</em> after <em>tri</em> because <em>tri</em> triggers the aspirate mutation for nouns starting with <em>c</em>, <em>p</em> or <em>t</em>【169933956085742†L1461-L1487】",
         parseOptions: [
           "Soft mutation after a particle",
-          "Aspirate mutation after a numeral",
+          "Aspirate mutation after specific triggers (tri/chwe/tua)",
           "Nasal mutation after fy ('my')",
         ],
         correctIndex: 1,
@@ -151,5 +151,61 @@ const exercises = [
     ],
     producePrompt:
       "Write a short exclamation calling a group of people or things by name (e.g. ‘Come on, friends!’) using the correct mutation.",
+  },
+  {
+    id: 6,
+    welsh: "am baned o de",
+    english: "for a cup of tea",
+    tokens: [
+      {
+        text: "am",
+        type: "trigger",
+        rule: "soft-preposition",
+        explanation: "The preposition <em>am</em> triggers the soft mutation on the following noun.",
+      },
+      {
+        text: "baned",
+        radical: "paned",
+        type: "mutated",
+        rule: "soft-preposition",
+        explanation: "<em>paned</em> becomes <em>baned</em> after the soft-mutating preposition <em>am</em>.",
+        parseOptions: [
+          "Soft mutation after a preposition",
+          "Aspirate mutation after a conjunction",
+          "Nasal mutation after a numeral",
+        ],
+        correctIndex: 0,
+      },
+    ],
+    producePrompt:
+      "Create a phrase using another preposition (am, ar, at, dan, dros, gan, heb, i, o, tan, trwy, wrth) that triggers the soft mutation on the following noun.",
+  },
+  {
+    id: 7,
+    welsh: "fy nghi",
+    english: "my dog",
+    tokens: [
+      {
+        text: "fy",
+        type: "trigger",
+        rule: "nasal-pronoun",
+        explanation: "The possessive pronoun <em>fy</em> (‘my’) triggers the nasal mutation on the following noun.",
+      },
+      {
+        text: "nghi",
+        radical: "ci",
+        type: "mutated",
+        rule: "nasal-pronoun",
+        explanation: "<em>ci</em> (dog) undergoes the nasal mutation after <em>fy</em> and appears as <em>nghi</em>.",
+        parseOptions: [
+          "Nasal mutation after <em>fy</em> (‘my’)",
+          "Soft mutation after <em>ei</em> (‘his’)",
+          "Aspirate mutation after a numeral",
+        ],
+        correctIndex: 0,
+      },
+    ],
+    producePrompt:
+      "Write another noun phrase beginning with <em>fy</em> that causes the nasal mutation (e.g. <em>fy mhen</em> — my head).",
   },
 ];
