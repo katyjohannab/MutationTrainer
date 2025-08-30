@@ -8,24 +8,63 @@ document.addEventListener('DOMContentLoaded', () => {
   // modes: 'home', 'read', 'parse', 'produce'
   let currentMode = 'home';
 
+  // Apply saved theme from localStorage
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  if (savedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+  }
+  // Update theme toggle button text when DOM is ready
+  const themeToggleBtn = document.getElementById('theme-toggle');
+  if (themeToggleBtn) {
+    themeToggleBtn.textContent = savedTheme === 'dark' ? 'Light mode' : 'Dark mode';
+    themeToggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      themeToggleBtn.textContent = isDark ? 'Light mode' : 'Dark mode';
+    });
+  }
+
   // Immediately show the home screen now that data is available
   showHome();
 
   // Render the home/welcome screen
   function showHome() {
     currentMode = 'home';
+    // Check if there is saved progress
+    let resumeControls = '';
+    let saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem('progress'));
+    } catch (e) {
+      saved = null;
+    }
+    if (saved && typeof saved.index === 'number' && typeof saved.mode === 'string' && saved.index < exercises.length) {
+      resumeControls = `<button class="btn btn-secondary btn-lg me-2" id="resume-btn">Resume</button>`;
+    }
     container.innerHTML = `
       <div class="text-center py-5">
         <h1 class="mb-3">Welsh Mutation Trainer</h1>
         <p class="lead">Drill Welsh mutation rules using Read → Parse → Produce cycles.</p>
-        <button class="btn btn-primary btn-lg" id="start-btn">Start Training</button>
+        ${resumeControls}<button class="btn btn-primary btn-lg" id="start-btn">Start Training</button>
       </div>
     `;
-    document.getElementById('start-btn').addEventListener('click', () => {
+    const startBtn = document.getElementById('start-btn');
+    startBtn.addEventListener('click', () => {
       currentIndex = 0;
       currentMode = 'read';
+      // Clear saved progress
+      localStorage.removeItem('progress');
       renderExercise();
     });
+    const resumeBtn = document.getElementById('resume-btn');
+    if (resumeBtn) {
+      resumeBtn.addEventListener('click', () => {
+        currentIndex = saved.index;
+        currentMode = saved.mode;
+        renderExercise();
+      });
+    }
   }
 
   // Render the current exercise in the given mode
@@ -53,6 +92,13 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
     attachEvents(ex);
+
+    // Save progress to localStorage so user can resume later
+    try {
+      localStorage.setItem('progress', JSON.stringify({ index: currentIndex, mode: currentMode }));
+    } catch (e) {
+      // ignore storage errors (e.g. quota exceeded)
+    }
   }
 
   // Wrap mutated tokens in spans with ghost radicals for read mode
@@ -126,8 +172,14 @@ document.addEventListener('DOMContentLoaded', () => {
     return `
       <div class="mode-title">Produce</div>
       <p>${ex.producePrompt}</p>
-      <textarea id="produce-input" class="form-control" rows="3" placeholder="Write your phrase here…"></textarea>
-      <button class="btn btn-outline-secondary mt-2" id="show-example-btn">Show Example</button>
+      <div class="mb-3">
+        <input type="text" id="produce-input" class="form-control" placeholder="Type your phrase here…">
+      </div>
+      <div class="mt-2 d-flex gap-2">
+        <button class="btn btn-outline-secondary" id="show-example-btn">Show Example</button>
+        <button class="btn btn-outline-primary" id="check-produce-btn">Check Answer</button>
+      </div>
+      <div id="produce-feedback" class="explanation-box hidden"></div>
       <div id="example-box" class="explanation-box hidden"><strong>Example answer:</strong> ${ex.welsh}</div>
       <div class="d-flex justify-content-between mt-4">
         <button class="btn btn-secondary" id="prev-mode-btn">Back</button>
@@ -224,6 +276,37 @@ document.addEventListener('DOMContentLoaded', () => {
       showExampleBtn.addEventListener('click', () => {
         exampleBox.classList.toggle('hidden');
       });
+
+      // Check the learner's response for presence of expected mutated forms
+      const checkProduceBtn = document.getElementById('check-produce-btn');
+      const produceInput = document.getElementById('produce-input');
+      const produceFeedback = document.getElementById('produce-feedback');
+      if (checkProduceBtn) {
+        checkProduceBtn.addEventListener('click', () => {
+          const answer = produceInput.value.trim().toLowerCase();
+          // Determine expected mutated forms from tokens in the exercise
+          const mutatedTokens = ex.tokens.filter((t) => t.type === 'mutated');
+          // Check if any of the expected mutated forms appear in the user's answer
+          let found = false;
+          let expectedList = [];
+          mutatedTokens.forEach((tok) => {
+            const mut = tok.text.toLowerCase();
+            expectedList.push(mut);
+            if (answer.includes(mut)) {
+              found = true;
+            }
+          });
+          produceFeedback.classList.remove('hidden', 'alert-success', 'alert-danger');
+          produceFeedback.classList.add('alert');
+          if (found) {
+            produceFeedback.classList.add('alert-success');
+            produceFeedback.innerHTML = `Good job! Your response contains the expected mutated form (${expectedList.join(', ')}).`;
+          } else {
+            produceFeedback.classList.add('alert-danger');
+            produceFeedback.innerHTML = `It looks like you didn\'t use the expected mutated form. Try including one of the following: <strong>${expectedList.join(', ')}</strong>.`;
+          }
+        });
+      }
       const nextExBtn = document.getElementById('next-ex-btn');
       if (nextExBtn) {
         nextExBtn.addEventListener('click', () => {
@@ -236,6 +319,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const finishBtn = document.getElementById('finish-btn');
       if (finishBtn) {
         finishBtn.addEventListener('click', () => {
+          // Clear saved progress when finished
+          localStorage.removeItem('progress');
           container.innerHTML = `
             <div class="text-center py-5">
               <h2>Congratulations!</h2>
