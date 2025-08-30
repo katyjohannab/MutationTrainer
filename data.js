@@ -1436,4 +1436,3 @@ var exercises =
     "producePrompt": "Combine another numeral (wyth, deng, deuddeng, pymtheg) with <em>diwrnod</em> to illustrate the nasal mutation on 'day'."
   }
 ];
-
