@@ -1,279 +1,251 @@
-/*
- * Main client‑side logic for the Welsh Mutation Trainer.
- * The application cycles through three modes — Read, Parse and Produce — for
- * each exercise.  Mode 0 (Read) displays the sentence with highlights and
- * allows the learner to reveal explanations.  Mode 1 (Parse) asks the
- * learner to identify which mutation rule applies.  Mode 2 (Produce)
- * encourages the learner to craft their own sentence following the same
- * structure.
- */
+// JavaScript for the Welsh Mutation Trainer (Stage 2)
 
-(() => {
-  // Whether we are currently showing the home screen.  When true, exercises
-  // are hidden and the introduction is displayed.  Users can return to the
-  // home screen at any time via the Home button.
-  let showHome = true;
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('app-container');
+  // The dataset is defined in data.js as a global constant `exercises`
+  let exercises = window.exercises || [];
   let currentIndex = 0;
-  let currentMode = 0; // 0: Read, 1: Parse, 2: Produce
+  // modes: 'home', 'read', 'parse', 'produce'
+  let currentMode = 'home';
 
-  // Cache DOM elements for performance and clarity
-  const exerciseCountEl = document.getElementById('exercise-count');
-  const modeIndicatorEl = document.getElementById('mode-indicator');
-  const exerciseAreaEl = document.getElementById('exercise-area');
-  const feedbackEl = document.getElementById('feedback');
-  const prevBtn = document.getElementById('prev-btn');
-  const nextBtn = document.getElementById('next-btn');
-  const homeBtn = document.getElementById('home-btn');
-  const startBtn = document.getElementById('start-btn');
-  const homeScreenEl = document.getElementById('home-screen');
-  const appScreenEl = document.getElementById('app-screen');
-  const progressBarEl = document.getElementById('progress-bar');
+  // Immediately show the home screen now that data is available
+  showHome();
 
-  // Attach event listeners for navigation
-  prevBtn.addEventListener('click', () => {
-    // Move back one mode or to the previous exercise
-    if (currentMode > 0) {
-      currentMode--;
-    } else if (currentIndex > 0) {
-      currentIndex--;
-      currentMode = 2;
-    }
-    render();
-  });
-
-  nextBtn.addEventListener('click', () => {
-    // Move forward one mode or to the next exercise
-    if (currentMode < 2) {
-      currentMode++;
-    } else if (currentIndex < exercises.length - 1) {
-      currentIndex++;
-      currentMode = 0;
-    }
-    render();
-  });
-
-  // Home button navigates back to the home screen
-  homeBtn.addEventListener('click', () => {
-    showHome = true;
-    render();
-  });
-
-  // Start button hides the home screen and starts the first exercise
-  startBtn.addEventListener('click', () => {
-    showHome = false;
-    currentIndex = 0;
-    currentMode = 0;
-    render();
-  });
-
-  /**
-   * Render the current state of the app based on exercise and mode.
-   */
-  function render() {
-    // Show home screen if requested
-    if (showHome) {
-      homeScreenEl.style.display = '';
-      appScreenEl.style.display = 'none';
-      // Reset progress bar to zero
-      if (progressBarEl) {
-        progressBarEl.style.width = '0%';
-      }
-      return;
-    }
-
-    // Otherwise display the exercise screen
-    homeScreenEl.style.display = 'none';
-    appScreenEl.style.display = '';
-
-    const exercise = exercises[currentIndex];
-    exerciseCountEl.textContent = `Exercise ${currentIndex + 1} of ${exercises.length}`;
-    const modeNames = ['Read', 'Parse', 'Produce'];
-    modeIndicatorEl.textContent = modeNames[currentMode];
-    feedbackEl.textContent = '';
-
-    // Update progress bar: compute the linear index across all exercises and modes
-    if (progressBarEl) {
-      const totalStates = exercises.length * 3;
-      const currentStateIndex = currentIndex * 3 + currentMode;
-      const progressPercent = Math.round((currentStateIndex) / (totalStates - 1) * 100);
-      progressBarEl.style.width = `${progressPercent}%`;
-    }
-
-    // Render appropriate mode
-    if (currentMode === 0) {
-      renderRead(exercise);
-    } else if (currentMode === 1) {
-      renderParse(exercise);
-    } else {
-      renderProduce(exercise);
-      // If we've reached the final exercise and mode, congratulate the learner
-      if (currentIndex === exercises.length - 1) {
-        feedbackEl.textContent = 'You have completed all exercises! Click Home to return to the start.';
-      }
-    }
-    // Disable prev button on very first state
-    prevBtn.disabled = currentIndex === 0 && currentMode === 0;
-    // Disable next button on very last state
-    nextBtn.disabled = currentIndex === exercises.length - 1 && currentMode === 2;
+  // Render the home/welcome screen
+  function showHome() {
+    currentMode = 'home';
+    container.innerHTML = `
+      <div class="text-center py-5">
+        <h1 class="mb-3">Welsh Mutation Trainer</h1>
+        <p class="lead">Drill Welsh mutation rules using Read → Parse → Produce cycles.</p>
+        <button class="btn btn-primary btn-lg" id="start-btn">Start Training</button>
+      </div>
+    `;
+    document.getElementById('start-btn').addEventListener('click', () => {
+      currentIndex = 0;
+      currentMode = 'read';
+      renderExercise();
+    });
   }
 
-  /**
-   * Render read mode.  Highlight mutated words and allow explanations to be shown.
-   * @param {Object} exercise
-   */
-  function renderRead(exercise) {
-    // Build the sentence with clickable spans for mutated tokens
-    const sentenceFragments = [];
-    const words = exercise.welsh.split(/\s+/);
-    let tokenIndex = 0;
-    for (const word of words) {
-      // Find matching token in exercise.tokens (by text ignoring accents)
-      // We search for mutated tokens by matching current word to token.text
-      const token = exercise.tokens.find(t => t.text === word);
-      if (token && token.type === 'mutated') {
-        // Create span with ghost radical
-        const span = document.createElement('span');
-        span.className = 'mutated';
-        span.textContent = token.text;
-        // Append ghost radical as small element if available
-        if (token.radical) {
-          const ghost = document.createElement('span');
-          ghost.className = 'ghost';
-          ghost.textContent = token.radical;
-          span.appendChild(ghost);
-        }
-        // On click, show explanation
-        span.addEventListener('click', () => {
-          feedbackEl.innerHTML = token.explanation;
-        });
-        sentenceFragments.push(span);
-      } else {
-        // Regular word
-        const textNode = document.createTextNode(word);
-        sentenceFragments.push(textNode);
-      }
-      // Add space between words except after last
-      sentenceFragments.push(document.createTextNode(' '));
-      tokenIndex++;
+  // Render the current exercise in the given mode
+  function renderExercise() {
+    const ex = exercises[currentIndex];
+    // Progress percentage (0 at first exercise)
+    const progress = ((currentIndex) / exercises.length) * 100;
+    let content = '';
+    if (currentMode === 'read') {
+      content = renderRead(ex);
+    } else if (currentMode === 'parse') {
+      content = renderParse(ex);
+    } else if (currentMode === 'produce') {
+      content = renderProduce(ex);
     }
-    // Clear area and append all fragments
-    exerciseAreaEl.innerHTML = '';
-    sentenceFragments.forEach(node => exerciseAreaEl.appendChild(node));
-    // Append translation below the Welsh sentence
-    const translation = document.createElement('div');
-    translation.className = 'translation';
-    translation.style.marginTop = '0.5rem';
-    translation.style.fontStyle = 'italic';
-    translation.textContent = exercise.english;
-    exerciseAreaEl.appendChild(translation);
-    // Instruction feedback
-    feedbackEl.innerHTML = 'Tap a highlighted word to see why it mutates.';
+    container.innerHTML = `
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title mb-3">${ex.topic}</h5>
+          <div class="progress mb-3">
+            <div class="progress-bar" role="progressbar" style="width: ${progress}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+          ${content}
+        </div>
+      </div>
+    `;
+    attachEvents(ex);
   }
 
-  /**
-   * Render parse mode.  Show the sentence and ask the learner to select the rule
-   * that applies to each mutated word.  Provide feedback when the
-   * "Check" button is pressed.
-   * @param {Object} exercise
-   */
-  function renderParse(exercise) {
-    exerciseAreaEl.innerHTML = '';
-    // Display the Welsh sentence plainly
-    const sentenceDiv = document.createElement('div');
-    sentenceDiv.textContent = exercise.welsh;
-    exerciseAreaEl.appendChild(sentenceDiv);
-    // List mutated tokens
-    const mutatedTokens = exercise.tokens.filter(t => t.type === 'mutated');
-    if (mutatedTokens.length > 0) {
-      mutatedTokens.forEach((token, idx) => {
-        const controlDiv = document.createElement('div');
-        controlDiv.className = 'parse-control';
-        const label = document.createElement('label');
-        label.textContent = `Which rule caused "${token.text}"?`;
-        controlDiv.appendChild(label);
-        const select = document.createElement('select');
+  // Wrap mutated tokens in spans with ghost radicals for read mode
+  function wrapSentence(ex) {
+    let sentence = ex.welsh;
+    // Sort tokens to handle longer tokens first to avoid nested replacements
+    const mutatedTokens = ex.tokens.filter((t) => t.type === 'mutated');
+    mutatedTokens.sort((a, b) => b.text.length - a.text.length);
+    mutatedTokens.forEach((token) => {
+      const escaped = token.text.replace(/([.*+?^${}()|[\]\\])/g, '\\$1');
+      const regex = new RegExp(`\\b${escaped}\\b`);
+      const explanation = token.explanation.replace(/"/g, '&quot;');
+      const radical = token.radical || '';
+      const replacement = `<span class="mutated" data-explanation="${explanation}" data-radical="${radical}">${token.text}<span class="ghost">${radical}</span></span>`;
+      sentence = sentence.replace(regex, replacement);
+    });
+    return sentence;
+  }
+
+  // Render read mode content
+  function renderRead(ex) {
+    const wrapped = wrapSentence(ex);
+    return `
+      <div class="mode-title">Read</div>
+      <p class="fs-5" id="read-sentence">${wrapped}</p>
+      <div id="explanation-box" class="explanation-box hidden"></div>
+      <div class="d-flex justify-content-between mt-4">
+        <button class="btn btn-secondary" id="home-btn">Home</button>
+        <button class="btn btn-primary" id="next-mode-btn">Parse</button>
+      </div>
+    `;
+  }
+
+  // Render parse mode content
+  function renderParse(ex) {
+    let selects = '';
+    ex.tokens.forEach((token, idx) => {
+      if (token.type === 'mutated') {
+        let options = '';
         token.parseOptions.forEach((opt, i) => {
-          const option = document.createElement('option');
-          option.value = i;
-          option.textContent = opt;
-          select.appendChild(option);
+          options += `<option value="${i}">${opt}</option>`;
         });
-        controlDiv.appendChild(select);
-        exerciseAreaEl.appendChild(controlDiv);
-        // Store select element on token for later checking
-        token._selectEl = select;
+        selects += `
+          <div class="mb-3">
+            <label class="form-label">${token.text}</label>
+            <select class="form-select parse-select" data-correct="${token.correctIndex}">
+              <option value="" selected disabled>Choose an explanation…</option>
+              ${options}
+            </select>
+          </div>
+        `;
+      }
+    });
+    return `
+      <div class="mode-title">Parse</div>
+      <p class="mb-2"><strong>Sentence:</strong> ${ex.welsh}</p>
+      <form id="parse-form">${selects}</form>
+      <div id="parse-feedback" class="explanation-box hidden"></div>
+      <div class="d-flex justify-content-between mt-4">
+        <button class="btn btn-secondary" id="prev-mode-btn">Back</button>
+        <div>
+          <button class="btn btn-primary me-2" id="check-parse-btn">Check</button>
+          <button class="btn btn-primary d-none" id="next-mode-btn">Produce</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Render produce mode content
+  function renderProduce(ex) {
+    return `
+      <div class="mode-title">Produce</div>
+      <p>${ex.producePrompt}</p>
+      <textarea id="produce-input" class="form-control" rows="3" placeholder="Write your phrase here…"></textarea>
+      <button class="btn btn-outline-secondary mt-2" id="show-example-btn">Show Example</button>
+      <div id="example-box" class="explanation-box hidden"><strong>Example answer:</strong> ${ex.welsh}</div>
+      <div class="d-flex justify-content-between mt-4">
+        <button class="btn btn-secondary" id="prev-mode-btn">Back</button>
+        ${currentIndex < exercises.length - 1 ? `<button class="btn btn-primary" id="next-ex-btn">Next Exercise</button>` : `<button class="btn btn-success" id="finish-btn">Finish</button>`}
+      </div>
+    `;
+  }
+
+  // Attach event listeners after rendering
+  function attachEvents(ex) {
+    // Common home/back buttons
+    const homeBtn = document.getElementById('home-btn');
+    if (homeBtn) {
+      homeBtn.addEventListener('click', showHome);
+    }
+    const prevModeBtn = document.getElementById('prev-mode-btn');
+    if (prevModeBtn) {
+      prevModeBtn.addEventListener('click', () => {
+        if (currentMode === 'parse') {
+          currentMode = 'read';
+        } else if (currentMode === 'produce') {
+          currentMode = 'parse';
+        }
+        renderExercise();
       });
-      // Add check button
-      const checkBtn = document.createElement('button');
-      checkBtn.textContent = 'Check answers';
-      checkBtn.className = 'produce-button';
-      exerciseAreaEl.appendChild(checkBtn);
-      checkBtn.addEventListener('click', () => {
+    }
+    // Read mode interactions
+    if (currentMode === 'read') {
+      // Show explanation on clicking a mutated word
+      document.querySelectorAll('.mutated').forEach((el) => {
+        el.addEventListener('click', () => {
+          const exp = el.getAttribute('data-explanation');
+          const box = document.getElementById('explanation-box');
+          box.innerHTML = exp;
+          box.classList.remove('hidden');
+        });
+      });
+      const nextModeBtn = document.getElementById('next-mode-btn');
+      nextModeBtn.addEventListener('click', () => {
+        currentMode = 'parse';
+        renderExercise();
+      });
+    }
+    // Parse mode interactions
+    if (currentMode === 'parse') {
+      const checkBtn = document.getElementById('check-parse-btn');
+      const nextBtn = document.getElementById('next-mode-btn');
+      checkBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const selects = document.querySelectorAll('.parse-select');
         let allCorrect = true;
-        mutatedTokens.forEach(token => {
-          const selected = parseInt(token._selectEl.value, 10);
-          if (selected !== token.correctIndex) {
+        let feedbackMessages = [];
+        selects.forEach((sel) => {
+          const correct = sel.getAttribute('data-correct');
+          const selected = sel.value;
+          // remove previous validation classes
+          sel.classList.remove('is-valid', 'is-invalid');
+          if (selected === correct) {
+            sel.classList.add('is-valid');
+          } else {
+            sel.classList.add('is-invalid');
             allCorrect = false;
+            // find token explanation
+            const tokenIdx = Array.from(selects).indexOf(sel);
+            const mutatedTokens = ex.tokens.filter((t) => t.type === 'mutated');
+            const tok = mutatedTokens[tokenIdx];
+            feedbackMessages.push(`<strong>${tok.text}:</strong> ${tok.explanation}`);
           }
         });
+        const feedbackBox = document.getElementById('parse-feedback');
         if (allCorrect) {
-          feedbackEl.textContent = 'All correct! Well done.';
+          feedbackBox.classList.remove('hidden');
+          feedbackBox.classList.remove('alert-danger');
+          feedbackBox.classList.add('alert', 'alert-success');
+          feedbackBox.innerHTML = 'All answers are correct!';
+          nextBtn.classList.remove('d-none');
         } else {
-          // Show explanations for each token
-          let messages = mutatedTokens.map(token => {
-            return `${token.text}: ${token.explanation.replace(/<[^>]+>/g, '')}`;
-          });
-          feedbackEl.innerHTML = 'Some answers were incorrect.\n' + messages.join('\n');
+          feedbackBox.classList.remove('hidden');
+          feedbackBox.classList.remove('alert-success');
+          feedbackBox.classList.add('alert', 'alert-danger');
+          feedbackBox.innerHTML = feedbackMessages.join('<br>');
         }
       });
-    } else {
-      feedbackEl.textContent = 'No mutations to parse for this exercise.';
+      // move to produce mode
+      nextBtn.addEventListener('click', () => {
+        currentMode = 'produce';
+        renderExercise();
+      });
     }
-    // Append translation
-    const translation = document.createElement('div');
-    translation.style.marginTop = '0.5rem';
-    translation.style.fontStyle = 'italic';
-    translation.textContent = exercise.english;
-    exerciseAreaEl.appendChild(translation);
+    // Produce mode interactions
+    if (currentMode === 'produce') {
+      const showExampleBtn = document.getElementById('show-example-btn');
+      const exampleBox = document.getElementById('example-box');
+      showExampleBtn.addEventListener('click', () => {
+        exampleBox.classList.toggle('hidden');
+      });
+      const nextExBtn = document.getElementById('next-ex-btn');
+      if (nextExBtn) {
+        nextExBtn.addEventListener('click', () => {
+          // proceed to next exercise
+          currentIndex += 1;
+          currentMode = 'read';
+          renderExercise();
+        });
+      }
+      const finishBtn = document.getElementById('finish-btn');
+      if (finishBtn) {
+        finishBtn.addEventListener('click', () => {
+          container.innerHTML = `
+            <div class="text-center py-5">
+              <h2>Congratulations!</h2>
+              <p>You have completed all ${exercises.length} exercises.</p>
+              <button class="btn btn-primary" id="restart-btn">Restart</button>
+            </div>
+          `;
+          document.getElementById('restart-btn').addEventListener('click', showHome);
+        });
+      }
+    }
   }
-
-  /**
-   * Render produce mode.  Encourage the learner to craft their own sentence
-   * following the same structure.  Since automatic checking of free text is
-   * difficult, we provide an example answer for inspiration.
-   * @param {Object} exercise
-   */
-  function renderProduce(exercise) {
-    exerciseAreaEl.innerHTML = '';
-    const promptDiv = document.createElement('div');
-    promptDiv.innerHTML = exercise.producePrompt;
-    exerciseAreaEl.appendChild(promptDiv);
-    // Input box
-    const input = document.createElement('textarea');
-    input.className = 'produce-input';
-    input.rows = 3;
-    input.placeholder = 'Write your Welsh sentence here…';
-    exerciseAreaEl.appendChild(input);
-    // Submit button
-    const submitBtn = document.createElement('button');
-    submitBtn.textContent = 'Show example';
-    submitBtn.className = 'produce-button';
-    exerciseAreaEl.appendChild(submitBtn);
-    submitBtn.addEventListener('click', () => {
-      // Provide example answer derived from tokens
-      const mutated = exercise.tokens.filter(t => t.type === 'mutated');
-      const examplePieces = mutated.map(token => token.text);
-      const example = examplePieces.length > 0 ? examplePieces.join(' ') : exercise.welsh;
-      feedbackEl.innerHTML = `Example: <em>${example}</em>`;
-    });
-    // Append translation for reference
-    const translation = document.createElement('div');
-    translation.style.marginTop = '0.5rem';
-    translation.style.fontStyle = 'italic';
-    translation.textContent = exercise.english;
-    exerciseAreaEl.appendChild(translation);
-  }
-
-  // Initial render
-  render();
-})();
+});
