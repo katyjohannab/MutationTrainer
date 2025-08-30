@@ -7,13 +7,26 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app-container">
+  <!-- Home screen shown at launch.  It provides a brief introduction and a start button. -->
+  <div id="home-screen" class="home-container">
+    <h2>Welcome to the Welsh Mutation Trainer</h2>
+    <p>Learn Welsh initial consonant mutations through read, parse and produce exercises.  Tap “Start” to begin your first exercise.</p>
+    <button id="start-btn">Start</button>
+  </div>
+
+  <!-- Main exercise area.  Hidden until the user starts the training. -->
+  <div class="app-container" id="app-screen" style="display:none;">
     <h1>Welsh Mutation Trainer</h1>
+    <!-- Progress bar tracks progress through all exercises and modes -->
+    <div class="progress-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
     <div id="exercise-count"></div>
     <div id="mode-indicator"></div>
     <div id="exercise-area"></div>
     <div id="feedback"></div>
     <div class="nav-buttons">
+      <button id="home-btn">Home</button>
       <button id="prev-btn">Previous</button>
       <button id="next-btn">Next</button>
     </div>
