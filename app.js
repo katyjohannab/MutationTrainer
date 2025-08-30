@@ -9,26 +9,40 @@
  */
 
 (() => {
+  // Whether we are currently showing the home screen.  When true, exercises
+  // are hidden and the introduction is displayed.  Users can return to the
+  // home screen at any time via the Home button.
+  let showHome = true;
   let currentIndex = 0;
   let currentMode = 0; // 0: Read, 1: Parse, 2: Produce
 
+  // Cache DOM elements for performance and clarity
   const exerciseCountEl = document.getElementById('exercise-count');
   const modeIndicatorEl = document.getElementById('mode-indicator');
   const exerciseAreaEl = document.getElementById('exercise-area');
   const feedbackEl = document.getElementById('feedback');
   const prevBtn = document.getElementById('prev-btn');
   const nextBtn = document.getElementById('next-btn');
+  const homeBtn = document.getElementById('home-btn');
+  const startBtn = document.getElementById('start-btn');
+  const homeScreenEl = document.getElementById('home-screen');
+  const appScreenEl = document.getElementById('app-screen');
+  const progressBarEl = document.getElementById('progress-bar');
 
   // Attach event listeners for navigation
   prevBtn.addEventListener('click', () => {
-    if (currentIndex > 0) {
+    // Move back one mode or to the previous exercise
+    if (currentMode > 0) {
+      currentMode--;
+    } else if (currentIndex > 0) {
       currentIndex--;
-      currentMode = 0;
-      render();
+      currentMode = 2;
     }
+    render();
   });
 
   nextBtn.addEventListener('click', () => {
+    // Move forward one mode or to the next exercise
     if (currentMode < 2) {
       currentMode++;
     } else if (currentIndex < exercises.length - 1) {
@@ -38,26 +52,68 @@
     render();
   });
 
+  // Home button navigates back to the home screen
+  homeBtn.addEventListener('click', () => {
+    showHome = true;
+    render();
+  });
+
+  // Start button hides the home screen and starts the first exercise
+  startBtn.addEventListener('click', () => {
+    showHome = false;
+    currentIndex = 0;
+    currentMode = 0;
+    render();
+  });
+
   /**
    * Render the current state of the app based on exercise and mode.
    */
   function render() {
+    // Show home screen if requested
+    if (showHome) {
+      homeScreenEl.style.display = '';
+      appScreenEl.style.display = 'none';
+      // Reset progress bar to zero
+      if (progressBarEl) {
+        progressBarEl.style.width = '0%';
+      }
+      return;
+    }
+
+    // Otherwise display the exercise screen
+    homeScreenEl.style.display = 'none';
+    appScreenEl.style.display = '';
+
     const exercise = exercises[currentIndex];
     exerciseCountEl.textContent = `Exercise ${currentIndex + 1} of ${exercises.length}`;
     const modeNames = ['Read', 'Parse', 'Produce'];
     modeIndicatorEl.textContent = modeNames[currentMode];
     feedbackEl.textContent = '';
 
+    // Update progress bar: compute the linear index across all exercises and modes
+    if (progressBarEl) {
+      const totalStates = exercises.length * 3;
+      const currentStateIndex = currentIndex * 3 + currentMode;
+      const progressPercent = Math.round((currentStateIndex) / (totalStates - 1) * 100);
+      progressBarEl.style.width = `${progressPercent}%`;
+    }
+
+    // Render appropriate mode
     if (currentMode === 0) {
       renderRead(exercise);
     } else if (currentMode === 1) {
       renderParse(exercise);
     } else {
       renderProduce(exercise);
+      // If we've reached the final exercise and mode, congratulate the learner
+      if (currentIndex === exercises.length - 1) {
+        feedbackEl.textContent = 'You have completed all exercises! Click Home to return to the start.';
+      }
     }
-    // Disable prev button on first exercise and first mode
+    // Disable prev button on very first state
     prevBtn.disabled = currentIndex === 0 && currentMode === 0;
-    // Disable next button at the very end
+    // Disable next button on very last state
     nextBtn.disabled = currentIndex === exercises.length - 1 && currentMode === 2;
   }
 
