@@ -778,3 +778,127 @@ body{
     box-shadow: none;
   }
 }
+
+/* =========================
+   Session HUD (tiles + mastery)
+   Used by the right-hand "This session" panel.
+   ========================= */
+
+/* Grid of tiles */
+.stat-tiles{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .55rem;
+}
+
+/* Stack tiles on narrow screens for readability */
+@media (max-width: 560px){
+  .stat-tiles{ grid-template-columns: 1fr; }
+}
+
+/* Individual tile */
+.stat-tile{
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(15,23,42,0.10);
+  border-radius: 1.1rem;
+  padding: .80rem .85rem;
+  box-shadow: 0 10px 18px rgba(2,6,23,0.05);
+  transition: transform .08s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease;
+}
+
+.stat-tile:hover{
+  transform: translateY(-1px);
+  border-color: rgba(4,120,87,0.22);
+  box-shadow: 0 16px 26px rgba(2,6,23,0.08);
+  background: rgba(255,255,255,1);
+}
+
+.stat-label{
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(71,85,105,0.95);
+  margin-bottom: .35rem;
+}
+
+.stat-big{
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-size: clamp(1.65rem, 2.4vw, 2.35rem);
+  color: rgba(15,23,42,0.96);
+}
+
+.stat-sub{
+  margin-top: .35rem;
+  font-size: 12px;
+  color: rgba(71,85,105,0.92);
+}
+
+/* Mastery progress */
+.progress-track{
+  height: 0.50rem; /* 8px */
+  border-radius: 999px;
+  background: rgba(15,23,42,0.10);
+  overflow: hidden;
+}
+
+.progress-fill{
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--primary-from) 0%, var(--primary-mid) 45%, var(--primary-to) 100%);
+  width: 0%;
+  transition: width .28s ease;
+}
+
+/* Tiny pop for streak/points updates.
+   JS can add/remove either .stat-pop OR .animate-pop (already defined above). */
+.stat-pop{ animation: pop .16s ease-out both; }
+
+/* Optional: make disclosure feel clickable without relying on Tailwind */
+.stat-more summary{
+  list-style: none;
+}
+.stat-more summary::-webkit-details-marker{ display:none; }
+.stat-more summary{
+  cursor: pointer;
+  padding: .35rem .15rem;
+  border-radius: .75rem;
+  transition: background .12s ease;
+}
+.stat-more summary:hover{ background: rgba(6,78,59,0.06); }
+
+/* Backwards-compatible styling for your current Step 1 markup.
+   If/when you switch the HTML to use the classes above, these rules become redundant. */
+#sessionPanel .grid.grid-cols-3 > div{
+  border-radius: 1.1rem;
+  box-shadow: 0 10px 18px rgba(2,6,23,0.05);
+  transition: transform .08s ease, box-shadow .14s ease, border-color .14s ease;
+}
+#sessionPanel .grid.grid-cols-3 > div:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 16px 26px rgba(2,6,23,0.08);
+}
+
+
+/* Compatibility rules for current Step 1 HTML (still using Tailwind utility classes). */
+@media (max-width: 560px){
+  /* Stack the 3 HUD tiles to avoid cramped numbers on phones */
+  #sessionPanel .grid.grid-cols-3{ grid-template-columns: 1fr !important; }
+}
+
+/* Make the mastery bar feel more "game HUD" even before HTML switches to .progress-* classes */
+#masteryBar{
+  background: linear-gradient(135deg, var(--primary-from) 0%, var(--primary-mid) 45%, var(--primary-to) 100%);
+  transition: width .28s ease;
+}
+
+/* Make the disclosure summary feel tappable */
+#sessionPanel details > summary{
+  list-style: none;
+  padding: .35rem .15rem;
+  border-radius: .75rem;
+  transition: background .12s ease;
+}
+#sessionPanel details > summary::-webkit-details-marker{ display:none; }
+#sessionPanel details > summary:hover{ background: rgba(6,78,59,0.06); }
