@@ -57,6 +57,40 @@ const PRACTICE_MODE_LS_KEY = "wm_practice_mode_v1";
 const SESSION_LS_KEY = "wm_session_v1";
 const SESSION_POINTS_PER_CORRECT = 10;
 
+/* ========= Issue reporting (no backend) ========= */
+const ISSUE_REPORT_EMAIL = "katyjohannabenson@gmail.com";
+// Optional: set a Google Form URL to collect tutor feedback.
+// Leave blank to hide the "Open form" button.
+const ISSUE_REPORT_FORM_URL = "";
+
+async function copyTextToClipboard(text) {
+  try {
+    // Prefer the Clipboard API when available.
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) {}
+
+  // Fallback: temporary textarea + execCommand.
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = String(text || "");
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (e) {
+    return false;
+  }
+}
+
 function bumpSessionBucket(bucket, key, ok) {
   if (!bucket || typeof bucket !== "object") return;
   const k = (key == null ? "" : String(key)).trim() || "Unknown";
@@ -145,6 +179,136 @@ function getCardId(card, idxFallback) {
   const raw = (card && (card.CardId ?? card.CardID ?? card.ID ?? card.Id ?? card.id));
   const s = (raw == null ? "" : String(raw)).trim();
   return s ? s : `row_${idxFallback}`;
+}
+
+function isIssueModalOpen() {
+  const m = $("#issueModal");
+  return !!(m && !m.classList.contains("hidden"));
+}
+
+function getShownCardContextForIssue() {
+  const n = state.filtered?.length || 0;
+  if (!n) return null;
+
+  const idxNow = (state.currentIdx == null) ? 0 : state.currentIdx;
+  const idxShown = (state.revealed && state.freezeIdx != null) ? state.freezeIdx : idxNow;
+  const safeIdxShown = (idxShown >= 0 && idxShown < n) ? idxShown : 0;
+
+  const card = state.filtered[safeIdxShown];
+  const cardId = getCardId(card, safeIdxShown);
+  return { idxNow, idxShown: safeIdxShown, card, cardId };
+}
+
+function buildIssueReportText() {
+  const ctx = getShownCardContextForIssue();
+  const lang = state.lang || "en";
+  const t = LABEL[lang] || LABEL.en;
+
+  if (!ctx) {
+    return (lang === "cy")
+      ? "Dim cerdiau i’w hadrodd (nid oes dim yn cyfateb i’r hidlwyr ar hyn o bryd)."
+      : "No cards to report (nothing matches the current filters).";
+  }
+
+  const c = ctx.card || {};
+  const typed = (($("#answerBox")?.value ?? state.guess) || "").trim();
+
+  const lines = [];
+  lines.push("=== Mutation Trainer issue report ===");
+  lines.push(`Time: ${new Date().toISOString()}`);
+  lines.push(`URL: ${location.href}`);
+  lines.push(`UI language: ${lang}`);
+  lines.push("");
+
+  lines.push(`CardId: ${ctx.cardId}`);
+  lines.push(`RuleFamily: ${c.RuleFamily || ""}`);
+  lines.push(`RuleCategory: ${c.RuleCategory || ""}`);
+  lines.push(`Trigger: ${c.Trigger || ""}`);
+  lines.push(`Outcome: ${c.Outcome || ""}`);
+  lines.push("");
+
+  lines.push(`Before: ${c.Before || ""}`);
+  lines.push(`Answer: ${c.Answer || ""}`);
+  lines.push(`After: ${c.After || ""}`);
+  if (c.Translate) lines.push(`Meaning: ${c.Translate}`);
+  lines.push("");
+
+  lines.push(`WhyEN: ${c.Why || ""}`);
+  lines.push(`WhyCY: ${c.WhyCym || ""}`);
+  lines.push("");
+
+  lines.push(`${t.youTyped || "You typed"}: ${typed || (t.blank || "(blank)")}`);
+  lines.push(`Reveal used: ${state.usedRevealThisCard ? "yes" : "no"}`);
+  lines.push(`Last result: ${state.lastResult || "unanswered"}`);
+  lines.push("");
+
+  lines.push(`Practice mode: ${state.practiceMode || "shuffle"}`);
+  lines.push("Filters:");
+  lines.push(`- families: ${(state.families || []).join(",") || "(all)"}`);
+  lines.push(`- outcomes: ${(state.outcomes || []).join(",") || "(all)"}`);
+  lines.push(`- categories: ${(state.categories || []).join(",") || "(all)"}`);
+  lines.push(`- triggerQuery: ${(state.triggerQuery || "").trim() || "(none)"}`);
+  lines.push(`- nilOnly: ${state.nilOnly ? "true" : "false"}`);
+
+  return lines.join("\n");
+}
+
+function closeIssueModal() {
+  const m = $("#issueModal");
+  if (!m) return;
+  m.classList.add("hidden");
+  const st = $("#issueCopyStatus");
+  if (st) st.textContent = "";
+}
+
+function openIssueModal() {
+  const m = $("#issueModal");
+  if (!m) return;
+
+  const report = buildIssueReportText();
+  const ta = $("#issuePreview");
+  if (ta) ta.value = report;
+  const st = $("#issueCopyStatus");
+  if (st) st.textContent = "";
+
+  const lang = state.lang || "en";
+  const t = LABEL[lang] || LABEL.en;
+
+  // Email link
+  const subj = (lang === "cy") ? "Adroddiad problem: Hyffordwr Treiglad" : "Mutation Trainer issue report";
+  const body = (lang === "cy")
+    ? `Helo Katy,\n\nDw i wedi gweld problem bosibl. Dyma’r adroddiad:\n\n${report}\n\nDiolch!`
+    : `Hi Katy,\n\nI spotted a possible issue. Here is the report:\n\n${report}\n\nThanks!`;
+  const mailto = `mailto:${ISSUE_REPORT_EMAIL}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+  const aEmail = $("#btnIssueEmail");
+  if (aEmail) {
+    aEmail.href = mailto;
+    aEmail.classList.remove("hidden");
+  }
+
+  // Optional form link
+  const aForm = $("#btnIssueForm");
+  if (aForm) {
+    if (ISSUE_REPORT_FORM_URL && ISSUE_REPORT_FORM_URL.trim()) {
+      aForm.href = ISSUE_REPORT_FORM_URL.trim();
+      aForm.classList.remove("hidden");
+    } else {
+      aForm.classList.add("hidden");
+    }
+  }
+
+  m.classList.remove("hidden");
+  setTimeout(() => $("#btnIssueCopy")?.focus(), 0);
+}
+
+async function copyIssueReport() {
+  const lang = state.lang || "en";
+  const t = LABEL[lang] || LABEL.en;
+  const text = ($("#issuePreview")?.value || buildIssueReportText());
+  const ok = await copyTextToClipboard(text);
+  const st = $("#issueCopyStatus");
+  if (!st) return;
+  st.textContent = ok ? (t.issueCopied || "Copied.") : (t.issueCopyFailed || "Couldn't copy automatically.");
 }
 function clampBox(n) {
   const x = Number(n);
@@ -345,6 +509,18 @@ const LABEL = {
     sessionByCategory:"By category",
     sessionOther:"Other",
     sessionCorrectFmt:"{correct} / {done} correct",
+
+    // Issue reporting
+    issueBtn:"Spotted a mistake?",
+    issueTitle:"Report an issue",
+    issueIntro:"I'm a learner too, so mistakes happen. If something looks wrong, please send the report below.",
+    issueCopy:"Copy report",
+    issueEmail:"Email me",
+    issueForm:"Open form",
+    issuePreviewLabel:"Report details",
+    issueCopied:"Copied to clipboard.",
+    issueCopyFailed:"Couldn't copy automatically. Select the text and copy it.",
+    issueClose:"Close",
   },
   cy: {
     headings: { focus:"Ffocws", rulefamily:"Math Treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)" },
@@ -394,6 +570,18 @@ const LABEL = {
     sessionByCategory:"Yn ôl categori",
     sessionOther:"Arall",
     sessionCorrectFmt:"{correct} / {done} yn gywir",
+
+    // Rhoi gwybod am broblem
+    issueBtn:"Wedi gweld camgymeriad?",
+    issueTitle:"Rhoi gwybod am broblem",
+    issueIntro:"Dw i’n ddysgwr hefyd, felly mae camgymeriadau’n digwydd. Os yw rhywbeth yn edrych yn anghywir, anfonwch yr adroddiad isod.",
+    issueCopy:"Copïo’r adroddiad",
+    issueEmail:"E-bostio fi",
+    issueForm:"Agor ffurflen",
+    issuePreviewLabel:"Manylion yr adroddiad",
+    issueCopied:"Wedi copïo i’r clipfwrdd.",
+    issueCopyFailed:"Methwyd copïo’n awtomatig. Dewiswch y testun a’i gopïo.",
+    issueClose:"Cau",
   }
 };
 
@@ -488,6 +676,34 @@ function applyLanguage() {
       const h = byCat.previousElementSibling;
       if (h) h.textContent = LABEL[lang].sessionByCategory;
     }
+  }
+
+  // ---- Issue report UI ----
+  const reportBtn = $("#btnReportIssue");
+  if (reportBtn) reportBtn.textContent = LABEL[lang].issueBtn;
+
+  const issueTitle = $("#issueTitle");
+  if (issueTitle) issueTitle.textContent = LABEL[lang].issueTitle;
+
+  const issueIntro = $("#issueIntro");
+  if (issueIntro) issueIntro.textContent = LABEL[lang].issueIntro;
+
+  const issuePreviewLabel = $("#issuePreviewLabel");
+  if (issuePreviewLabel) issuePreviewLabel.textContent = LABEL[lang].issuePreviewLabel;
+
+  const issueCopyBtn = $("#btnIssueCopy");
+  if (issueCopyBtn) issueCopyBtn.textContent = LABEL[lang].issueCopy;
+
+  const issueEmailBtn = $("#btnIssueEmail");
+  if (issueEmailBtn) issueEmailBtn.textContent = LABEL[lang].issueEmail;
+
+  const issueFormBtn = $("#btnIssueForm");
+  if (issueFormBtn) issueFormBtn.textContent = LABEL[lang].issueForm;
+
+  const issueCloseBtn = $("#btnIssueClose");
+  if (issueCloseBtn) {
+    issueCloseBtn.title = LABEL[lang].issueClose;
+    issueCloseBtn.setAttribute("aria-label", LABEL[lang].issueClose);
   }
 
   buildFilters();
@@ -1563,10 +1779,28 @@ function wireUi() {
     clearDeviceStats();
   });
 
+  // Issue report modal
+  $("#btnReportIssue")?.addEventListener("click", () => openIssueModal());
+  $("#btnIssueClose")?.addEventListener("click", () => closeIssueModal());
+  $("#btnIssueCopy")?.addEventListener("click", () => copyIssueReport());
+  $("#issueModal")?.addEventListener("click", (e) => {
+    if (e.target && e.target.dataset && e.target.dataset.issueClose === "1") closeIssueModal();
+  });
+
 
   $("#btnTop")?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
   document.addEventListener("keydown", (e) => {
+    // Close issue modal with Esc (even if focus is in an input/textarea)
+    if (e.key === "Escape" && isIssueModalOpen()) {
+      e.preventDefault();
+      closeIssueModal();
+      return;
+    }
+
+    // While the modal is open, ignore practice hotkeys
+    if (isIssueModalOpen()) return;
+
     const tag = (e.target && e.target.tagName) || "";
     if (["INPUT", "TEXTAREA"].includes(tag.toUpperCase())) return;
     if (state.mode !== "practice") return;
@@ -1650,6 +1884,4 @@ function wireUi() {
   syncLangFromNavbar();
 
 })();
-
-
 
