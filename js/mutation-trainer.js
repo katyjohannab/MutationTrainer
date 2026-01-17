@@ -44,6 +44,92 @@ function wmGetLangLocal() {
 /* ========= Smart review (Leitner) ========= */
 const LEITNER_LS_KEY = "wm_leitner_boxes_v1";
 const PRACTICE_MODE_LS_KEY = "wm_practice_mode_v1";
+
+/* ========= Session stats (device-local) ========= */
+const SESSION_LS_KEY = "wm_session_v1";
+const SESSION_POINTS_PER_CORRECT = 10;
+
+function bumpSessionBucket(bucket, key, ok) {
+  if (!bucket || typeof bucket !== "object") return;
+  const k = (key == null ? "" : String(key)).trim() || "Unknown";
+  if (!bucket[k]) bucket[k] = { done: 0, correct: 0 };
+  bucket[k].done = (bucket[k].done || 0) + 1;
+  if (ok) bucket[k].correct = (bucket[k].correct || 0) + 1;
+}
+
+function defaultSession() {
+  return {
+    startedAt: Date.now(),
+    done: 0,
+    correct: 0,
+    points: 0,
+    streak: 0,
+    bestStreak: 0,
+    byOutcome: {},
+    byCategory: {},
+  };
+}
+
+function loadSession() {
+  const toInt = (v, d = 0) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : d;
+  };
+  const fixBuckets = (obj) => {
+    const out = {};
+    if (!obj || typeof obj !== "object") return out;
+    for (const [k, v] of Object.entries(obj)) {
+      if (!v || typeof v !== "object") continue;
+      out[k] = { done: toInt(v.done), correct: toInt(v.correct) };
+    }
+    return out;
+  };
+
+  const raw = loadLS(SESSION_LS_KEY, null);
+  if (!raw || typeof raw !== "object") {
+    const fresh = defaultSession();
+    saveSession(fresh);
+    return fresh;
+  }
+
+  const sess = defaultSession();
+  sess.startedAt = Number.isFinite(Number(raw.startedAt)) ? Number(raw.startedAt) : sess.startedAt;
+  sess.done = toInt(raw.done);
+  sess.correct = toInt(raw.correct);
+  sess.points = toInt(raw.points);
+  sess.streak = toInt(raw.streak);
+  sess.bestStreak = toInt(raw.bestStreak);
+  sess.byOutcome = fixBuckets(raw.byOutcome);
+  sess.byCategory = fixBuckets(raw.byCategory);
+
+  // Persist any repaired/defaulted fields back to storage.
+  saveSession(sess);
+  return sess;
+}
+
+function saveSession(sess) {
+  if (!sess || typeof sess !== "object") return;
+  saveLS(SESSION_LS_KEY, sess);
+}
+
+function resetSession() {
+  const fresh = defaultSession();
+  saveSession(fresh);
+  // Safe: state is defined later; this will only run after init.
+  try {
+    if (typeof state === "object" && state) state.session = fresh;
+  } catch (e) {}
+  return fresh;
+}
+
+function resetStreak(sess) {
+  const s = (sess && typeof sess === "object") ? sess : (state?.session || null);
+  if (!s) return null;
+  s.streak = 0;
+  saveSession(s);
+  return s;
+}
+
 const LEITNER_MAX_BOX = 5;
 const LEITNER_WEIGHTS = [0, 50, 25, 15, 7, 3]; // index 1..5
 
@@ -189,8 +275,10 @@ const state = {
   p: 0,
   guess: "",
   revealed: false,
+  usedRevealThisCard: false,
   lastResult: null,
   history: loadLS("wm_hist", []),
+  session: loadSession(),
   admin: getParam("admin") === "1",
   freezeIdx: null,
   freezePos: null,
@@ -228,7 +316,7 @@ const LABEL = {
     hear:"Hear",
     meaningAria:"Meaning",
     onboardDismiss:"Got it",
-    resetStats:"Reset stats",
+    resetStats:"Clear device stats",
     backToTop:"Back to top",
   },
   cy: {
@@ -258,7 +346,7 @@ const LABEL = {
     hear:"Gwrando",
     meaningAria:"Ystyr",
     onboardDismiss:"Iawn",
-    resetStats:"Ailosod ystadegau",
+    resetStats:"Clirio ystadegau'r ddyfais",
     backToTop:"Yn ôl i’r brig",
   }
 };
@@ -515,6 +603,7 @@ function rebuildDeck() {
   state.p = 0;
   state.guess = "";
   state.revealed = false;
+  state.usedRevealThisCard = false;
   state.lastResult = null;
   state.freezeIdx = null;
   state.freezePos = null;
@@ -864,6 +953,8 @@ function renderPractice() {
   aux.className = "practice-actions-aux";
 
   const onCheck = () => {
+    // Prevent double-counting if the user triggers Check more than once.
+    if (state.lastResult) return;
     const ok = normalize(state.guess) === normalize(card.Answer);
     state.revealed = true;
     state.lastResult = ok ? "correct" : "wrong";
@@ -885,6 +976,23 @@ function renderPractice() {
     };
     state.history = [rec, ...state.history].slice(0, 500);
     saveLS("wm_hist", state.history);
+
+    // --- session stats (device-local) ---
+    const sess = state.session || loadSession();
+    sess.done += 1;
+    if (ok) {
+      sess.correct += 1;
+      sess.points += SESSION_POINTS_PER_CORRECT;
+      if (!state.usedRevealThisCard) sess.streak += 1;
+      else sess.streak = 0;
+      if (sess.streak > sess.bestStreak) sess.bestStreak = sess.streak;
+    } else {
+      sess.streak = 0;
+    }
+    bumpSessionBucket(sess.byOutcome, (shownCard.Outcome || "?").toUpperCase(), ok);
+    bumpSessionBucket(sess.byCategory, shownCard.RuleCategory || "Uncategorised", ok);
+    state.session = sess;
+    saveSession(sess);
 
     updateLeitner(cardId, ok ? "correct" : "wrong");
     if (!ok && state.practiceMode === "smart") {
@@ -916,11 +1024,16 @@ function renderPractice() {
   btnHint.title = `${t.hint} (H)`;
 
   const btnReveal = btn(t.reveal, "btn-ghost", () => {
+    // Reveal counts as "used" for streak purposes on this card.
+    const turningOn = !state.revealed;
+    if (turningOn) state.usedRevealThisCard = true;
     state.revealed = !state.revealed;
     render();
   });
 
   const btnSkip = btn(t.skip, "btn-ghost", () => {
+    // Prevent double-counting if the user triggers Skip after already checking.
+    if (state.lastResult) return;
     state.guess = "";
     state.revealed = true;
     state.lastResult = "skipped";
@@ -942,6 +1055,15 @@ function renderPractice() {
       skipped: true,
     });
     saveLS("wm_hist", state.history);
+
+    // --- session stats (device-local) ---
+    const sess = state.session || loadSession();
+    sess.done += 1;
+    sess.streak = 0;
+    bumpSessionBucket(sess.byOutcome, (shownCard.Outcome || "?").toUpperCase(), false);
+    bumpSessionBucket(sess.byCategory, shownCard.RuleCategory || "Uncategorised", false);
+    state.session = sess;
+    saveSession(sess);
 
     updateLeitner(cardId, "skipped");
     if (state.practiceMode === "smart") {
@@ -1099,29 +1221,113 @@ function computeStats() {
   return { total, correct, acc, by };
 }
 
-function renderStatsPanels() {
-  const s = computeStats();
+function renderSessionPanel() {
+  // Session panel lives in the practice view sidebar.
+  // It should show *session* stats (device-local), not lifetime.
+  const sess = state.session || loadSession();
 
-  if ($("#accBig")) $("#accBig").textContent = `${s.acc}%`;
-  if ($("#accText")) $("#accText").textContent = `${s.correct} / ${s.total} correct`;
+  const done = Number(sess.done) || 0;
+  const correct = Number(sess.correct) || 0;
+  const acc = done ? Math.round((correct / done) * 100) : 0;
+
+  // Accuracy tile
+  if ($("#accBig")) $("#accBig").textContent = `${acc}%`;
+  if ($("#accText")) $("#accText").textContent = `${correct} / ${done} correct`;
+
+  // Streak tile
+  if ($("#sessStreak")) $("#sessStreak").textContent = String(Number(sess.streak) || 0);
+  if ($("#sessBestStreak")) $("#sessBestStreak").textContent = `Best: ${String(Number(sess.bestStreak) || 0)}`;
+
+  // ---- Mastery (this focus) ----
+  const pool = (state.filtered?.length || 0);
+  const boxCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (let i = 0; i < pool; i++) {
+    const id = getCardId(state.filtered[i], i);
+    const box = getBoxFor(id);
+    boxCounts[box] = (boxCounts[box] || 0) + 1;
+  }
+  const mastered = (boxCounts[4] || 0) + (boxCounts[5] || 0);
+  const masteryPct = pool ? Math.round((mastered / pool) * 100) : 0;
+
+  if ($("#masteryText")) $("#masteryText").textContent = `Mastered: ${mastered} / ${pool}`;
+  const mb = $("#masteryBar");
+  if (mb) mb.style.width = `${masteryPct}%`;
+  if ($("#masteryBoxes")) $("#masteryBoxes").textContent = `Box 1: ${boxCounts[1] || 0}`;
+
+  // ---- More info: by outcome (session) ----
+  const ulOutcome = $("#byOutcome");
+  if (ulOutcome) {
+    ulOutcome.innerHTML = "";
+    const entries = Object.entries(sess.byOutcome || {});
+    // stable order preferred (SM/AM/NM/NONE), then others.
+    const order = ["SM", "AM", "NM", "NONE"];
+    entries.sort((a, b) => {
+      const ak = String(a[0]).toUpperCase();
+      const bk = String(b[0]).toUpperCase();
+      const ai = order.indexOf(ak);
+      const bi = order.indexOf(bk);
+      if (ai !== -1 || bi !== -1) {
+        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+      }
+      return ak.localeCompare(bk);
+    });
+
+    for (const [k, v] of entries) {
+      const tot = Number(v?.done) || 0;
+      const ok = Number(v?.correct) || 0;
+      const li = document.createElement("li");
+      li.className = "flex justify-between";
+      li.innerHTML = `<span>${esc(String(k).toUpperCase())}</span><span class="text-slate-600">${ok}/${tot}</span>`;
+      ulOutcome.appendChild(li);
+    }
+  }
+
+  // ---- More info: by category (session) ----
+  const ulCat = $("#sessByCategory");
+  if (ulCat) {
+    ulCat.innerHTML = "";
+    const catEntries = Object.entries(sess.byCategory || {})
+      .map(([k, v]) => ({
+        k: String(k || "Uncategorised"),
+        done: Number(v?.done) || 0,
+        correct: Number(v?.correct) || 0
+      }))
+      .filter(x => x.done > 0)
+      .sort((a, b) => b.done - a.done);
+
+    const MAX = 6;
+    let shown = catEntries.slice(0, MAX);
+    const rest = catEntries.slice(MAX);
+    for (const it of shown) {
+      const li = document.createElement("li");
+      li.className = "flex justify-between";
+      li.innerHTML = `<span>${esc(it.k)}</span><span class="text-slate-600">${it.correct}/${it.done}</span>`;
+      ulCat.appendChild(li);
+    }
+    if (rest.length) {
+      const otherDone = rest.reduce((a, x) => a + x.done, 0);
+      const otherCorrect = rest.reduce((a, x) => a + x.correct, 0);
+      const li = document.createElement("li");
+      li.className = "flex justify-between";
+      li.innerHTML = `<span>${esc("Other")}</span><span class="text-slate-600">${otherCorrect}/${otherDone}</span>`;
+      ulCat.appendChild(li);
+    }
+  }
+}
+
+function renderLifetimeStatsView() {
+  // Stats page should show lifetime accuracy based on history.
+  const s = computeStats();
   if ($("#statsAcc")) $("#statsAcc").textContent = `${s.acc}%`;
   if ($("#statsText")) $("#statsText").textContent = `${s.correct} correct out of ${s.total}`;
 
-  const ul1 = $("#byOutcome");
-  const ul2 = $("#statsByOutcome");
-  if (ul1) ul1.innerHTML = "";
-  if (ul2) ul2.innerHTML = "";
-
+  const ul = $("#statsByOutcome");
+  if (ul) ul.innerHTML = "";
   for (const [k, v] of Object.entries(s.by)) {
-    const li1 = document.createElement("li");
-    li1.className = "flex justify-between";
-    li1.innerHTML = `<span>${esc(k)}</span><span class="text-slate-600">${v.ok}/${v.total}</span>`;
-    ul1?.appendChild(li1);
-
-    const li2 = document.createElement("li");
-    li2.className = "flex justify-between";
-    li2.innerHTML = `<span>${esc(k)}</span><span class="text-slate-600">${v.ok}/${v.total}</span>`;
-    ul2?.appendChild(li2);
+    const li = document.createElement("li");
+    li.className = "flex justify-between";
+    li.innerHTML = `<span>${esc(k)}</span><span class="text-slate-600">${v.ok}/${v.total}</span>`;
+    ul?.appendChild(li);
   }
 }
 
@@ -1132,7 +1338,12 @@ function render() {
 
   renderPractice();
   if (state.mode === "browse") renderBrowse();
-  renderStatsPanels();
+
+  // Always update the session sidebar (it exists on the practice page).
+  renderSessionPanel();
+
+  // Only update the lifetime stats view when visible.
+  if (state.mode === "stats") renderLifetimeStatsView();
 }
 
 function nextCard(offset = 1) {
@@ -1144,6 +1355,7 @@ function nextCard(offset = 1) {
     state.smartCount = (state.smartCount || 0) + 1;
     state.guess = "";
     state.revealed = false;
+    state.usedRevealThisCard = false;
     state.lastResult = null;
     render();
     return;
@@ -1169,6 +1381,7 @@ function nextCard(offset = 1) {
   state.p = (state.p + offset + state.deck.length) % state.deck.length;
   state.guess = "";
   state.revealed = false;
+  state.usedRevealThisCard = false;
   state.lastResult = null;
   render();
 }
@@ -1179,8 +1392,46 @@ function wireUi() {
 
   $("#onboardDismiss")?.addEventListener("click", () => $("#onboard")?.classList.add("hidden"));
 
-  $("#btnResetStats")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
-  $("#btnResetStats2")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
+  // Session panel buttons
+  $("#btnNewSession")?.addEventListener("click", () => {
+    resetSession();
+    render();
+  });
+
+  $("#btnResetStreak")?.addEventListener("click", () => {
+    resetStreak(state.session);
+    render();
+  });
+
+  // Device reset (clears device-local progress and stats)
+  const confirmClearDevice = () => {
+    const msg = (state.lang === "cy")
+      ? "Bydd hyn yn clirio eich cynnydd a’ch ystadegau sydd wedi’u cadw ar y ddyfais hon (hanes, blychau Leitner, a’r sesiwn bresennol). Ni ellir dadwneud hyn. Parhau?"
+      : "This will clear your progress and stats saved on this device (history, Leitner boxes, and the current session). This cannot be undone. Continue?";
+    return window.confirm(msg);
+  };
+
+  const clearDeviceStats = () => {
+    try { localStorage.removeItem("wm_hist"); } catch (e) {}
+    try { localStorage.removeItem(LEITNER_LS_KEY); } catch (e) {}
+    try { localStorage.removeItem(SESSION_LS_KEY); } catch (e) {}
+
+    state.history = [];
+    state.leitner = {};
+    state.session = resetSession(); // creates a fresh session and persists it
+    state.usedRevealThisCard = false;
+    render();
+  };
+
+  $("#btnResetStats")?.addEventListener("click", () => {
+    if (!confirmClearDevice()) return;
+    clearDeviceStats();
+  });
+  $("#btnResetStats2")?.addEventListener("click", () => {
+    if (!confirmClearDevice()) return;
+    clearDeviceStats();
+  });
+
 
   $("#btnTop")?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
@@ -1268,4 +1519,5 @@ function wireUi() {
   syncLangFromNavbar();
 
 })();
+
 
