@@ -275,6 +275,88 @@ body{
   box-shadow: 0 10px 22px rgba(2,6,23,0.08);
 }
 
+/* ---------- Link-style button ---------- */
+.btn-link{
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+  color: var(--emerald-ink);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.btn-link:hover{
+  color: #0b7a5a;
+  text-decoration-thickness: 2px;
+  transform: none;
+  box-shadow: none;
+}
+.btn-link:focus-visible{
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* ---------- Issue report modal ---------- */
+.wm-modal{
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.wm-modal.hidden{ display:none; }
+
+.wm-modal-overlay{
+  position: absolute;
+  inset: 0;
+  background: rgba(2,6,23,0.45);
+  backdrop-filter: blur(2px);
+}
+
+.wm-modal-card{
+  position: relative;
+  width: min(720px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+
+.wm-modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+}
+
+.wm-modal-title{
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.wm-issue-preview{
+  width: 100%;
+  border: 1px solid var(--border);
+  background: rgba(248,250,252,0.92);
+  border-radius: 14px;
+  padding: 12px;
+  resize: vertical;
+  min-height: 150px;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.wm-modal-actions a{ text-decoration: none; }
+
+.wm-copy-status{ min-height: 16px; }
+
+@media (max-width: 480px){
+  .wm-modal-card{ padding: 16px !important; }
+}
+
 /* ---------- Language toggle (fix pill-in-pill) ---------- */
 .btn-lang{
   display:inline-flex;
