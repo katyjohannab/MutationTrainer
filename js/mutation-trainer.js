@@ -29,6 +29,14 @@ function getParam(k) { return new URLSearchParams(location.search).get(k); }
 function saveLS(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 function loadLS(k, d) { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
 
+function formatTpl(tpl, vars) {
+  const s = (tpl == null ? "" : String(tpl));
+  return s.replace(/\{(\w+)\}/g, (_, k) => {
+    const v = vars?.[k];
+    return (v == null) ? "" : String(v);
+  });
+}
+
 /* Robust language getter (matches navbar.js behaviour) */
 function wmGetLangLocal() {
   const raw = localStorage.getItem("wm_lang");
@@ -318,6 +326,25 @@ const LABEL = {
     onboardDismiss:"Got it",
     resetStats:"Clear device stats",
     backToTop:"Back to top",
+
+    // Session panel (practice sidebar)
+    sessionTitle:"This session",
+    sessionNew:"New",
+    sessionAccuracy:"Accuracy",
+    sessionStreak:"Streak",
+    sessionResetStreak:"Reset streak",
+    sessionBestFmt:"Best: {n}",
+    sessionCard:"Card",
+    sessionUseNewHint:"Use New to start a fresh run.",
+    sessionMasteryFocus:"Mastery (this focus)",
+    sessionMasteredFmt:"Mastered: {mastered} / {pool}",
+    sessionBox1Fmt:"Box 1: {n}",
+    sessionMoreInfo:"More info",
+    sessionByOutcome:"By outcome",
+    sessionLegendHtml:"Legend: <b>SM</b>=Soft, <b>AM</b>=Aspirate, <b>NM</b>=Nasal, <b>NONE</b>=No mutation",
+    sessionByCategory:"By category",
+    sessionOther:"Other",
+    sessionCorrectFmt:"{correct} / {done} correct",
   },
   cy: {
     headings: { focus:"Ffocws", rulefamily:"Math Treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)" },
@@ -348,6 +375,25 @@ const LABEL = {
     onboardDismiss:"Iawn",
     resetStats:"Clirio ystadegau'r ddyfais",
     backToTop:"Yn ôl i’r brig",
+
+    // Panel sesiwn (bar ochr ymarfer)
+    sessionTitle:"Y sesiwn hon",
+    sessionNew:"Newydd",
+    sessionAccuracy:"Cywirdeb",
+    sessionStreak:"Rhediad",
+    sessionResetStreak:"Ailosod y rhediad",
+    sessionBestFmt:"Gorau: {n}",
+    sessionCard:"Cerdyn",
+    sessionUseNewHint:"Defnyddiwch Newydd i ddechrau rhediad newydd.",
+    sessionMasteryFocus:"Meistrolaeth (y ffocws hwn)",
+    sessionMasteredFmt:"Wedi meistroli: {mastered} / {pool}",
+    sessionBox1Fmt:"Blwch 1: {n}",
+    sessionMoreInfo:"Rhagor o wybodaeth",
+    sessionByOutcome:"Yn ôl canlyniad",
+    sessionLegendHtml:"Allwedd: <b>SM</b>=Meddal, <b>AM</b>=Llaes, <b>NM</b>=Trwynol, <b>NONE</b>=Dim treiglad",
+    sessionByCategory:"Yn ôl categori",
+    sessionOther:"Arall",
+    sessionCorrectFmt:"{correct} / {done} yn gywir",
   }
 };
 
@@ -377,6 +423,72 @@ function applyLanguage() {
   if ($("#btnResetStats")) $("#btnResetStats").textContent = LABEL[lang].resetStats;
   if ($("#btnResetStats2")) $("#btnResetStats2").textContent = LABEL[lang].resetStats;
   if ($("#btnTop")) $("#btnTop").textContent = LABEL[lang].backToTop;
+
+  // ---- Session panel static labels (practice sidebar) ----
+  const sp = $("#sessionPanel");
+  if (sp) {
+    // Header title
+    const headerRow = sp.querySelector(":scope > div.flex.items-center.justify-between");
+    const titleEl = headerRow?.querySelector(":scope > div.text-sm.font-medium");
+    if (titleEl) titleEl.textContent = LABEL[lang].sessionTitle;
+
+    // Header buttons
+    if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].sessionNew;
+
+    const rs = $("#btnResetStreak");
+    if (rs) {
+      rs.title = LABEL[lang].sessionResetStreak;
+      rs.setAttribute("aria-label", LABEL[lang].sessionResetStreak);
+    }
+
+    // Tile headings
+    const accBig = $("#accBig");
+    if (accBig) {
+      const tile = accBig.closest("div.p-3") || accBig.parentElement;
+      const h = tile?.querySelector(":scope > div");
+      if (h) h.textContent = LABEL[lang].sessionAccuracy;
+    }
+
+    if (rs) {
+      const h = rs.parentElement?.querySelector(":scope > div");
+      if (h) h.textContent = LABEL[lang].sessionStreak;
+    }
+
+    const cardPos = $("#cardPos");
+    if (cardPos) {
+      const tile = cardPos.closest("div.p-3") || cardPos.parentElement;
+      const h = tile?.querySelector(":scope > div");
+      if (h) h.textContent = LABEL[lang].sessionCard;
+      const hint = tile?.querySelector(":scope > div.text-xs");
+      if (hint) hint.textContent = LABEL[lang].sessionUseNewHint;
+    }
+
+    // Mastery label
+    const masteryText = $("#masteryText");
+    if (masteryText) {
+      const row = masteryText.parentElement;
+      const h = row?.querySelector(":scope > div");
+      if (h) h.textContent = LABEL[lang].sessionMasteryFocus;
+    }
+
+    // Details labels
+    const sum = sp.querySelector("details > summary");
+    if (sum) sum.textContent = LABEL[lang].sessionMoreInfo;
+
+    const byOutcome = $("#byOutcome");
+    if (byOutcome) {
+      const h = byOutcome.previousElementSibling;
+      if (h) h.textContent = LABEL[lang].sessionByOutcome;
+      const legend = byOutcome.nextElementSibling;
+      if (legend) legend.innerHTML = LABEL[lang].sessionLegendHtml;
+    }
+
+    const byCat = $("#sessByCategory");
+    if (byCat) {
+      const h = byCat.previousElementSibling;
+      if (h) h.textContent = LABEL[lang].sessionByCategory;
+    }
+  }
 
   buildFilters();
   render();
@@ -1226,17 +1338,36 @@ function renderSessionPanel() {
   // It should show *session* stats (device-local), not lifetime.
   const sess = state.session || loadSession();
 
+  const lang = (state.lang === "cy" ? "cy" : "en");
+  const L = LABEL[lang];
+
   const done = Number(sess.done) || 0;
   const correct = Number(sess.correct) || 0;
   const acc = done ? Math.round((correct / done) * 100) : 0;
 
   // Accuracy tile
   if ($("#accBig")) $("#accBig").textContent = `${acc}%`;
-  if ($("#accText")) $("#accText").textContent = `${correct} / ${done} correct`;
+  if ($("#accText")) $("#accText").textContent = formatTpl(L.sessionCorrectFmt, { correct, done });
 
   // Streak tile
-  if ($("#sessStreak")) $("#sessStreak").textContent = String(Number(sess.streak) || 0);
-  if ($("#sessBestStreak")) $("#sessBestStreak").textContent = `Best: ${String(Number(sess.bestStreak) || 0)}`;
+  const currentStreak = Number(sess.streak) || 0;
+  const prevStreak = (typeof state._lastRenderedSessStreak === "number") ? state._lastRenderedSessStreak : null;
+  if ($("#sessStreak")) $("#sessStreak").textContent = String(currentStreak);
+  if ($("#sessBestStreak")) $("#sessBestStreak").textContent = formatTpl(L.sessionBestFmt, { n: Number(sess.bestStreak) || 0 });
+
+  // Tiny “pop” when streak increases
+  if (prevStreak != null && currentStreak > prevStreak) {
+    const span = $("#sessStreak");
+    const tile = span?.closest?.("div.p-3") || span?.closest?.("div.rounded-2xl");
+    if (tile) {
+      tile.classList.remove("animate-pop");
+      // force reflow so the animation restarts
+      void tile.offsetWidth;
+      tile.classList.add("animate-pop");
+      setTimeout(() => tile.classList.remove("animate-pop"), 200);
+    }
+  }
+  state._lastRenderedSessStreak = currentStreak;
 
   // ---- Mastery (this focus) ----
   const pool = (state.filtered?.length || 0);
@@ -1249,10 +1380,10 @@ function renderSessionPanel() {
   const mastered = (boxCounts[4] || 0) + (boxCounts[5] || 0);
   const masteryPct = pool ? Math.round((mastered / pool) * 100) : 0;
 
-  if ($("#masteryText")) $("#masteryText").textContent = `Mastered: ${mastered} / ${pool}`;
+  if ($("#masteryText")) $("#masteryText").textContent = formatTpl(L.sessionMasteredFmt, { mastered, pool });
   const mb = $("#masteryBar");
   if (mb) mb.style.width = `${masteryPct}%`;
-  if ($("#masteryBoxes")) $("#masteryBoxes").textContent = `Box 1: ${boxCounts[1] || 0}`;
+  if ($("#masteryBoxes")) $("#masteryBoxes").textContent = formatTpl(L.sessionBox1Fmt, { n: boxCounts[1] || 0 });
 
   // ---- More info: by outcome (session) ----
   const ulOutcome = $("#byOutcome");
@@ -1301,7 +1432,7 @@ function renderSessionPanel() {
     for (const it of shown) {
       const li = document.createElement("li");
       li.className = "flex justify-between";
-      li.innerHTML = `<span>${esc(it.k)}</span><span class="text-slate-600">${it.correct}/${it.done}</span>`;
+      li.innerHTML = `<span>${esc(label("categories", it.k))}</span><span class="text-slate-600">${it.correct}/${it.done}</span>`;
       ulCat.appendChild(li);
     }
     if (rest.length) {
@@ -1309,7 +1440,7 @@ function renderSessionPanel() {
       const otherCorrect = rest.reduce((a, x) => a + x.correct, 0);
       const li = document.createElement("li");
       li.className = "flex justify-between";
-      li.innerHTML = `<span>${esc("Other")}</span><span class="text-slate-600">${otherCorrect}/${otherDone}</span>`;
+      li.innerHTML = `<span>${esc(L.sessionOther)}</span><span class="text-slate-600">${otherCorrect}/${otherDone}</span>`;
       ulCat.appendChild(li);
     }
   }
@@ -1519,5 +1650,6 @@ function wireUi() {
   syncLangFromNavbar();
 
 })();
+
 
 
