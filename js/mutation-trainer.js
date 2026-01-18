@@ -57,40 +57,6 @@ const PRACTICE_MODE_LS_KEY = "wm_practice_mode_v1";
 const SESSION_LS_KEY = "wm_session_v1";
 const SESSION_POINTS_PER_CORRECT = 10;
 
-/* ========= Issue reporting (no backend) ========= */
-const ISSUE_REPORT_EMAIL = "katyjohannabenson@gmail.com";
-// Optional: set a Google Form URL to collect tutor feedback.
-// Leave blank to hide the "Open form" button.
-const ISSUE_REPORT_FORM_URL = "";
-
-async function copyTextToClipboard(text) {
-  try {
-    // Prefer the Clipboard API when available.
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch (e) {}
-
-  // Fallback: temporary textarea + execCommand.
-  try {
-    const ta = document.createElement("textarea");
-    ta.value = String(text || "");
-    ta.setAttribute("readonly", "");
-    ta.style.position = "fixed";
-    ta.style.left = "-9999px";
-    ta.style.top = "0";
-    document.body.appendChild(ta);
-    ta.select();
-    ta.setSelectionRange(0, ta.value.length);
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta);
-    return !!ok;
-  } catch (e) {
-    return false;
-  }
-}
-
 function bumpSessionBucket(bucket, key, ok) {
   if (!bucket || typeof bucket !== "object") return;
   const k = (key == null ? "" : String(key)).trim() || "Unknown";
@@ -179,136 +145,6 @@ function getCardId(card, idxFallback) {
   const raw = (card && (card.CardId ?? card.CardID ?? card.ID ?? card.Id ?? card.id));
   const s = (raw == null ? "" : String(raw)).trim();
   return s ? s : `row_${idxFallback}`;
-}
-
-function isIssueModalOpen() {
-  const m = $("#issueModal");
-  return !!(m && !m.classList.contains("hidden"));
-}
-
-function getShownCardContextForIssue() {
-  const n = state.filtered?.length || 0;
-  if (!n) return null;
-
-  const idxNow = (state.currentIdx == null) ? 0 : state.currentIdx;
-  const idxShown = (state.revealed && state.freezeIdx != null) ? state.freezeIdx : idxNow;
-  const safeIdxShown = (idxShown >= 0 && idxShown < n) ? idxShown : 0;
-
-  const card = state.filtered[safeIdxShown];
-  const cardId = getCardId(card, safeIdxShown);
-  return { idxNow, idxShown: safeIdxShown, card, cardId };
-}
-
-function buildIssueReportText() {
-  const ctx = getShownCardContextForIssue();
-  const lang = state.lang || "en";
-  const t = LABEL[lang] || LABEL.en;
-
-  if (!ctx) {
-    return (lang === "cy")
-      ? "Dim cerdiau i’w hadrodd (nid oes dim yn cyfateb i’r hidlwyr ar hyn o bryd)."
-      : "No cards to report (nothing matches the current filters).";
-  }
-
-  const c = ctx.card || {};
-  const typed = (($("#answerBox")?.value ?? state.guess) || "").trim();
-
-  const lines = [];
-  lines.push("=== Mutation Trainer issue report ===");
-  lines.push(`Time: ${new Date().toISOString()}`);
-  lines.push(`URL: ${location.href}`);
-  lines.push(`UI language: ${lang}`);
-  lines.push("");
-
-  lines.push(`CardId: ${ctx.cardId}`);
-  lines.push(`RuleFamily: ${c.RuleFamily || ""}`);
-  lines.push(`RuleCategory: ${c.RuleCategory || ""}`);
-  lines.push(`Trigger: ${c.Trigger || ""}`);
-  lines.push(`Outcome: ${c.Outcome || ""}`);
-  lines.push("");
-
-  lines.push(`Before: ${c.Before || ""}`);
-  lines.push(`Answer: ${c.Answer || ""}`);
-  lines.push(`After: ${c.After || ""}`);
-  if (c.Translate) lines.push(`Meaning: ${c.Translate}`);
-  lines.push("");
-
-  lines.push(`WhyEN: ${c.Why || ""}`);
-  lines.push(`WhyCY: ${c.WhyCym || ""}`);
-  lines.push("");
-
-  lines.push(`${t.youTyped || "You typed"}: ${typed || (t.blank || "(blank)")}`);
-  lines.push(`Reveal used: ${state.usedRevealThisCard ? "yes" : "no"}`);
-  lines.push(`Last result: ${state.lastResult || "unanswered"}`);
-  lines.push("");
-
-  lines.push(`Practice mode: ${state.practiceMode || "shuffle"}`);
-  lines.push("Filters:");
-  lines.push(`- families: ${(state.families || []).join(",") || "(all)"}`);
-  lines.push(`- outcomes: ${(state.outcomes || []).join(",") || "(all)"}`);
-  lines.push(`- categories: ${(state.categories || []).join(",") || "(all)"}`);
-  lines.push(`- triggerQuery: ${(state.triggerQuery || "").trim() || "(none)"}`);
-  lines.push(`- nilOnly: ${state.nilOnly ? "true" : "false"}`);
-
-  return lines.join("\n");
-}
-
-function closeIssueModal() {
-  const m = $("#issueModal");
-  if (!m) return;
-  m.classList.add("hidden");
-  const st = $("#issueCopyStatus");
-  if (st) st.textContent = "";
-}
-
-function openIssueModal() {
-  const m = $("#issueModal");
-  if (!m) return;
-
-  const report = buildIssueReportText();
-  const ta = $("#issuePreview");
-  if (ta) ta.value = report;
-  const st = $("#issueCopyStatus");
-  if (st) st.textContent = "";
-
-  const lang = state.lang || "en";
-  const t = LABEL[lang] || LABEL.en;
-
-  // Email link
-  const subj = (lang === "cy") ? "Adroddiad problem: Hyffordwr Treiglad" : "Mutation Trainer issue report";
-  const body = (lang === "cy")
-    ? `Helo Katy,\n\nDw i wedi gweld problem bosibl. Dyma’r adroddiad:\n\n${report}\n\nDiolch!`
-    : `Hi Katy,\n\nI spotted a possible issue. Here is the report:\n\n${report}\n\nThanks!`;
-  const mailto = `mailto:${ISSUE_REPORT_EMAIL}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
-  const aEmail = $("#btnIssueEmail");
-  if (aEmail) {
-    aEmail.href = mailto;
-    aEmail.classList.remove("hidden");
-  }
-
-  // Optional form link
-  const aForm = $("#btnIssueForm");
-  if (aForm) {
-    if (ISSUE_REPORT_FORM_URL && ISSUE_REPORT_FORM_URL.trim()) {
-      aForm.href = ISSUE_REPORT_FORM_URL.trim();
-      aForm.classList.remove("hidden");
-    } else {
-      aForm.classList.add("hidden");
-    }
-  }
-
-  m.classList.remove("hidden");
-  setTimeout(() => $("#btnIssueCopy")?.focus(), 0);
-}
-
-async function copyIssueReport() {
-  const lang = state.lang || "en";
-  const t = LABEL[lang] || LABEL.en;
-  const text = ($("#issuePreview")?.value || buildIssueReportText());
-  const ok = await copyTextToClipboard(text);
-  const st = $("#issueCopyStatus");
-  if (!st) return;
-  st.textContent = ok ? (t.issueCopied || "Copied.") : (t.issueCopyFailed || "Couldn't copy automatically.");
 }
 function clampBox(n) {
   const x = Number(n);
@@ -510,17 +346,21 @@ const LABEL = {
     sessionOther:"Other",
     sessionCorrectFmt:"{correct} / {done} correct",
 
-    // Issue reporting
-    issueBtn:"Spotted a mistake?",
-    issueTitle:"Report an issue",
-    issueIntro:"I'm a learner too, so mistakes happen. If something looks wrong, please send the report below.",
-    issueCopy:"Copy report",
-    issueEmail:"Email me",
-    issueForm:"Open form",
-    issuePreviewLabel:"Report details",
-    issueCopied:"Copied to clipboard.",
-    issueCopyFailed:"Couldn't copy automatically. Select the text and copy it.",
-    issueClose:"Close",
+    // Preset + focus labels
+    startHereTitle: "Start here",
+    presetStarterPreps: "Starter prepositions",
+    presetStarterPrepsDesc: "Core / starter set of common prepositions",
+    presetNumbers: "Numbers 1–10",
+    presetNumbersDesc: "Practice numbers one to ten",
+    presetArticles: "Articles",
+    presetArticlesDesc: "Practice the definite article with common nouns",
+    presetPlaceNames: "Place names",
+    presetPlaceNamesDesc: "Practice mutations after place names",
+    advancedFiltersTitle: "Advanced filters",
+    commonCategoriesTitle: "Categories",
+    advancedCategoriesTitle: "Categories",
+    presetSoftBasics: "Soft basics",
+    presetSoftBasicsDesc: "Soft mutation basics (common structures)",
   },
   cy: {
     headings: { focus:"Ffocws", rulefamily:"Math Treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)" },
@@ -571,17 +411,21 @@ const LABEL = {
     sessionOther:"Arall",
     sessionCorrectFmt:"{correct} / {done} yn gywir",
 
-    // Rhoi gwybod am broblem
-    issueBtn:"Wedi gweld camgymeriad?",
-    issueTitle:"Rhoi gwybod am broblem",
-    issueIntro:"Dw i’n ddysgwr hefyd, felly mae camgymeriadau’n digwydd. Os yw rhywbeth yn edrych yn anghywir, anfonwch yr adroddiad isod.",
-    issueCopy:"Copïo’r adroddiad",
-    issueEmail:"E-bostio fi",
-    issueForm:"Agor ffurflen",
-    issuePreviewLabel:"Manylion yr adroddiad",
-    issueCopied:"Wedi copïo i’r clipfwrdd.",
-    issueCopyFailed:"Methwyd copïo’n awtomatig. Dewiswch y testun a’i gopïo.",
-    issueClose:"Cau",
+    // Preset + focus labels
+    startHereTitle: "Dechreuwch yma",
+    presetStarterPreps: "Arddodiaid cychwynnol",
+    presetStarterPrepsDesc: "Set cychwynnol o arddodiaid cyffredin",
+    presetNumbers: "Rhifau 1–10",
+    presetNumbersDesc: "Ymarfer rhifau un i ddeg",
+    presetArticles: "Erthyglau",
+    presetArticlesDesc: "Ymarfer yr erthygl ddiffiniol gyda enwau cyffredin",
+    presetPlaceNames: "Enwau lleoedd",
+    presetPlaceNamesDesc: "Ymarfer treigladau ar ôl enwau lleoedd",
+    advancedFiltersTitle: "Hidlau uwch",
+    commonCategoriesTitle: "Categorïau",
+    advancedCategoriesTitle: "Categorïau",
+    presetSoftBasics: "Meddal sylfaenol",
+    presetSoftBasicsDesc: "Elfennau sylfaenol treiglad meddal (strwythurau cyffredin)",
   }
 };
 
@@ -678,33 +522,19 @@ function applyLanguage() {
     }
   }
 
-  // ---- Issue report UI ----
-  const reportBtn = $("#btnReportIssue");
-  if (reportBtn) reportBtn.textContent = LABEL[lang].issueBtn;
-
-  const issueTitle = $("#issueTitle");
-  if (issueTitle) issueTitle.textContent = LABEL[lang].issueTitle;
-
-  const issueIntro = $("#issueIntro");
-  if (issueIntro) issueIntro.textContent = LABEL[lang].issueIntro;
-
-  const issuePreviewLabel = $("#issuePreviewLabel");
-  if (issuePreviewLabel) issuePreviewLabel.textContent = LABEL[lang].issuePreviewLabel;
-
-  const issueCopyBtn = $("#btnIssueCopy");
-  if (issueCopyBtn) issueCopyBtn.textContent = LABEL[lang].issueCopy;
-
-  const issueEmailBtn = $("#btnIssueEmail");
-  if (issueEmailBtn) issueEmailBtn.textContent = LABEL[lang].issueEmail;
-
-  const issueFormBtn = $("#btnIssueForm");
-  if (issueFormBtn) issueFormBtn.textContent = LABEL[lang].issueForm;
-
-  const issueCloseBtn = $("#btnIssueClose");
-  if (issueCloseBtn) {
-    issueCloseBtn.title = LABEL[lang].issueClose;
-    issueCloseBtn.setAttribute("aria-label", LABEL[lang].issueClose);
-  }
+  // ----- Phase 1: Presets & Focus translation -----
+  // Presets section labels (Start here)
+  const presetsTitle = $("#presetsTitle");
+  if (presetsTitle) presetsTitle.textContent = LABEL[lang].startHereTitle || "Start here";
+  // Advanced filters summary text
+  const advToggle = $("#advToggle");
+  if (advToggle) advToggle.textContent = LABEL[lang].advancedFiltersTitle || "Advanced filters";
+  // Basic categories heading
+  const basicCatTitle = $("#basicCategoriesTitle");
+  if (basicCatTitle) basicCatTitle.textContent = LABEL[lang].commonCategoriesTitle || LABEL[lang].headings.categories;
+  // Advanced categories heading
+  const advCatTitle = $("#advCategoriesTitle");
+  if (advCatTitle) advCatTitle.textContent = LABEL[lang].advancedCategoriesTitle || LABEL[lang].headings.categories;
 
   buildFilters();
   render();
@@ -824,6 +654,8 @@ function toggleBtn(text, active, onToggle) {
   return b;
 }
 function buildFilters() {
+  // ---- Phase 1: Build preset buttons ----
+  buildPresetButtons();
   const cats = new Set();
   for (const r of state.rows) if (r.RuleCategory) cats.add(r.RuleCategory);
   const outcomes = ["SM","AM","NM","NONE"];
@@ -863,21 +695,50 @@ function buildFilters() {
     }
   }
 
+  // ----- Phase 1: Categories -----
+  // Basic (common) categories
+  const basicCatEl = $("#basicCatBtns");
+  if (basicCatEl) {
+    basicCatEl.innerHTML = "";
+    const commonCats = COMMON_CATEGORIES && COMMON_CATEGORIES.length ? COMMON_CATEGORIES : Array.from(cats).sort().slice(0, 8);
+    for (const c of commonCats) {
+      const active = (!state.categories.length) || state.categories.includes(c);
+      const cLabel = label("categories", c);
+      const b = toggleBtn(cLabel, active, (on) => {
+        if (on) {
+          state.categories = Array.from(new Set([...state.categories, c]));
+        } else {
+          state.categories = state.categories.filter(x => x !== c);
+        }
+        saveLS("wm_categories", state.categories);
+        applyFilters(); rebuildDeck(); buildFilters(); render();
+      });
+      b.dataset.key = c;
+      basicCatEl.appendChild(b);
+    }
+  }
+  // Advanced categories (full list)
   const catEl = $("#catBtns");
   if (catEl) {
     catEl.innerHTML = "";
     const allCatsActive = !state.categories.length;
     const allLabel = label("categories", "All");
-    catEl.appendChild(toggleBtn(allLabel, allCatsActive, () => {
+    const allBtn = toggleBtn(allLabel, allCatsActive, () => {
       state.categories = [];
       saveLS("wm_categories", state.categories);
       applyFilters(); rebuildDeck(); buildFilters(); render();
-    }));
+    });
+    allBtn.dataset.key = "All";
+    catEl.appendChild(allBtn);
     for (const c of Array.from(cats).sort()) {
       const active = state.categories.includes(c);
       const cLabel = label("categories", c);
       const b = toggleBtn(cLabel, active, (on) => {
-        state.categories = on ? Array.from(new Set([...state.categories, c])) : state.categories.filter(x => x !== c);
+        if (on) {
+          state.categories = Array.from(new Set([...state.categories, c]));
+        } else {
+          state.categories = state.categories.filter(x => x !== c);
+        }
         saveLS("wm_categories", state.categories);
         applyFilters(); rebuildDeck(); buildFilters(); render();
       });
@@ -905,6 +766,74 @@ function buildFilters() {
       applyFilters(); rebuildDeck(); buildFilters(); render();
     };
   }
+}
+
+// ----- Phase 1: Common categories constant -----
+// This list defines which categories appear in the basic focus section.
+const COMMON_CATEGORIES = [
+  "Preposition",
+  "Article",
+  "Bod+yn",
+  "Numerals",
+  "Possessive",
+  "Adjective+Noun",
+  "PlaceName",
+  "Negation"
+];
+
+// ----- Phase 1: Preset handling -----
+function buildPresetButtons() {
+  const container = $("#presetBtns");
+  if (!container) return;
+  container.innerHTML = "";
+  // Define presets with keys and translation keys
+  const presets = [
+    { id: "starter-preps", titleKey: "presetStarterPreps", descKey: "presetStarterPrepsDesc" },
+    { id: "numbers-1-10", titleKey: "presetNumbers", descKey: "presetNumbersDesc" },
+    { id: "articles", titleKey: "presetArticles", descKey: "presetArticlesDesc" },
+    { id: "place-names", titleKey: "presetPlaceNames", descKey: "presetPlaceNamesDesc" },
+  ];
+  for (const p of presets) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "preset-card";
+    btn.dataset.preset = p.id;
+    const title = LABEL[state.lang || "en"]?.[p.titleKey] || p.id;
+    const desc = LABEL[state.lang || "en"]?.[p.descKey] || "";
+    btn.innerHTML = `<div class="preset-title">${esc(title)}</div><div class="preset-desc">${esc(desc)}</div>`;
+    btn.addEventListener("click", () => {
+      applyPreset(p.id);
+    });
+    container.appendChild(btn);
+  }
+}
+
+function applyPreset(name) {
+  // Reset filters first to defaults
+  state.categories = [];
+  state.families = ["Soft", "Aspirate", "Nasal", "None"];
+  state.outcomes = ["SM", "AM", "NM", "NONE"];
+  state.triggerQuery = "";
+  state.nilOnly = false;
+  if (name === "starter-preps") {
+    state.categories = ["Preposition"];
+  } else if (name === "numbers-1-10") {
+    state.categories = ["Numerals"];
+  } else if (name === "articles") {
+    state.categories = ["Article"];
+  } else if (name === "place-names") {
+    state.categories = ["PlaceName"];
+  }
+  // Persist to localStorage
+  saveLS("wm_families", state.families);
+  saveLS("wm_categories", state.categories);
+  saveLS("wm_outcomes", state.outcomes);
+  saveLS("wm_trig", state.triggerQuery);
+  saveLS("wm_nil", state.nilOnly);
+  applyFilters();
+  rebuildDeck();
+  buildFilters();
+  render();
 }
 function applyFilters() {
   const allowedOutcomes = (state.outcomes && state.outcomes.length) ? state.outcomes : ["SM","AM","NM","NONE"];
@@ -1779,28 +1708,10 @@ function wireUi() {
     clearDeviceStats();
   });
 
-  // Issue report modal
-  $("#btnReportIssue")?.addEventListener("click", () => openIssueModal());
-  $("#btnIssueClose")?.addEventListener("click", () => closeIssueModal());
-  $("#btnIssueCopy")?.addEventListener("click", () => copyIssueReport());
-  $("#issueModal")?.addEventListener("click", (e) => {
-    if (e.target && e.target.dataset && e.target.dataset.issueClose === "1") closeIssueModal();
-  });
-
 
   $("#btnTop")?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
   document.addEventListener("keydown", (e) => {
-    // Close issue modal with Esc (even if focus is in an input/textarea)
-    if (e.key === "Escape" && isIssueModalOpen()) {
-      e.preventDefault();
-      closeIssueModal();
-      return;
-    }
-
-    // While the modal is open, ignore practice hotkeys
-    if (isIssueModalOpen()) return;
-
     const tag = (e.target && e.target.tagName) || "";
     if (["INPUT", "TEXTAREA"].includes(tag.toUpperCase())) return;
     if (state.mode !== "practice") return;
@@ -1884,4 +1795,7 @@ function wireUi() {
   syncLangFromNavbar();
 
 })();
+
+
+
 
