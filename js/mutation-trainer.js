@@ -386,6 +386,7 @@ const PRESET_DEFS = {
     descKey: "starterPrepsDesc",
     category: "Preposition",
     triggers: ["am","ar","at","gan","i","o","trwy","drwy","tan","dros","tros","heb","hyd","wrth"],
+    sourceScope: ["data/prep.csv"],
   },
   "numbers-1-10": {
     id: "numbers-1-10",
@@ -475,6 +476,8 @@ function applyPreset(presetId, { fromUrl = false } = {}) {
 
   state.categories = [p.category];
   saveLS("wm_categories", state.categories);
+  state.sourceScope = Array.isArray(p.sourceScope) ? [...p.sourceScope] : [];
+  saveLS("wm_source_scope", state.sourceScope);
 
   // Families: default to all unless preset forces a specific family.
   if (p.forceFamily) state.families = [p.forceFamily];
