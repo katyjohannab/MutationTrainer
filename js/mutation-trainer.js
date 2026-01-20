@@ -1,12 +1,3 @@
-/* =========================================================
-   Welsh Mutation Trainer — mutation-trainer.js (clean rebuild)
-   Implements:
-   - Robust presets (Phase 2)
-   - Common vs All categories (Phase 3)
-   - Pack scoping (starter-preps uses data/prep.csv only)
-   - i18n for all new UI
-   - Avoids rebuilding filter DOM on every click (prevents layout break)
-   ========================================================= */
 
 /* ========= Utilities ========= */
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -23,28 +14,28 @@ function normalize(s) {
     .replace(/\s+/g, " ");
 }
 
+// Canonicalise Trigger values for reliable matching (presets + URL params).
+// - lowercases, trims, normalises apostrophes
+// - removes bracketed glosses: "i (to)" -> "i"; "y [the]" -> "y"
+function canonicalTrigger(s) {
+  let x = (s == null ? "" : String(s));
+  // Normalise apostrophes early
+  x = x.replace(/’/g, "'");
+  // Remove bracketed glosses anywhere in the string
+  x = x.replace(/\([^)]*\)/g, " ");
+  x = x.replace(/\[[^\]]*\]/g, " ");
+  // Collapse whitespace + normalise case/diacritics
+  x = normalize(x);
+  // If someone used multiple tokens (e.g. "o (from)"), keep the first meaningful token
+  // but only if there are still multiple words after gloss removal.
+  if (x.includes(" ")) x = x.split(" ")[0].trim();
+  return x;
+}
 function esc(s) {
   return (s == null ? "" : String(s)).replace(/[&<>"]/g, ch => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"
   }[ch]));
 }
-
-function getParam(k) {
-  return new URLSearchParams(location.search).get(k);
-}
-
-function saveLS(k, v) {
-  try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {}
-}
-function loadLS(k, d) {
-  try {
-    const r = localStorage.getItem(k);
-    return r ? JSON.parse(r) : d;
-  } catch (e) {
-    return d;
-  }
-}
-
 function download(text, filename, type = "text/plain") {
   const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
@@ -52,6 +43,9 @@ function download(text, filename, type = "text/plain") {
   a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
 }
+function getParam(k) { return new URLSearchParams(location.search).get(k); }
+function saveLS(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function loadLS(k, d) { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
 
 /* Robust language getter (matches navbar.js behaviour) */
 function wmGetLangLocal() {
@@ -63,20 +57,6 @@ function wmGetLangLocal() {
   } catch {
     return (raw === "cy" || raw === "en") ? raw : "en";
   }
-}
-
-/* ========= Canonical trigger (preset-safe) =========
-   - lowercase, trims, normalises apostrophes
-   - removes bracketed glosses: "i (to)" -> "i"; "y [the]" -> "y"
-*/
-function canonicalTrigger(s) {
-  let x = (s == null ? "" : String(s));
-  x = x.replace(/’/g, "'");           // normalise curly apostrophe
-  x = x.replace(/\([^)]*\)/g, " ");   // remove (...) gloss
-  x = x.replace(/\[[^\]]*\]/g, " ");  // remove [...] gloss
-  x = normalize(x);
-  if (x.includes(" ")) x = x.split(" ")[0].trim();
-  return x;
 }
 
 /* ========= Smart review (Leitner) ========= */
@@ -163,7 +143,6 @@ function pickNextSmartIdx() {
 
 /* ========= Data coercion ========= */
 const PREP = new Set(["am","ar","at","dan","dros","tros","drwy","trwy","gan","heb","hyd","i","o","tan","wrth","yng","yn","gyda","hefo","â"]);
-
 function getVal(row, names) {
   const keys = Object.keys(row || {});
   for (const key of keys) {
@@ -173,7 +152,6 @@ function getVal(row, names) {
   }
   return "";
 }
-
 function familyFromOutcome(outcome) {
   const o = (outcome || "").toUpperCase();
   if (o === "SM") return "Soft";
@@ -182,7 +160,6 @@ function familyFromOutcome(outcome) {
   if (o === "NONE") return "None";
   return "";
 }
-
 function coerceRow(row) {
   const r = row || {};
   const rawOutcome = getVal(r, ["Outcome","Result","Mutation","Mut"]);
@@ -194,14 +171,12 @@ function coerceRow(row) {
   let fam = famRaw;
   if (famRaw.includes(",")) fam = famRaw.split(",")[0].trim();
 
-  const trigCanon = canonicalTrigger(trig);
-
   return {
     CardId: getVal(r, ["CardId","Card ID","ID","Id","id","cardId","card_id"]) || "",
     RuleFamily: fam,
-    RuleCategory: getVal(r, ["RuleCategory","Rule Category","Category"]) || (PREP.has(trigCanon) ? "Preposition" : ""),
+    RuleCategory: getVal(r, ["RuleCategory","Rule Category","Category"]) || (PREP.has((trig || "").toLowerCase()) ? "Preposition" : ""),
     Trigger: trig,
-    TriggerCanon: trigCanon,
+    TriggerCanon: canonicalTrigger(trig),
     Base: getVal(r, ["Base","Radical","Word","Base word","BaseWord"]),
     WordCategory: getVal(r, ["WordCategory","Word Category","POS","Part of speech"]),
     Before: getVal(r, ["Before","PromptBefore","Left","SentenceBefore"]),
@@ -216,107 +191,59 @@ function coerceRow(row) {
 
 /* ========= App State ========= */
 const state = {
-  // Pack/source scoping (presets can lock to specific CSV source files)
-  sourceScope: loadLS("wm_source_scope", []), // e.g. ["data/prep.csv"]
-
+  sourceScope: loadLS("wm_source_scope", []), // restrict cards to specific CSV sources (presets)
   rows: [],
   filtered: [],
-
   families: loadLS("wm_families", ["Soft","Aspirate","Nasal","None"]),
   categories: loadLS("wm_categories", []),
   outcomes: loadLS("wm_outcomes", ["SM","AM","NM","NONE"]),
-
   triggerQuery: loadLS("wm_trig", ""),
-  nilOnly: loadLS("wm_nil", false),
-
-  // Preset layer
+  // Presets are implemented as a thin layer over filters.
   activePreset: loadLS("wm_active_preset", ""),
-  presetTriggers: loadLS("wm_preset_triggers", []), // canonical triggers
-
-  // Category UI
+  presetTriggers: loadLS("wm_preset_triggers", []), // canonical triggers for the active preset
   showAllCategories: loadLS("wm_show_all_cats", false),
-
+  nilOnly: loadLS("wm_nil", false),
   mode: loadLS("wm_mode", "practice"),
   practiceMode: loadLS(PRACTICE_MODE_LS_KEY, "shuffle"),
-
   leitner: loadLS(LEITNER_LS_KEY, {}),
-
   smartIdx: null,
   smartCount: 0,
   smartQueue: [],
-
   deck: [],
   p: 0,
   guess: "",
   revealed: false,
   lastResult: null,
-
   history: loadLS("wm_hist", []),
-
   admin: getParam("admin") === "1",
-
   freezeIdx: null,
   freezePos: null,
-
-  lang: wmGetLangLocal(),
-
+  lang: wmGetLangLocal(),   // IMPORTANT: read same as navbar.js
   currentIdx: 0,
   currentDeckPos: -1,
-
-  // Guard so we don’t rebind events repeatedly
-  _filtersBound: false,
 };
 
 /* ========= UI Translations ========= */
 const LABEL = {
   en: {
-    headings: {
-      focus:"Focus",
-      presets:"Start here",
-      rulefamily:"RuleFamily",
-      outcome:"Outcome",
-      categories:"Categories",
-      trigger:"Filter by Trigger",
-      nilOnly:"Nil-cases only (no mutation expected)"
-    },
+    headings: { focus:"Focus", rulefamily:"RuleFamily", outcome:"Outcome", categories:"Categories", trigger:"Filter by Trigger", nilOnly:"Nil-cases only (no mutation expected)", presets:"Start here" },
     presets: {
       starterPrepsTitle: "Starter prepositions",
-      starterPrepsDesc: "Core / starter set of common prepositions",
+      starterPrepsDesc: "Common contact-mutation prepositions",
       numbersTitle: "Numbers 1–10",
       numbersDesc: "Un, dau, tri ... deg",
       articlesTitle: "Articles",
       articlesDesc: "y / yr / 'r (starter set)",
       placeNamesTitle: "Place names",
       placeNamesDesc: "Early nasal-mutation practice",
-      placeNamesTip: "Place names often take nasal mutation in common patterns."
+      placeNamesTip: "Place names often take nasal mutation in common patterns (e.g. after certain structures)."
     },
-    categoryView: {
-      showAll: "Show all categories",
-      showCommon: "Show common categories"
-    },
+    categoryView: { showAll: "Show all categories", showCommon: "Show common categories" },
     categories: {
-      All:"All",
-      "Adjective+Noun":"Adjective+Noun",
-      Article:"Article",
-      "Bod+yn":"Bod+Yn",
-      Complement:"Complement",
-      Conjunction:"Conjunction",
-      Deictic:"Deictic",
-      Determiner:"Determiner",
-      Idiom:"Idiom",
-      Intensifier:"Intensifier",
-      Interrogative:"Interrogative",
-      Negation:"Negation",
-      Numerals:"Numerals",
-      Particle:"Particle",
-      PlaceName:"PlaceName",
-      Possessive:"Possessive",
-      Preposition:"Preposition",
-      Presentative:"Presentative",
-      Relative:"Relative",
-      SubjectBoundary:"SubjectBoundary",
-      Subordinator:"Subordinator",
-      TimeExpressions:"TimeExpressions"
+      All:"All","Adjective+Noun":"Adjective+Noun",Article:"Article","Bod+yn":"Bod+Yn",Complement:"Complement",Conjunction:"Conjunction",
+      Deictic:"Deictic",Determiner:"Determiner",Intensifier:"Intensifier",Interrogative:"Interrogative",Idiom: "Idiom",Negation:"Negation",Numerals:"Numerals",
+      Particle:"Particle",PlaceName:"PlaceName",Possessive:"Possessive",Preposition:"Preposition",Presentative:"Presentative",Relative:"Relative",
+      SubjectBoundary:"SubjectBoundary",Subordinator:"Subordinator",TimeExpressions:"TimeExpressions"
     },
     rulefamily: { Soft:"Soft", Aspirate:"Aspirate", Nasal:"Nasal", None:"None", SM:"Soft", AM:"Aspirate", NM:"Nasal", NONE:"None" },
     instruction: "Type the correct form. If no change is needed, repeat the base form.",
@@ -339,22 +266,12 @@ const LABEL = {
     onboardDismiss:"Got it",
     resetStats:"Reset stats",
     backToTop:"Back to top",
-    clearFilters:"Clear filters",
-    triggerChip:"Trigger",
   },
   cy: {
-    headings: {
-      focus:"Ffocws",
-      presets:"Dechreuwch yma",
-      rulefamily:"Math Treiglad",
-      outcome:"Canlyniad",
-      categories:"Categorïau",
-      trigger:"Hidlo yn ôl y sbardun",
-      nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)"
-    },
+    headings: { focus:"Ffocws", rulefamily:"Math Treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)", presets:"Dechreuwch yma" },
     presets: {
       starterPrepsTitle: "Arddodiaid sylfaenol",
-      starterPrepsDesc: "Set ddechreuol o arddodiaid cyffredin",
+      starterPrepsDesc: "Arddodiaid cyffredin (treiglad cyswllt)",
       numbersTitle: "Rhifau 1–10",
       numbersDesc: "un, dau, tri ... deg",
       articlesTitle: "Erthyglau",
@@ -363,40 +280,19 @@ const LABEL = {
       placeNamesDesc: "Ymarfer treiglad trwynol cynnar",
       placeNamesTip: "Mae enwau lleoedd yn aml yn cymryd treiglad trwynol mewn patrymau cyffredin."
     },
-    categoryView: {
-      showAll: "Dangos pob categori",
-      showCommon: "Dangos categorïau cyffredin"
-    },
+    categoryView: { showAll: "Dangos pob categori", showCommon: "Dangos categorïau cyffredin" },
     categories: {
-      All:"Pob un",
-      "Adjective+Noun":"Ansoddair+Enw",
-      Article:"Erthygl",
-      "Bod+yn":"Bod+Yn",
-      Complement:"Cyflenwad",
-      Conjunction:"Cysylltair",
-      Deictic:"Deictig",
-      Determiner:"Penderfyniadur",
-      Idiom:"Idiom",
-      Intensifier:"Dwysydd",
-      Interrogative:"Holiadol",
-      Negation:"Negydd",
-      Numerals:"Rhifau",
-      Particle:"Gronyn",
-      PlaceName:"Enw lle",
-      Possessive:"Meddiannol",
-      Preposition:"Arddodiad",
-      Presentative:"Cyflwyniadur",
-      Relative:"Perthynol",
-      SubjectBoundary:"Ar ôl pwnc",
-      Subordinator:"Isgysylltair",
-      TimeExpressions:"Mynegiadau Amser"
+      All:"Pob un","Adjective+Noun":"Ansoddair+Enw",Article:"Erthygl","Bod+yn":"Bod+Yn",Complement:"Cyflenwad",Conjunction:"Cysylltair",
+      Deictic:"Deictig",Determiner:"Penderfyniadur",Idiom:"Idiom",Intensifier:"Dwysydd",Interrogative:"Holiadol",Negation:"Negydd",Numerals:"Rhifau",
+      Particle:"Gronyn",PlaceName:"Enw lle",Possessive:"Meddiannol",Preposition:"Arddodiad",Presentative:"Cyflwyniadur",Relative:"Perthynol",
+      SubjectBoundary:"Ar ôl pwnc",Subordinator:"Isgysylltair",TimeExpressions:"Mynegiadau Amser"
     },
     rulefamily: { Soft:"Meddal", Aspirate:"Llaes", Nasal:"Trwynol", None:"Dim", SM:"Meddal", AM:"Llaes", NM:"Trwynol", NONE:"Dim" },
     instruction: "Teipiwch y ffurf gywir. Os nad oes treiglad, ailysgrifennwch y ffurf wreiddiol.",
     hint:"Awgrym", reveal:"Datgelu", skip:"Hepgor", check:"Gwirio", next:"Nesaf",
     shuffleModeDesc:"Adolygu ar hap: mae cardiau’n ymddangos mewn trefn wirioneddol ar hap.",
     smartModeDesc:"Adolygu clyfar: addasu i’ch cynnydd a phwysleisio camgymeriadau; mae’n ailadrodd cardiau anghywir yn amlach.",
-    shuffleNowDesc:"Ailgymysgu’r dec presennol (os ydych chi’n gweld yr un cardiau dro ar ôl tro).",
+    shuffleNowDesc:"Ailgymysgu’r dec presennol (yn ddefnyddiol os ydych chi’n gweld yr un cardiau dro ar ôl tro).",
     shuffleNow:"Cymysgu cardiau",
     shuffleModeShort:"Ar hap",
     smartModeShort:"Clyfar",
@@ -412,8 +308,6 @@ const LABEL = {
     onboardDismiss:"Iawn",
     resetStats:"Ailosod ystadegau",
     backToTop:"Yn ôl i’r brig",
-    clearFilters:"Clirio hidlau",
-    triggerChip:"Sbardun",
   }
 };
 
@@ -422,7 +316,41 @@ function label(section, key) {
   return (LABEL?.[lang]?.[section]?.[key]) || key;
 }
 
-/* ========= Presets + Category view ========= */
+/* IMPORTANT: This does NOT toggle the navbar. navbar.js owns that.
+   This only updates ynamic UI and labels to match state.lang. */
+function applyLanguage() {
+  const lang = (state.lang === "cy" ? "cy" : "en");
+
+  // keep html lang in sync (navbar.js also sets it, but harmless)
+  document.documentElement.setAttribute("lang", lang);
+
+  if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
+  if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
+  if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
+  if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
+  if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
+  if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
+
+  const dismiss = $("#onboardDismiss");
+  if (dismiss) dismiss.textContent = LABEL[lang].onboardDismiss;
+
+  if ($("#btnResetStats")) $("#btnResetStats").textContent = LABEL[lang].resetStats;
+  if ($("#btnResetStats2")) $("#btnResetStats2").textContent = LABEL[lang].resetStats;
+  if ($("#btnTop")) $("#btnTop").textContent = LABEL[lang].backToTop;
+
+  buildFilters();
+  render();
+}
+
+function syncLangFromNavbar() {
+  const lang = wmGetLangLocal();
+  if (lang !== "en" && lang !== "cy") return;
+  state.lang = lang;
+  applyLanguage(); // this rebuilds your dynamic UI with the right labels
+}
+
+/* ========= Presets + Category view (progressive disclosure) ========= */
+
 const COMMON_CATEGORIES = [
   "Preposition",
   "Article",
@@ -441,8 +369,6 @@ const PRESET_DEFS = {
     descKey: "starterPrepsDesc",
     category: "Preposition",
     triggers: ["am","ar","at","gan","i","o","trwy","drwy","tan","dros","tros","heb","hyd","wrth"],
-    // Pack scoping:
-    sourceScope: ["data/prep.csv"],
   },
   "numbers-1-10": {
     id: "numbers-1-10",
@@ -472,27 +398,9 @@ const PRESET_DEFS = {
 
 const PRESET_ORDER = ["starter-preps","numbers-1-10","articles","place-names"];
 
-function clearPresetLayer({ keepActivePreset = false } = {}) {
-  if (!keepActivePreset) state.activePreset = "";
-  state.presetTriggers = [];
-  state.sourceScope = [];
-  saveLS("wm_active_preset", state.activePreset);
-  saveLS("wm_preset_triggers", state.presetTriggers);
-  saveLS("wm_source_scope", state.sourceScope);
-}
-
-function buildCompleteSentence(card) {
-  const before = (card.Before || "").trimEnd();
-  const answer = (card.Answer || "").trim();
-  const after  = (card.After  || "").trimStart();
-  let s = [before, answer, after].filter(Boolean).join(" ");
-  s = s.replace(/\s+/g, " ").trim();
-  s = s.replace(/\s+([,.;:!?])/g, "$1");
-  return s;
-}
-
-/* Heuristic until you have a Complexity column */
 function isLikelyComplexRow(card) {
+  // Heuristic v1 (until a real Complexity column exists):
+  // exclude very long / multi-clause sentences from starter article practice.
   const s = buildCompleteSentence(card);
   const w = normalize(s).split(" ").filter(Boolean);
   if (w.length > 14) return true;
@@ -506,45 +414,107 @@ function isLikelyComplexRow(card) {
   return false;
 }
 
+
+saveLS("wm_source_scope", state.sourceScope);
+
+  saveLS("wm_preset_triggers", state.presetTriggers);
+}
+
 function applyPreset(presetId, { fromUrl = false } = {}) {
   const p = PRESET_DEFS[presetId];
   if (!p) return;
-
-  // Clear conflicting filters (but keep outcomes broad)
+  
+function applyPreset(presetId, { fromUrl = false } = {}) {
+  // FULL RESET FIRST
   state.triggerQuery = "";
   state.nilOnly = false;
+  state.categories = [];
+  state.families = ["Soft","Aspirate","Nasal","None"];
+  state.outcomes = ["SM","AM","NM","NONE"];
+  saveLS("wm_trig", "");
+  saveLS("wm_nil", false);
 
-  // Core preset selections
-  state.activePreset = presetId;
   state.categories = [p.category];
-  state.presetTriggers = (p.triggers || []).map(canonicalTrigger).filter(Boolean);
+  state.presetTriggers = p.triggers.map(canonicalTrigger);
 
-  // Families default (unless preset forces)
-  state.families = p.forceFamily ? [p.forceFamily] : ["Soft","Aspirate","Nasal","None"];
-
-  // Pack scoping (starter-preps only)
-  state.sourceScope = Array.isArray(p.sourceScope) ? p.sourceScope.slice() : [];
-
-  // Persist
-  saveLS("wm_active_preset", state.activePreset);
-  saveLS("wm_categories", state.categories);
-  saveLS("wm_preset_triggers", state.presetTriggers);
-  saveLS("wm_families", state.families);
+  // Reset/clear potentially conflicting filters.
+  state.triggerQuery = "";
   saveLS("wm_trig", state.triggerQuery);
+  state.nilOnly = false;
   saveLS("wm_nil", state.nilOnly);
-  saveLS("wm_source_scope", state.sourceScope);
+  state.outcomes = ["SM","AM","NM","NONE"]; // keep full outcome set
+  saveLS("wm_outcomes", state.outcomes);
 
-  // UX: keep category view simple by default
+  // Core preset filter targets.
+  state.activePreset = presetId;
+  saveLS("wm_active_preset", state.activePreset);
+
+  state.categories = [p.category];
+  saveLS("wm_categories", state.categories);
+
+  // Families: default to all unless preset forces a specific family.
+  if (p.forceFamily) state.families = [p.forceFamily];
+  else state.families = ["Soft","Aspirate","Nasal","None"];
+  saveLS("wm_families", state.families);
+
+  state.presetTriggers = (p.triggers || []).map(canonicalTrigger).filter(Boolean);
+  saveLS("wm_preset_triggers", state.presetTriggers);
+
+  // UX: start with the simpler category view.
   state.showAllCategories = false;
   saveLS("wm_show_all_cats", state.showAllCategories);
 
   applyFilters();
   rebuildDeck();
-  render();         // IMPORTANT: do not rebuild filter DOM here
-  updatePresetActiveClasses();
+  buildFilters();
+  render();
+
+  // If we applied it from URL params, don't clutter history - but do keep filters.
+  if (fromUrl) {
+    // no-op placeholder (kept for future analytics hooks)
+  }
 }
 
-function updatePresetActiveClasses() {
+function wirePresetUi() {
+  // Supports either: dynamically generated preset tiles in #presetBtns,
+  // OR static HTML buttons with data-preset="...".
+  const container = $("#presetBtns");
+
+  if (container && container.children.length === 0) {
+    container.innerHTML = "";
+    for (const id of PRESET_ORDER) {
+      const p = PRESET_DEFS[id];
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `preset-btn ${state.activePreset === id ? "preset-on" : ""}`;
+      btn.dataset.preset = id;
+
+      const title = document.createElement("div");
+      title.className = "preset-title";
+      title.textContent = LABEL[state.lang].presets[p.titleKey];
+
+      const desc = document.createElement("div");
+      desc.className = "preset-desc";
+      desc.textContent = LABEL[state.lang].presets[p.descKey];
+
+      if (p.tipKey) btn.title = LABEL[state.lang].presets[p.tipKey];
+
+      btn.appendChild(title);
+      btn.appendChild(desc);
+      btn.addEventListener("click", () => applyPreset(id));
+      container.appendChild(btn);
+    }
+  }
+
+  // Static buttons (or the ones we just created)
+  $$("[data-preset]").forEach(el => {
+    if (el.__wmPresetBound) return;
+    el.__wmPresetBound = true;
+    const id = el.getAttribute("data-preset");
+    el.addEventListener("click", () => applyPreset(id));
+  });
+
+  // Keep visual state in sync (works for both dynamic + static preset buttons).
   $$("[data-preset]").forEach(el => {
     const id = el.getAttribute("data-preset");
     if (!id) return;
@@ -552,42 +522,21 @@ function updatePresetActiveClasses() {
   });
 }
 
-function renderPresetTiles() {
-  const container = $("#presetBtns");
-  if (!container) return;
+// Listen for clicks on the navbar language toggle.
+// Use CAPTURE so we can run after navbar.js has handled the click.
+document.addEventListener("click", (e) => {
+  const btn = e.target?.closest?.("#btnLangToggle");
+  if (!btn) return;
 
-  container.innerHTML = "";
-  const lang = state.lang || "en";
+  // navbar.js will update localStorage + hide/show [data-lang] immediately.
+  // Then we sync our dynamic UI right after.
+  setTimeout(syncLangFromNavbar, 0);
+}, true);
 
-  for (const id of PRESET_ORDER) {
-    const p = PRESET_DEFS[id];
-    if (!p) continue;
 
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = `preset-btn ${state.activePreset === id ? "preset-on" : ""}`;
-    btn.dataset.preset = id;
-
-    const title = document.createElement("div");
-    title.className = "preset-title";
-    title.textContent = LABEL[lang].presets[p.titleKey];
-
-    const desc = document.createElement("div");
-    desc.className = "preset-desc";
-    desc.textContent = LABEL[lang].presets[p.descKey];
-
-    if (p.tipKey) btn.title = LABEL[lang].presets[p.tipKey];
-
-    btn.appendChild(title);
-    btn.appendChild(desc);
-    btn.addEventListener("click", () => applyPreset(id));
-    container.appendChild(btn);
-  }
-}
-
-/* ========= Data loading ========= */
-const FALLBACK_INDEX_URL = "https://katyjohannab.github.io/MutationTrainer/data/index.json";
-const FALLBACK_SITE_ROOT = "https://katyjohannab.github.io/MutationTrainer/";
+/* ========= Data loading (index list) ========= */
+const FALLBACK_INDEX_URL = "https://katyjohannab.github.io/mutationtrainer/data/index.json";
+const FALLBACK_SITE_ROOT = "https://katyjohannab.github.io/mutationtrainer/";
 
 async function loadCsvUrl(u) {
   return new Promise((resolve, reject) => {
@@ -614,7 +563,6 @@ async function fetchIndexList(url) {
   if (!Array.isArray(j)) throw new Error("Index JSON is not an array: " + url);
   return j;
 }
-
 async function loadAllDefault() {
   let list = null;
   let usingFallbackRoot = false;
@@ -622,38 +570,37 @@ async function loadAllDefault() {
   try {
     list = await fetchIndexList("data/index.json");
   } catch (e) {
-    list = await fetchIndexList(FALLBACK_INDEX_URL);
-    usingFallbackRoot = true;
+    try {
+      list = await fetchIndexList(FALLBACK_INDEX_URL);
+      usingFallbackRoot = true;
+    } catch (e2) {
+      console.warn("Failed to load both local and fallback index.json", e, e2);
+      return [];
+    }
   }
 
   const root = usingFallbackRoot ? FALLBACK_SITE_ROOT : new URL(".", location.href).toString();
   let merged = [];
-
   for (const p of list) {
     const url = resolveFromRoot(p, root);
     if (!url) continue;
-
     try {
-      const d = await loadCsvUrl(url);
+        const d = await loadCsvUrl(url);
+        // Stamp each row with its source CSV path
+        d.forEach(row => {
+  if (row && typeof row === "object") row.__src = p;
+});
 
-      // Stamp each row with its index.json entry (e.g. "data/cards.csv" / "data/prep.csv")
-      d.forEach(row => {
-        if (row && typeof row === "object") row.__src = p;
-      });
-
-      merged = merged.concat(d);
+merged = merged.concat(d);
     } catch (err) {
       console.warn("Failed to load source:", url, err);
     }
   }
-
   return merged;
 }
-
 async function initData() {
   const sheet = getParam("sheet");
   let rows = [];
-
   try {
     rows = sheet ? await loadCsvUrl(sheet) : await loadAllDefault();
   } catch (e) {
@@ -661,43 +608,22 @@ async function initData() {
     rows = await loadAllDefault();
   }
 
-  // If loading a custom sheet, stamp the source
-  if (sheet) {
-    rows.forEach(row => {
-      if (row && typeof row === "object") row.__src = sheet;
-    });
-  }
-
-  // Keep source + trigger canon in cleaned rows
-  const expected = ["CardId","RuleFamily","RuleCategory","Trigger","TriggerCanon","Base","WordCategory","Translate","Before","After","Answer","Outcome","Why","WhyCym","Source"];
-
+  const expected = ["CardId","RuleFamily","RuleCategory","Trigger","Base","WordCategory","Translate","Before","After","Answer","Outcome","Why","WhyCym"];
   const cleaned = rows.map(r => {
-    const src = (r && typeof r === "object" && r.__src) ? String(r.__src) : "";
-    const m = coerceRow(r);
-    const o = {};
-    for (const k of expected) o[k] = (m?.[k] ?? "").toString().trim();
-    o.Source = src;
-    // Ensure TriggerCanon exists even if missing
-    o.TriggerCanon = canonicalTrigger(o.Trigger);
-    return o;
-  });
+  const src = (r && typeof r === "object" && r.__src) ? String(r.__src) : "";
+  const m = coerceRow(r);
+  const o = {};
+  for (const k of expected) o[k] = (m?.[k] ?? "").toString().trim();
+  o.Source = src; // 👈 preserve CSV origin
+  return o;
+});
 
   state.rows = cleaned;
 
   applyFilters();
   rebuildDeck();
-
-  // Build UI now that categories exist
-  buildFiltersUI();
-
-  // Apply URL preset (shareable tutor links)
-  const presetRaw = (getParam("preset") || "").trim();
-  const mapped = (presetRaw === "prepositions") ? "starter-preps" : presetRaw;
-  if (mapped && PRESET_DEFS[mapped]) {
-    applyPreset(mapped, { fromUrl: true });
-  } else {
-    render();
-  }
+  buildFilters();
+  render();
 }
 
 /* ========= Filters & Deck ========= */
@@ -706,28 +632,281 @@ function toggleBtn(text, active, onToggle) {
   b.type = "button";
   b.className = `pill ${active ? "pill-on" : ""}`;
   b.textContent = text;
-  b.addEventListener("click", () => onToggle(!active));
+  b.onclick = () => onToggle(!active);
   return b;
 }
+function buildFiltersUI() {
+  const lang = state.lang || "en";
 
+  // Titles
+  if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
+  if ($("#presetsTitle")) $("#presetsTitle").textContent = LABEL[lang].headings.presets;
+  if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
+  if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
+  if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
+  if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
+  if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
+
+  // Presets
+  renderPresetTiles();
+
+  // Derive categories from data
+  const cats = new Set();
+  for (const r of state.rows) if (r.RuleCategory) cats.add(r.RuleCategory);
+  const allCats = Array.from(cats).sort();
+
+  /* -----------------------------
+     RULE FAMILY (with All)
+  ------------------------------*/
+  const famEl = $("#familyBtns");
+  if (famEl) {
+    famEl.innerHTML = "";
+
+    // ALL pill
+    const allBtn = toggleBtn(label("categories", "All"), false, () => {
+      clearPresetLayer();
+      state.families = ["Soft","Aspirate","Nasal","None"];
+      saveLS("wm_families", state.families);
+      applyFilters();
+      rebuildDeck();
+      refreshFilterPills();
+      render();
+      updatePresetActiveClasses();
+    });
+    allBtn.dataset.key = "__ALL__";
+    famEl.appendChild(allBtn);
+
+    for (const f of ["Soft","Aspirate","Nasal","None"]) {
+      const b = toggleBtn(label("rulefamily", f), false, (on) => {
+        clearPresetLayer();
+
+        // multi-select
+        state.families = on
+          ? Array.from(new Set([...state.families, f]))
+          : state.families.filter(x => x !== f);
+
+        // if user turns them all off, snap back to All (prevents empty state confusion)
+        if (!state.families.length) state.families = ["Soft","Aspirate","Nasal","None"];
+
+        saveLS("wm_families", state.families);
+        applyFilters();
+        rebuildDeck();
+        refreshFilterPills();
+        render();
+        updatePresetActiveClasses();
+      });
+      b.dataset.key = f;
+      famEl.appendChild(b);
+    }
+  }
+
+  /* -----------------------------
+     OUTCOME (with All)
+  ------------------------------*/
+  const outEl = $("#outcomeBtns");
+  if (outEl) {
+    outEl.innerHTML = "";
+
+    const allBtn = toggleBtn(label("categories", "All"), false, () => {
+      clearPresetLayer();
+      state.outcomes = ["SM","AM","NM","NONE"];
+      saveLS("wm_outcomes", state.outcomes);
+      applyFilters();
+      rebuildDeck();
+      refreshFilterPills();
+      render();
+      updatePresetActiveClasses();
+    });
+    allBtn.dataset.key = "__ALL__";
+    outEl.appendChild(allBtn);
+
+    const outcomes = ["SM","AM","NM","NONE"];
+    for (const o of outcomes) {
+      const b = toggleBtn(o, false, (on) => {
+        clearPresetLayer();
+
+        state.outcomes = on
+          ? Array.from(new Set([...state.outcomes, o]))
+          : state.outcomes.filter(x => x !== o);
+
+        if (!state.outcomes.length) state.outcomes = ["SM","AM","NM","NONE"];
+
+        saveLS("wm_outcomes", state.outcomes);
+        applyFilters();
+        rebuildDeck();
+        refreshFilterPills();
+        render();
+        updatePresetActiveClasses();
+      });
+      b.dataset.key = o;
+      outEl.appendChild(b);
+    }
+  }
+
+  /* -----------------------------
+     CATEGORIES — BASIC (common vs all) + All pill
+     NOTE: now multi-select (no more “only one” behaviour)
+  ------------------------------*/
+  const basicCatEl = $("#basicCatBtns");
+  if (basicCatEl) {
+    basicCatEl.innerHTML = "";
+
+    // ALL = no category restriction (state.categories = [])
+    const allBtn = toggleBtn(label("categories", "All"), false, () => {
+      clearPresetLayer();
+      state.categories = [];
+      saveLS("wm_categories", state.categories);
+      applyFilters();
+      rebuildDeck();
+      refreshFilterPills();
+      render();
+      updatePresetActiveClasses();
+    });
+    allBtn.dataset.key = "__ALL__";
+    basicCatEl.appendChild(allBtn);
+
+    const showAll = !!state.showAllCategories;
+    const displayCats = showAll
+      ? allCats
+      : COMMON_CATEGORIES.filter(c => cats.has(c));
+
+    for (const c of displayCats) {
+      if (!cats.has(c)) continue;
+
+      const b = toggleBtn(label("categories", c), false, (on) => {
+        clearPresetLayer();
+
+        state.categories = on
+          ? Array.from(new Set([...state.categories, c]))
+          : state.categories.filter(x => x !== c);
+
+        saveLS("wm_categories", state.categories);
+        applyFilters();
+        rebuildDeck();
+        refreshFilterPills();
+        render();
+        updatePresetActiveClasses();
+      });
+
+      b.dataset.key = c;
+      basicCatEl.appendChild(b);
+    }
+
+    // Toggle common vs all categories view
+    const toggle = $("#catViewToggle") || document.createElement("button");
+    toggle.id = "catViewToggle";
+    toggle.type = "button";
+    toggle.className = "btn btn-ghost";
+    toggle.style.marginTop = "8px";
+    toggle.textContent = showAll ? LABEL[lang].categoryView.showCommon : LABEL[lang].categoryView.showAll;
+
+    toggle.onclick = () => {
+      state.showAllCategories = !state.showAllCategories;
+      saveLS("wm_show_all_cats", state.showAllCategories);
+      buildFiltersUI();
+      updatePresetActiveClasses();
+    };
+
+    basicCatEl.parentElement?.appendChild(toggle);
+  }
+
+  /* -----------------------------
+     CATEGORIES — ADVANCED (full list) + All pill
+  ------------------------------*/
+  const advCatEl = $("#catBtns");
+  if (advCatEl) {
+    advCatEl.innerHTML = "";
+
+    const allBtn = toggleBtn(label("categories", "All"), false, () => {
+      clearPresetLayer();
+      state.categories = [];
+      saveLS("wm_categories", state.categories);
+      applyFilters();
+      rebuildDeck();
+      refreshFilterPills();
+      render();
+      updatePresetActiveClasses();
+    });
+    allBtn.dataset.key = "__ALL__";
+    advCatEl.appendChild(allBtn);
+
+    for (const c of allCats) {
+      const b = toggleBtn(label("categories", c), false, (on) => {
+        clearPresetLayer();
+
+        state.categories = on
+          ? Array.from(new Set([...state.categories, c]))
+          : state.categories.filter(x => x !== c);
+
+        saveLS("wm_categories", state.categories);
+        applyFilters();
+        rebuildDeck();
+        refreshFilterPills();
+        render();
+        updatePresetActiveClasses();
+      });
+      b.dataset.key = c;
+      advCatEl.appendChild(b);
+    }
+  }
+
+  /* -----------------------------
+     TRIGGER SEARCH
+  ------------------------------*/
+  const trig = $("#triggerFilter");
+  if (trig) {
+    trig.value = state.triggerQuery || "";
+    trig.oninput = (e) => {
+      clearPresetLayer();
+      state.triggerQuery = e.target.value;
+      saveLS("wm_trig", state.triggerQuery);
+      applyFilters();
+      rebuildDeck();
+      render();
+      updatePresetActiveClasses();
+    };
+  }
+
+  /* -----------------------------
+     NIL ONLY
+  ------------------------------*/
+  const nil = $("#nilOnly");
+  if (nil) {
+    nil.checked = !!state.nilOnly;
+    nil.onchange = (e) => {
+      clearPresetLayer();
+      state.nilOnly = e.target.checked;
+      saveLS("wm_nil", state.nilOnly);
+      applyFilters();
+      rebuildDeck();
+      render();
+      updatePresetActiveClasses();
+    };
+  }
+
+  state._filtersBound = true;
+
+  // IMPORTANT: ensure pills reflect current state right away
+  refreshFilterPills();
+}
+
+  
 function applyFilters() {
   const allowedOutcomes = (state.outcomes && state.outcomes.length) ? state.outcomes : ["SM","AM","NM","NONE"];
-
   let list = state.rows.filter(r =>
     (state.families.length ? state.families.includes(r.RuleFamily) : true) &&
     (state.categories.length ? state.categories.includes(r.RuleCategory) : true) &&
     (allowedOutcomes.includes((r.Outcome || "").toUpperCase()))
   );
-
   if (state.nilOnly) list = list.filter(r => (r.Outcome || "").toUpperCase() === "NONE");
 
-  // Preset triggers (canonical)
+  // Preset trigger set (canonical, robust to glosses/parentheticals in CSV Trigger values)
   if (state.presetTriggers && state.presetTriggers.length) {
     const set = new Set(state.presetTriggers.map(canonicalTrigger));
     list = list.filter(r => set.has(r.TriggerCanon || canonicalTrigger(r.Trigger)));
   }
 
-  // Articles preset: simple only until true Complexity column exists
+  // Optional v1 limiter: keep the Articles preset beginner-friendly until we have a real Complexity column.
   if (state.activePreset && PRESET_DEFS[state.activePreset]?.limitComplexity) {
     list = list.filter(r => !isLikelyComplexRow(r));
   }
@@ -736,25 +915,21 @@ function applyFilters() {
     const q = normalize(state.triggerQuery);
     list = list.filter(r => normalize(r.Trigger).includes(q));
   }
-
-  // Pack scope (only when preset sets it)
+  // Restrict to specific CSV source(s) if a preset has set a pack scope
   if (Array.isArray(state.sourceScope) && state.sourceScope.length) {
-    const allowed = new Set(state.sourceScope);
-    list = list.filter(r => allowed.has(r.Source));
+  const allowed = new Set(state.sourceScope);
+  list = list.filter(r => allowed.has(r.Source));
   }
 
   state.filtered = list;
 }
-
 function rebuildDeck() {
   const n = state.filtered.length;
   const d = Array.from({ length: n }, (_, i) => i);
-
   for (let i = d.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [d[i], d[j]] = [d[j], d[i]];
   }
-
   state.deck = d;
   state.p = 0;
   state.guess = "";
@@ -773,188 +948,19 @@ function rebuildDeck() {
   }
 }
 
-/* ========= Build filter UI (one-time + lightweight updates) ========= */
-function buildFiltersUI() {
-  // Title labels (if your HTML uses these IDs)
-  const lang = state.lang || "en";
-  if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
-  if ($("#presetsTitle")) $("#presetsTitle").textContent = LABEL[lang].headings.presets;
-  if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
-  if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
-  if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
-  if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
-  if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
-
-  // Preset tiles
-  renderPresetTiles();
-
-  // Derive category set from data
-  const cats = new Set();
-  for (const r of state.rows) if (r.RuleCategory) cats.add(r.RuleCategory);
-  const allCats = Array.from(cats).sort();
-
-  // Families
-  const famEl = $("#familyBtns");
-  if (famEl) {
-    famEl.innerHTML = "";
-    for (const f of ["Soft","Aspirate","Nasal","None"]) {
-      const b = toggleBtn(label("rulefamily", f), state.families.includes(f), (on) => {
-        state.families = on ? Array.from(new Set([...state.families, f])) : state.families.filter(x => x !== f);
-        saveLS("wm_families", state.families);
-        applyFilters();
-        rebuildDeck();
-        render();
-      });
-      b.dataset.key = f;
-      famEl.appendChild(b);
-    }
-  }
-
-  // Outcomes
-  const outEl = $("#outcomeBtns");
-  if (outEl) {
-    outEl.innerHTML = "";
-    const outcomes = ["SM","AM","NM","NONE"];
-    for (const o of outcomes) {
-      const b = toggleBtn(o, state.outcomes.includes(o), (on) => {
-        state.outcomes = on ? Array.from(new Set([...state.outcomes, o])) : state.outcomes.filter(x => x !== o);
-        saveLS("wm_outcomes", state.outcomes);
-        applyFilters();
-        rebuildDeck();
-        render();
-      });
-      outEl.appendChild(b);
-    }
-  }
-
-  // Categories — BASIC (common vs all)
-  const basicCatEl = $("#basicCatBtns");
-  if (basicCatEl) {
-    basicCatEl.innerHTML = "";
-
-    const showAll = !!state.showAllCategories;
-    const displayCats = showAll
-      ? allCats
-      : COMMON_CATEGORIES.filter(c => cats.has(c));
-
-    for (const c of displayCats) {
-      if (!cats.has(c)) continue;
-      const b = toggleBtn(label("categories", c), state.categories.includes(c), (on) => {
-        // Any manual category selection exits preset mode
-        clearPresetLayer();
-        state.categories = on ? [c] : [];
-        saveLS("wm_categories", state.categories);
-        applyFilters();
-        rebuildDeck();
-        render();
-        updatePresetActiveClasses();
-      });
-      basicCatEl.appendChild(b);
-    }
-
-    // Add toggle button beneath basic category pills
-    const toggle = $("#catViewToggle") || document.createElement("button");
-    toggle.id = "catViewToggle";
-    toggle.type = "button";
-    toggle.className = "btn btn-ghost";
-    toggle.style.marginTop = "8px";
-    toggle.textContent = showAll ? LABEL[lang].categoryView.showCommon : LABEL[lang].categoryView.showAll;
-
-    toggle.onclick = () => {
-      state.showAllCategories = !state.showAllCategories;
-      saveLS("wm_show_all_cats", state.showAllCategories);
-      buildFiltersUI(); // rebuild only the UI section (safe)
-      updatePresetActiveClasses();
-    };
-
-    // Ensure it sits after the pills
-    basicCatEl.parentElement?.appendChild(toggle);
-  }
-
-  // Categories — ADVANCED (full list always)
-  const advCatEl = $("#catBtns");
-  if (advCatEl) {
-    advCatEl.innerHTML = "";
-    for (const c of allCats) {
-      const b = toggleBtn(label("categories", c), state.categories.includes(c), (on) => {
-        clearPresetLayer();
-        // advanced supports multi-select (optional); keep consistent with your current behaviour
-        state.categories = on
-          ? Array.from(new Set([...state.categories, c]))
-          : state.categories.filter(x => x !== c);
-
-        saveLS("wm_categories", state.categories);
-        applyFilters();
-        rebuildDeck();
-        render();
-        updatePresetActiveClasses();
-      });
-      advCatEl.appendChild(b);
-    }
-  }
-
-  // Trigger filter
-  const trig = $("#triggerFilter");
-  if (trig) {
-    trig.value = state.triggerQuery || "";
-    trig.oninput = (e) => {
-      // any manual trigger search exits preset mode
-      clearPresetLayer();
-      state.triggerQuery = e.target.value;
-      saveLS("wm_trig", state.triggerQuery);
-      applyFilters();
-      rebuildDeck();
-      render();
-      updatePresetActiveClasses();
-    };
-  }
-
-  // Nil-only toggle (keep functional; if you remove it from HTML it will no-op)
-  const nil = $("#nilOnly");
-  if (nil) {
-    nil.checked = !!state.nilOnly;
-    nil.onchange = (e) => {
-      clearPresetLayer();
-      state.nilOnly = e.target.checked;
-      saveLS("wm_nil", state.nilOnly);
-      applyFilters();
-      rebuildDeck();
-      render();
-      updatePresetActiveClasses();
-    };
-  }
-
-  state._filtersBound = true;
-}
-
-/* ========= Language sync ========= */
-function applyLanguage() {
-  state.lang = (state.lang === "cy" ? "cy" : "en");
-  document.documentElement.setAttribute("lang", state.lang);
-
-  buildFiltersUI();  // rebuild UI strings
-  render();          // keep numbers stable
-}
-
-function syncLangFromNavbar() {
-  const lang = wmGetLangLocal();
-  if (lang !== "en" && lang !== "cy") return;
-  if (state.lang === lang) return;
-  state.lang = lang;
-  applyLanguage();
-}
-
-// Listen for clicks on navbar language toggle (navbar.js owns it)
-document.addEventListener("click", (e) => {
-  const btn = e.target?.closest?.("#btnLangToggle");
-  if (!btn) return;
-  setTimeout(syncLangFromNavbar, 0);
-}, true);
-
 /* ========= TTS (Polly via Lambda URL) ========= */
 const POLLY_FUNCTION_URL = "https://pl6xqfeht2hhbruzlhm3imcpya0upied.lambda-url.eu-west-2.on.aws/";
 const ttsCache = new Map();
 
+function buildCompleteSentence(card) {
+  const before = (card.Before || "").trimEnd();
+  const answer = (card.Answer || "").trim();
+  const after  = (card.After  || "").trimStart();
+  let s = [before, answer, after].filter(Boolean).join(" ");
+  s = s.replace(/\s+/g, " ").trim();
+  s = s.replace(/\s+([,.;:!?])/g, "$1");
+  return s;
+}
 async function playPollySentence(sentence) {
   if (!sentence) throw new Error("No sentence to speak.");
   if (!POLLY_FUNCTION_URL) throw new Error("POLLY_FUNCTION_URL isn't set.");
@@ -1089,10 +1095,9 @@ function renderPractice() {
     host.innerHTML = `
       <div class="text-slate-700 panel rounded-xl p-4">
         No cards match your filters.
-        <button id="btnClearFilters" class="ml-2 btn btn-ghost px-2 py-1">${esc(t.clearFilters)}</button>
+        <button id="btnClearFilters" class="ml-2 btn btn-ghost px-2 py-1">Clear filters</button>
       </div>`;
     $("#btnClearFilters")?.addEventListener("click", () => {
-      clearPresetLayer();
       state.families = ["Soft","Aspirate","Nasal","None"];
       state.categories = [];
       state.outcomes = ["SM","AM","NM","NONE"];
@@ -1103,7 +1108,7 @@ function renderPractice() {
       saveLS("wm_outcomes", state.outcomes);
       saveLS("wm_trig", state.triggerQuery);
       saveLS("wm_nil", state.nilOnly);
-      applyFilters(); rebuildDeck(); render(); updatePresetActiveClasses();
+      applyFilters(); rebuildDeck(); buildFilters(); render();
     });
     return;
   }
@@ -1201,15 +1206,9 @@ function renderPractice() {
     (state.outcomes.length && state.outcomes.length < 4) ||
     state.categories.length ||
     (state.triggerQuery && state.triggerQuery.trim()) ||
-    state.nilOnly ||
-    (state.activePreset && state.activePreset.trim());
+    state.nilOnly;
 
   if (anyRestriction) {
-    if (state.activePreset) {
-      const p = PRESET_DEFS[state.activePreset];
-      if (p) summary.appendChild(addChip((LABEL[lang].presets[p.titleKey]), null));
-    }
-
     if (state.families.length && state.families.length < 4) {
       state.families.forEach(f => summary.appendChild(addChip(label("rulefamily", f))));
     }
@@ -1220,12 +1219,12 @@ function renderPractice() {
       state.categories.forEach(ca => summary.appendChild(addChip(label("categories", ca))));
     }
     if (state.triggerQuery && state.triggerQuery.trim()) {
-      summary.appendChild(addChip(`${LABEL[lang].triggerChip}: ${state.triggerQuery.trim()}`));
+      const trigLabel = (lang === "cy" ? "Sbardun" : "Trigger");
+      summary.appendChild(addChip(`${trigLabel}: ${state.triggerQuery.trim()}`));
     }
     if (state.nilOnly) summary.appendChild(addChip(label("headings", "nilOnly")));
 
     summary.appendChild(addChip(lang === "cy" ? "Clirio" : "Clear", () => {
-      clearPresetLayer();
       state.families = ["Soft","Aspirate","Nasal","None"];
       state.categories = [];
       state.outcomes = ["SM","AM","NM","NONE"];
@@ -1236,7 +1235,7 @@ function renderPractice() {
       saveLS("wm_outcomes", state.outcomes);
       saveLS("wm_trig", state.triggerQuery);
       saveLS("wm_nil", state.nilOnly);
-      applyFilters(); rebuildDeck(); render(); updatePresetActiveClasses();
+      applyFilters(); rebuildDeck(); buildFilters(); render();
     }));
   } else {
     summary.classList.add("hidden");
@@ -1351,7 +1350,7 @@ function renderPractice() {
     const shownCard = state.filtered[shownIdx];
     const cardId = getCardId(shownCard, shownIdx);
 
-    state.history = [{
+    state.history.push({
       t: Date.now(),
       ok: false,
       key: `${shownCard.RuleCategory}:${shownCard.Trigger}:${shownCard.Base}`,
@@ -1360,7 +1359,7 @@ function renderPractice() {
       got: "",
       mode: state.practiceMode,
       skipped: true,
-    }, ...state.history].slice(0, 500);
+    });
     saveLS("wm_hist", state.history);
 
     updateLeitner(cardId, "skipped");
@@ -1553,9 +1552,6 @@ function render() {
   renderPractice();
   if (state.mode === "browse") renderBrowse();
   renderStatsPanels();
-
-  // Keep preset buttons visually correct
-  updatePresetActiveClasses();
 }
 
 function nextCard(offset = 1) {
@@ -1598,23 +1594,12 @@ function nextCard(offset = 1) {
 
 /* ========= Event wiring ========= */
 function wireUi() {
-  // NOTE: Do NOT bind #btnLangToggle here. navbar.js owns it.
+  // NOTE: Do NOT bind #btnLangToggle here. navbar.js owns that button.
 
   $("#onboardDismiss")?.addEventListener("click", () => $("#onboard")?.classList.add("hidden"));
 
-  $("#btnResetStats")?.addEventListener("click", () => {
-    state.history = [];
-    saveLS("wm_hist", state.history);
-    renderStatsPanels();
-    render();
-  });
-
-  $("#btnResetStats2")?.addEventListener("click", () => {
-    state.history = [];
-    saveLS("wm_hist", state.history);
-    renderStatsPanels();
-    render();
-  });
+  $("#btnResetStats")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
+  $("#btnResetStats2")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
 
   $("#btnTop")?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
@@ -1650,18 +1635,8 @@ function wireUi() {
       const u = ($("#dataUrl")?.value || "").trim();
       if (!u) return;
       const d = await loadCsvUrl(u);
-      // Stamp source
-      d.forEach(row => { if (row && typeof row === "object") row.__src = u; });
-
-      state.rows = d.map(r => {
-        const m = coerceRow(r);
-        m.Source = u;
-        m.TriggerCanon = canonicalTrigger(m.Trigger);
-        return m;
-      });
-
-      clearPresetLayer();
-      applyFilters(); rebuildDeck(); buildFiltersUI(); render();
+      state.rows = d.map(coerceRow);
+      applyFilters(); rebuildDeck(); buildFilters(); render();
     });
 
     $("#btnShareable")?.addEventListener("click", () => {
@@ -1690,31 +1665,31 @@ function wireUi() {
         header: true,
         skipEmptyLines: true,
         complete: (res) => {
-          res.data.forEach(row => { if (row && typeof row === "object") row.__src = f.name; });
-          state.rows = res.data.map(r => {
-            const m = coerceRow(r);
-            m.Source = f.name;
-            m.TriggerCanon = canonicalTrigger(m.Trigger);
-            return m;
-          });
-          clearPresetLayer();
-          applyFilters(); rebuildDeck(); buildFiltersUI(); render();
+          state.rows = res.data.map(coerceRow);
+          applyFilters(); rebuildDeck(); buildFilters(); render();
         }
       });
     });
   }
+
+  
 }
 
 /* ========= Boot ========= */
 (async function boot() {
   wireUi();
   await initData();
+  // Apply preset from URL (shareable tutor links)
+const preset = (getParam("preset") || "").trim();
+if (preset && PRESET_DEFS[preset]) {
+  applyPreset(preset, { fromUrl: true });
+}
+
 
   // Apply current language immediately (navbar.js also applies [data-lang] visibility)
   syncLangFromNavbar();
 
-  // Ensure labels render even if language was already correct
-  applyLanguage();
 })();
+
 
 
