@@ -222,6 +222,16 @@ const state = {
   currentIdx: 0,
   currentDeckPos: -1,
 };
+function normalizeCategoryList(list) {
+  return Array.from(new Set((list || []).filter(Boolean).filter(c => c !== "All")));
+}
+
+function setCategories(next) {
+  state.categories = normalizeCategoryList(next);
+  saveLS("wm_categories", state.categories);
+}
+
+state.categories = normalizeCategoryList(state.categories);
 
 /* ========= UI Translations ========= */
 const LABEL = {
@@ -635,6 +645,34 @@ function toggleBtn(text, active, onToggle) {
   b.onclick = () => onToggle(!active);
   return b;
 }
+
+  function refreshFilterPills() {
+  const applyPillState = (container, activeKeys, allActive) => {
+    if (!container) return;
+    const activeSet = new Set(activeKeys || []);
+    $$("[data-key]", container).forEach(btn => {
+      const key = btn.dataset.key;
+      const isAll = key === "__ALL__";
+      const on = isAll ? allActive : activeSet.has(key);
+      btn.classList.toggle("pill-on", on);
+    });
+  };
+
+  const familyAll = ["Soft","Aspirate","Nasal","None"];
+  const families = state.families?.length ? state.families : familyAll;
+  const familyAllActive = families.length === familyAll.length;
+  applyPillState($("#familyBtns"), families, familyAllActive);
+
+  const outcomeAll = ["SM","AM","NM","NONE"];
+  const outcomes = state.outcomes?.length ? state.outcomes : outcomeAll;
+  const outcomeAllActive = outcomes.length === outcomeAll.length;
+  applyPillState($("#outcomeBtns"), outcomes, outcomeAllActive);
+
+  const categories = state.categories || [];
+  const categoriesAllActive = categories.length === 0;
+  applyPillState($("#basicCatBtns"), categories, categoriesAllActive);
+  applyPillState($("#catBtns"), categories, categoriesAllActive);
+}
 function buildFiltersUI() {
   const lang = state.lang || "en";
 
@@ -755,8 +793,7 @@ function buildFiltersUI() {
     const allActive = state.categories.includes("All") || state.categories.length === 0;
     const allBtn = toggleBtn(LABEL[lang].categories.All, allActive, () => {
       clearPresetLayer();
-      state.categories = ["All"];
-      saveLS("wm_categories", state.categories);
+      setCategories([]);
       applyFilters();
       rebuildDeck();
       refreshFilterPills();
@@ -779,11 +816,11 @@ function buildFiltersUI() {
        if (on && state.categories.includes("All")) {
           state.categories = state.categories.filter(x => x !== "All");
         }
-        state.categories = on
-          ? Array.from(new Set([...state.categories, c]))
+           const nextCategories = on
+          ? [...state.categories, c]
           : state.categories.filter(x => x !== c);
 
-        saveLS("wm_categories", state.categories);
+        setCategories(nextCategories);
         applyFilters();
         rebuildDeck();
         refreshFilterPills();
@@ -822,8 +859,7 @@ function buildFiltersUI() {
 
     const allBtn = toggleBtn(label("categories", "All"), false, () => {
       clearPresetLayer();
-      state.categories = [];
-      saveLS("wm_categories", state.categories);
+      setCategories([]);
       applyFilters();
       rebuildDeck();
       refreshFilterPills();
@@ -837,11 +873,11 @@ function buildFiltersUI() {
       const b = toggleBtn(label("categories", c), false, (on) => {
         clearPresetLayer();
 
-        state.categories = on
-          ? Array.from(new Set([...state.categories, c]))
+        const nextCategories = on
+          ? [...state.categories, c]
           : state.categories.filter(x => x !== c);
 
-        saveLS("wm_categories", state.categories);
+        setCategories(nextCategories);
         applyFilters();
         rebuildDeck();
         refreshFilterPills();
