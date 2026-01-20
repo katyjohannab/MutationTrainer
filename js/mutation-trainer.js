@@ -13,6 +13,24 @@ function normalize(s) {
     .trim()
     .replace(/\s+/g, " ");
 }
+
+// Canonicalise Trigger values for reliable matching (presets + URL params).
+// - lowercases, trims, normalises apostrophes
+// - removes bracketed glosses: "i (to)" -> "i"; "y [the]" -> "y"
+function canonicalTrigger(s) {
+  let x = (s == null ? "" : String(s));
+  // Normalise apostrophes early
+  x = x.replace(/’/g, "'");
+  // Remove bracketed glosses anywhere in the string
+  x = x.replace(/\([^)]*\)/g, " ");
+  x = x.replace(/\[[^\]]*\]/g, " ");
+  // Collapse whitespace + normalise case/diacritics
+  x = normalize(x);
+  // If someone used multiple tokens (e.g. "o (from)"), keep the first meaningful token
+  // but only if there are still multiple words after gloss removal.
+  if (x.includes(" ")) x = x.split(" ")[0].trim();
+  return x;
+}
 function esc(s) {
   return (s == null ? "" : String(s)).replace(/[&<>"]/g, ch => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"
@@ -29,14 +47,6 @@ function getParam(k) { return new URLSearchParams(location.search).get(k); }
 function saveLS(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 function loadLS(k, d) { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
 
-function formatTpl(tpl, vars) {
-  const s = (tpl == null ? "" : String(tpl));
-  return s.replace(/\{(\w+)\}/g, (_, k) => {
-    const v = vars?.[k];
-    return (v == null) ? "" : String(v);
-  });
-}
-
 /* Robust language getter (matches navbar.js behaviour) */
 function wmGetLangLocal() {
   const raw = localStorage.getItem("wm_lang");
@@ -52,92 +62,6 @@ function wmGetLangLocal() {
 /* ========= Smart review (Leitner) ========= */
 const LEITNER_LS_KEY = "wm_leitner_boxes_v1";
 const PRACTICE_MODE_LS_KEY = "wm_practice_mode_v1";
-
-/* ========= Session stats (device-local) ========= */
-const SESSION_LS_KEY = "wm_session_v1";
-const SESSION_POINTS_PER_CORRECT = 10;
-
-function bumpSessionBucket(bucket, key, ok) {
-  if (!bucket || typeof bucket !== "object") return;
-  const k = (key == null ? "" : String(key)).trim() || "Unknown";
-  if (!bucket[k]) bucket[k] = { done: 0, correct: 0 };
-  bucket[k].done = (bucket[k].done || 0) + 1;
-  if (ok) bucket[k].correct = (bucket[k].correct || 0) + 1;
-}
-
-function defaultSession() {
-  return {
-    startedAt: Date.now(),
-    done: 0,
-    correct: 0,
-    points: 0,
-    streak: 0,
-    bestStreak: 0,
-    byOutcome: {},
-    byCategory: {},
-  };
-}
-
-function loadSession() {
-  const toInt = (v, d = 0) => {
-    const n = Number(v);
-    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : d;
-  };
-  const fixBuckets = (obj) => {
-    const out = {};
-    if (!obj || typeof obj !== "object") return out;
-    for (const [k, v] of Object.entries(obj)) {
-      if (!v || typeof v !== "object") continue;
-      out[k] = { done: toInt(v.done), correct: toInt(v.correct) };
-    }
-    return out;
-  };
-
-  const raw = loadLS(SESSION_LS_KEY, null);
-  if (!raw || typeof raw !== "object") {
-    const fresh = defaultSession();
-    saveSession(fresh);
-    return fresh;
-  }
-
-  const sess = defaultSession();
-  sess.startedAt = Number.isFinite(Number(raw.startedAt)) ? Number(raw.startedAt) : sess.startedAt;
-  sess.done = toInt(raw.done);
-  sess.correct = toInt(raw.correct);
-  sess.points = toInt(raw.points);
-  sess.streak = toInt(raw.streak);
-  sess.bestStreak = toInt(raw.bestStreak);
-  sess.byOutcome = fixBuckets(raw.byOutcome);
-  sess.byCategory = fixBuckets(raw.byCategory);
-
-  // Persist any repaired/defaulted fields back to storage.
-  saveSession(sess);
-  return sess;
-}
-
-function saveSession(sess) {
-  if (!sess || typeof sess !== "object") return;
-  saveLS(SESSION_LS_KEY, sess);
-}
-
-function resetSession() {
-  const fresh = defaultSession();
-  saveSession(fresh);
-  // Safe: state is defined later; this will only run after init.
-  try {
-    if (typeof state === "object" && state) state.session = fresh;
-  } catch (e) {}
-  return fresh;
-}
-
-function resetStreak(sess) {
-  const s = (sess && typeof sess === "object") ? sess : (state?.session || null);
-  if (!s) return null;
-  s.streak = 0;
-  saveSession(s);
-  return s;
-}
-
 const LEITNER_MAX_BOX = 5;
 const LEITNER_WEIGHTS = [0, 50, 25, 15, 7, 3]; // index 1..5
 
@@ -252,6 +176,7 @@ function coerceRow(row) {
     RuleFamily: fam,
     RuleCategory: getVal(r, ["RuleCategory","Rule Category","Category"]) || (PREP.has((trig || "").toLowerCase()) ? "Preposition" : ""),
     Trigger: trig,
+    TriggerCanon: canonicalTrigger(trig),
     Base: getVal(r, ["Base","Radical","Word","Base word","BaseWord"]),
     WordCategory: getVal(r, ["WordCategory","Word Category","POS","Part of speech"]),
     Before: getVal(r, ["Before","PromptBefore","Left","SentenceBefore"]),
@@ -272,6 +197,10 @@ const state = {
   categories: loadLS("wm_categories", []),
   outcomes: loadLS("wm_outcomes", ["SM","AM","NM","NONE"]),
   triggerQuery: loadLS("wm_trig", ""),
+  // Presets are implemented as a thin layer over filters.
+  activePreset: loadLS("wm_active_preset", ""),
+  presetTriggers: loadLS("wm_preset_triggers", []), // canonical triggers for the active preset
+  showAllCategories: loadLS("wm_show_all_cats", false),
   nilOnly: loadLS("wm_nil", false),
   mode: loadLS("wm_mode", "practice"),
   practiceMode: loadLS(PRACTICE_MODE_LS_KEY, "shuffle"),
@@ -283,10 +212,8 @@ const state = {
   p: 0,
   guess: "",
   revealed: false,
-  usedRevealThisCard: false,
   lastResult: null,
   history: loadLS("wm_hist", []),
-  session: loadSession(),
   admin: getParam("admin") === "1",
   freezeIdx: null,
   freezePos: null,
@@ -298,7 +225,19 @@ const state = {
 /* ========= UI Translations ========= */
 const LABEL = {
   en: {
-    headings: { focus:"Focus", rulefamily:"RuleFamily", outcome:"Outcome", categories:"Categories", trigger:"Filter by Trigger", nilOnly:"Nil-cases only (no mutation expected)" },
+    headings: { focus:"Focus", rulefamily:"RuleFamily", outcome:"Outcome", categories:"Categories", trigger:"Filter by Trigger", nilOnly:"Nil-cases only (no mutation expected)", presets:"Start here" },
+    presets: {
+      starterPrepsTitle: "Starter prepositions",
+      starterPrepsDesc: "Common contact-mutation prepositions",
+      numbersTitle: "Numbers 1–10",
+      numbersDesc: "Un, dau, tri ... deg",
+      articlesTitle: "Articles",
+      articlesDesc: "y / yr / 'r (starter set)",
+      placeNamesTitle: "Place names",
+      placeNamesDesc: "Early nasal-mutation practice",
+      placeNamesTip: "Place names often take nasal mutation in common patterns (e.g. after certain structures)."
+    },
+    categoryView: { showAll: "Show all categories", showCommon: "Show common categories" },
     categories: {
       All:"All","Adjective+Noun":"Adjective+Noun",Article:"Article","Bod+yn":"Bod+Yn",Complement:"Complement",Conjunction:"Conjunction",
       Deictic:"Deictic",Determiner:"Determiner",Intensifier:"Intensifier",Interrogative:"Interrogative",Idiom: "Idiom",Negation:"Negation",Numerals:"Numerals",
@@ -324,46 +263,23 @@ const LABEL = {
     hear:"Hear",
     meaningAria:"Meaning",
     onboardDismiss:"Got it",
-    resetStats:"Clear device stats",
+    resetStats:"Reset stats",
     backToTop:"Back to top",
-
-    // Session panel (practice sidebar)
-    sessionTitle:"This session",
-    sessionNew:"New",
-    sessionAccuracy:"Accuracy",
-    sessionStreak:"Streak",
-    sessionResetStreak:"Reset streak",
-    sessionBestFmt:"Best: {n}",
-    sessionCard:"Card",
-    sessionUseNewHint:"Use New to start a fresh run.",
-    sessionMasteryFocus:"Mastery (this focus)",
-    sessionMasteredFmt:"Mastered: {mastered} / {pool}",
-    sessionBox1Fmt:"Box 1: {n}",
-    sessionMoreInfo:"More info",
-    sessionByOutcome:"By outcome",
-    sessionLegendHtml:"Legend: <b>SM</b>=Soft, <b>AM</b>=Aspirate, <b>NM</b>=Nasal, <b>NONE</b>=No mutation",
-    sessionByCategory:"By category",
-    sessionOther:"Other",
-    sessionCorrectFmt:"{correct} / {done} correct",
-
-    // Preset + focus labels
-    startHereTitle: "Start here",
-    presetStarterPreps: "Starter prepositions",
-    presetStarterPrepsDesc: "Core / starter set of common prepositions",
-    presetNumbers: "Numbers 1–10",
-    presetNumbersDesc: "Practice numbers one to ten",
-    presetArticles: "Articles",
-    presetArticlesDesc: "Practice the definite article with common nouns",
-    presetPlaceNames: "Place names",
-    presetPlaceNamesDesc: "Practice mutations after place names",
-    advancedFiltersTitle: "Advanced filters",
-    commonCategoriesTitle: "Categories",
-    advancedCategoriesTitle: "Categories",
-    presetSoftBasics: "Soft basics",
-    presetSoftBasicsDesc: "Soft mutation basics (common structures)",
   },
   cy: {
-    headings: { focus:"Ffocws", rulefamily:"Math Treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)" },
+    headings: { focus:"Ffocws", rulefamily:"Math Treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)", presets:"Dechreuwch yma" },
+    presets: {
+      starterPrepsTitle: "Arddodiaid sylfaenol",
+      starterPrepsDesc: "Arddodiaid cyffredin (treiglad cyswllt)",
+      numbersTitle: "Rhifau 1–10",
+      numbersDesc: "un, dau, tri ... deg",
+      articlesTitle: "Erthyglau",
+      articlesDesc: "y / yr / 'r (set ddechrau)",
+      placeNamesTitle: "Enwau lleoedd",
+      placeNamesDesc: "Ymarfer treiglad trwynol cynnar",
+      placeNamesTip: "Mae enwau lleoedd yn aml yn cymryd treiglad trwynol mewn patrymau cyffredin."
+    },
+    categoryView: { showAll: "Dangos pob categori", showCommon: "Dangos categorïau cyffredin" },
     categories: {
       All:"Pob un","Adjective+Noun":"Ansoddair+Enw",Article:"Erthygl","Bod+yn":"Bod+Yn",Complement:"Cyflenwad",Conjunction:"Cysylltair",
       Deictic:"Deictig",Determiner:"Penderfyniadur",Idiom:"Idiom",Intensifier:"Dwysydd",Interrogative:"Holiadol",Negation:"Negydd",Numerals:"Rhifau",
@@ -389,43 +305,8 @@ const LABEL = {
     hear:"Gwrando",
     meaningAria:"Ystyr",
     onboardDismiss:"Iawn",
-    resetStats:"Clirio ystadegau'r ddyfais",
+    resetStats:"Ailosod ystadegau",
     backToTop:"Yn ôl i’r brig",
-
-    // Panel sesiwn (bar ochr ymarfer)
-    sessionTitle:"Y sesiwn hon",
-    sessionNew:"Newydd",
-    sessionAccuracy:"Cywirdeb",
-    sessionStreak:"Rhediad",
-    sessionResetStreak:"Ailosod y rhediad",
-    sessionBestFmt:"Gorau: {n}",
-    sessionCard:"Cerdyn",
-    sessionUseNewHint:"Defnyddiwch Newydd i ddechrau rhediad newydd.",
-    sessionMasteryFocus:"Meistrolaeth (y ffocws hwn)",
-    sessionMasteredFmt:"Wedi meistroli: {mastered} / {pool}",
-    sessionBox1Fmt:"Blwch 1: {n}",
-    sessionMoreInfo:"Rhagor o wybodaeth",
-    sessionByOutcome:"Yn ôl canlyniad",
-    sessionLegendHtml:"Allwedd: <b>SM</b>=Meddal, <b>AM</b>=Llaes, <b>NM</b>=Trwynol, <b>NONE</b>=Dim treiglad",
-    sessionByCategory:"Yn ôl categori",
-    sessionOther:"Arall",
-    sessionCorrectFmt:"{correct} / {done} yn gywir",
-
-    // Preset + focus labels
-    startHereTitle: "Dechreuwch yma",
-    presetStarterPreps: "Arddodiaid cychwynnol",
-    presetStarterPrepsDesc: "Set cychwynnol o arddodiaid cyffredin",
-    presetNumbers: "Rhifau 1–10",
-    presetNumbersDesc: "Ymarfer rhifau un i ddeg",
-    presetArticles: "Erthyglau",
-    presetArticlesDesc: "Ymarfer yr erthygl ddiffiniol gyda enwau cyffredin",
-    presetPlaceNames: "Enwau lleoedd",
-    presetPlaceNamesDesc: "Ymarfer treigladau ar ôl enwau lleoedd",
-    advancedFiltersTitle: "Hidlau uwch",
-    commonCategoriesTitle: "Categorïau",
-    advancedCategoriesTitle: "Categorïau",
-    presetSoftBasics: "Meddal sylfaenol",
-    presetSoftBasicsDesc: "Elfennau sylfaenol treiglad meddal (strwythurau cyffredin)",
   }
 };
 
@@ -456,86 +337,6 @@ function applyLanguage() {
   if ($("#btnResetStats2")) $("#btnResetStats2").textContent = LABEL[lang].resetStats;
   if ($("#btnTop")) $("#btnTop").textContent = LABEL[lang].backToTop;
 
-  // ---- Session panel static labels (practice sidebar) ----
-  const sp = $("#sessionPanel");
-  if (sp) {
-    // Header title
-    const headerRow = sp.querySelector(":scope > div.flex.items-center.justify-between");
-    const titleEl = headerRow?.querySelector(":scope > div.text-sm.font-medium");
-    if (titleEl) titleEl.textContent = LABEL[lang].sessionTitle;
-
-    // Header buttons
-    if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].sessionNew;
-
-    const rs = $("#btnResetStreak");
-    if (rs) {
-      rs.title = LABEL[lang].sessionResetStreak;
-      rs.setAttribute("aria-label", LABEL[lang].sessionResetStreak);
-    }
-
-    // Tile headings
-    const accBig = $("#accBig");
-    if (accBig) {
-      const tile = accBig.closest("div.p-3") || accBig.parentElement;
-      const h = tile?.querySelector(":scope > div");
-      if (h) h.textContent = LABEL[lang].sessionAccuracy;
-    }
-
-    if (rs) {
-      const h = rs.parentElement?.querySelector(":scope > div");
-      if (h) h.textContent = LABEL[lang].sessionStreak;
-    }
-
-    const cardPos = $("#cardPos");
-    if (cardPos) {
-      const tile = cardPos.closest("div.p-3") || cardPos.parentElement;
-      const h = tile?.querySelector(":scope > div");
-      if (h) h.textContent = LABEL[lang].sessionCard;
-      const hint = tile?.querySelector(":scope > div.text-xs");
-      if (hint) hint.textContent = LABEL[lang].sessionUseNewHint;
-    }
-
-    // Mastery label
-    const masteryText = $("#masteryText");
-    if (masteryText) {
-      const row = masteryText.parentElement;
-      const h = row?.querySelector(":scope > div");
-      if (h) h.textContent = LABEL[lang].sessionMasteryFocus;
-    }
-
-    // Details labels
-    const sum = sp.querySelector("details > summary");
-    if (sum) sum.textContent = LABEL[lang].sessionMoreInfo;
-
-    const byOutcome = $("#byOutcome");
-    if (byOutcome) {
-      const h = byOutcome.previousElementSibling;
-      if (h) h.textContent = LABEL[lang].sessionByOutcome;
-      const legend = byOutcome.nextElementSibling;
-      if (legend) legend.innerHTML = LABEL[lang].sessionLegendHtml;
-    }
-
-    const byCat = $("#sessByCategory");
-    if (byCat) {
-      const h = byCat.previousElementSibling;
-      if (h) h.textContent = LABEL[lang].sessionByCategory;
-    }
-  }
-
-  // ----- Phase 1: Presets & Focus translation -----
-  // Presets section labels (Start here)
-  const presetsTitle = $("#presetsTitle");
-  if (presetsTitle) presetsTitle.textContent = LABEL[lang].startHereTitle || "Start here";
-  // Advanced filters summary text
-  const advToggle = $("#advToggle");
-  if (advToggle) advToggle.textContent = LABEL[lang].advancedFiltersTitle || "Advanced filters";
-  // Basic categories heading
-  const basicCatTitle = $("#basicCategoriesTitle");
-  if (basicCatTitle) basicCatTitle.textContent = LABEL[lang].commonCategoriesTitle || LABEL[lang].headings.categories;
-  // Advanced categories heading
-  const advCatTitle = $("#advCategoriesTitle");
-  if (advCatTitle) advCatTitle.textContent = LABEL[lang].advancedCategoriesTitle || LABEL[lang].headings.categories;
-
   buildFilters();
   render();
 }
@@ -545,6 +346,167 @@ function syncLangFromNavbar() {
   if (lang !== "en" && lang !== "cy") return;
   state.lang = lang;
   applyLanguage(); // this rebuilds your dynamic UI with the right labels
+}
+
+/* ========= Presets + Category view (progressive disclosure) ========= */
+
+const COMMON_CATEGORIES = [
+  "Preposition",
+  "Article",
+  "Numerals",
+  "Possessive",
+  "Bod+yn",
+  "Adjective+Noun",
+  "Negation",
+  "PlaceName",
+];
+
+const PRESET_DEFS = {
+  "starter-preps": {
+    id: "starter-preps",
+    titleKey: "starterPrepsTitle",
+    descKey: "starterPrepsDesc",
+    category: "Preposition",
+    triggers: ["am","ar","at","gan","i","o","trwy","drwy","tan","dros","tros","heb","hyd","wrth"],
+  },
+  "numbers-1-10": {
+    id: "numbers-1-10",
+    titleKey: "numbersTitle",
+    descKey: "numbersDesc",
+    category: "Numerals",
+    triggers: ["un","dau","tri","pedwar","pump","chwech","saith","wyth","naw","deg"],
+  },
+  "articles": {
+    id: "articles",
+    titleKey: "articlesTitle",
+    descKey: "articlesDesc",
+    category: "Article",
+    triggers: ["y","yr","'r","r"],
+    limitComplexity: true,
+  },
+  "place-names": {
+    id: "place-names",
+    titleKey: "placeNamesTitle",
+    descKey: "placeNamesDesc",
+    category: "PlaceName",
+    triggers: [],
+    forceFamily: "Nasal",
+    tipKey: "placeNamesTip",
+  },
+};
+
+const PRESET_ORDER = ["starter-preps","numbers-1-10","articles","place-names"];
+
+function isLikelyComplexRow(card) {
+  // Heuristic v1 (until a real Complexity column exists):
+  // exclude very long / multi-clause sentences from starter article practice.
+  const s = buildCompleteSentence(card);
+  const w = normalize(s).split(" ").filter(Boolean);
+  if (w.length > 14) return true;
+  if (/[;:]/.test(s)) return true;
+  const commas = (s.match(/,/g) || []).length;
+  if (commas >= 1 && w.length > 12) return true;
+
+  const low = normalize(s);
+  const markers = ["achos","ond","pan","tra","er","os","lle","pryd","gan fod","sy'n","sydd"];
+  if (markers.some(m => low.includes(m)) && w.length > 10) return true;
+  return false;
+}
+
+function clearPresetLayer({ keepActivePreset = false } = {}) {
+  if (!keepActivePreset) state.activePreset = "";
+  state.presetTriggers = [];
+  saveLS("wm_active_preset", state.activePreset);
+  saveLS("wm_preset_triggers", state.presetTriggers);
+}
+
+function applyPreset(presetId, { fromUrl = false } = {}) {
+  const p = PRESET_DEFS[presetId];
+  if (!p) return;
+
+  // Reset/clear potentially conflicting filters.
+  state.triggerQuery = "";
+  saveLS("wm_trig", state.triggerQuery);
+  state.nilOnly = false;
+  saveLS("wm_nil", state.nilOnly);
+  state.outcomes = ["SM","AM","NM","NONE"]; // keep full outcome set
+  saveLS("wm_outcomes", state.outcomes);
+
+  // Core preset filter targets.
+  state.activePreset = presetId;
+  saveLS("wm_active_preset", state.activePreset);
+
+  state.categories = [p.category];
+  saveLS("wm_categories", state.categories);
+
+  // Families: default to all unless preset forces a specific family.
+  if (p.forceFamily) state.families = [p.forceFamily];
+  else state.families = ["Soft","Aspirate","Nasal","None"];
+  saveLS("wm_families", state.families);
+
+  state.presetTriggers = (p.triggers || []).map(canonicalTrigger).filter(Boolean);
+  saveLS("wm_preset_triggers", state.presetTriggers);
+
+  // UX: start with the simpler category view.
+  state.showAllCategories = false;
+  saveLS("wm_show_all_cats", state.showAllCategories);
+
+  applyFilters();
+  rebuildDeck();
+  buildFilters();
+  render();
+
+  // If we applied it from URL params, don't clutter history - but do keep filters.
+  if (fromUrl) {
+    // no-op placeholder (kept for future analytics hooks)
+  }
+}
+
+function wirePresetUi() {
+  // Supports either: dynamically generated preset tiles in #presetBtns,
+  // OR static HTML buttons with data-preset="...".
+  const container = $("#presetBtns");
+
+  if (container && container.children.length === 0) {
+    container.innerHTML = "";
+    for (const id of PRESET_ORDER) {
+      const p = PRESET_DEFS[id];
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `preset-btn ${state.activePreset === id ? "preset-on" : ""}`;
+      btn.dataset.preset = id;
+
+      const title = document.createElement("div");
+      title.className = "preset-title";
+      title.textContent = LABEL[state.lang].presets[p.titleKey];
+
+      const desc = document.createElement("div");
+      desc.className = "preset-desc";
+      desc.textContent = LABEL[state.lang].presets[p.descKey];
+
+      if (p.tipKey) btn.title = LABEL[state.lang].presets[p.tipKey];
+
+      btn.appendChild(title);
+      btn.appendChild(desc);
+      btn.addEventListener("click", () => applyPreset(id));
+      container.appendChild(btn);
+    }
+  }
+
+  // Static buttons (or the ones we just created)
+  $$("[data-preset]").forEach(el => {
+    if (el.__wmPresetBound) return;
+    el.__wmPresetBound = true;
+    const id = el.getAttribute("data-preset");
+    el.addEventListener("click", () => applyPreset(id));
+  });
+
+  // Keep visual state in sync (works for both dynamic + static preset buttons).
+  $$("[data-preset]").forEach(el => {
+    const id = el.getAttribute("data-preset");
+    if (!id) return;
+    el.classList.toggle("preset-on", id === state.activePreset);
+  });
 }
 
 // Listen for clicks on the navbar language toggle.
@@ -654,8 +616,10 @@ function toggleBtn(text, active, onToggle) {
   return b;
 }
 function buildFilters() {
-  // ---- Phase 1: Build preset buttons ----
-  buildPresetButtons();
+  // Presets may be rendered in the Focus panel (if the HTML contains #presetBtns
+  // or static buttons with data-preset="..."). Safe no-op otherwise.
+  wirePresetUi();
+
   const cats = new Set();
   for (const r of state.rows) if (r.RuleCategory) cats.add(r.RuleCategory);
   const outcomes = ["SM","AM","NM","NONE"];
@@ -695,56 +659,54 @@ function buildFilters() {
     }
   }
 
-  // ----- Phase 1: Categories -----
-  // Basic (common) categories
-  const basicCatEl = $("#basicCatBtns");
-  if (basicCatEl) {
-    basicCatEl.innerHTML = "";
-    const commonCats = COMMON_CATEGORIES && COMMON_CATEGORIES.length ? COMMON_CATEGORIES : Array.from(cats).sort().slice(0, 8);
-    for (const c of commonCats) {
-      const active = (!state.categories.length) || state.categories.includes(c);
-      const cLabel = label("categories", c);
-      const b = toggleBtn(cLabel, active, (on) => {
-        if (on) {
-          state.categories = Array.from(new Set([...state.categories, c]));
-        } else {
-          state.categories = state.categories.filter(x => x !== c);
-        }
-        saveLS("wm_categories", state.categories);
-        applyFilters(); rebuildDeck(); buildFilters(); render();
-      });
-      b.dataset.key = c;
-      basicCatEl.appendChild(b);
-    }
-  }
-  // Advanced categories (full list)
   const catEl = $("#catBtns");
   if (catEl) {
     catEl.innerHTML = "";
     const allCatsActive = !state.categories.length;
     const allLabel = label("categories", "All");
-    const allBtn = toggleBtn(allLabel, allCatsActive, () => {
+    catEl.appendChild(toggleBtn(allLabel, allCatsActive, () => {
+      clearPresetLayer();
       state.categories = [];
       saveLS("wm_categories", state.categories);
       applyFilters(); rebuildDeck(); buildFilters(); render();
-    });
-    allBtn.dataset.key = "All";
-    catEl.appendChild(allBtn);
-    for (const c of Array.from(cats).sort()) {
+    }));
+
+    const allCats = Array.from(cats).sort();
+    const commonExisting = COMMON_CATEGORIES.filter(c => cats.has(c));
+    const showAll = !!state.showAllCategories;
+    const displayCats = showAll
+      ? allCats
+      : Array.from(new Set([...commonExisting, ...state.categories])).filter(c => cats.has(c));
+
+    for (const c of displayCats) {
       const active = state.categories.includes(c);
       const cLabel = label("categories", c);
       const b = toggleBtn(cLabel, active, (on) => {
-        if (on) {
-          state.categories = Array.from(new Set([...state.categories, c]));
-        } else {
-          state.categories = state.categories.filter(x => x !== c);
-        }
+        clearPresetLayer();
+        state.categories = on ? Array.from(new Set([...state.categories, c])) : state.categories.filter(x => x !== c);
         saveLS("wm_categories", state.categories);
         applyFilters(); rebuildDeck(); buildFilters(); render();
       });
       b.dataset.key = c;
       catEl.appendChild(b);
     }
+
+    // Toggle: common vs all (Phase 3)
+    const existingToggle = $("#catViewToggle");
+    if (existingToggle) existingToggle.remove();
+    const t = document.createElement("button");
+    t.id = "catViewToggle";
+    t.type = "button";
+    t.className = "btn btn-ghost";
+    t.style.marginTop = "8px";
+    t.textContent = showAll ? LABEL[state.lang].categoryView.showCommon : LABEL[state.lang].categoryView.showAll;
+    t.onclick = () => {
+      state.showAllCategories = !state.showAllCategories;
+      saveLS("wm_show_all_cats", state.showAllCategories);
+      buildFilters();
+      render();
+    };
+    catEl.parentElement?.appendChild(t);
   }
 
   const trig = $("#triggerFilter");
@@ -767,74 +729,6 @@ function buildFilters() {
     };
   }
 }
-
-// ----- Phase 1: Common categories constant -----
-// This list defines which categories appear in the basic focus section.
-const COMMON_CATEGORIES = [
-  "Preposition",
-  "Article",
-  "Bod+yn",
-  "Numerals",
-  "Possessive",
-  "Adjective+Noun",
-  "PlaceName",
-  "Negation"
-];
-
-// ----- Phase 1: Preset handling -----
-function buildPresetButtons() {
-  const container = $("#presetBtns");
-  if (!container) return;
-  container.innerHTML = "";
-  // Define presets with keys and translation keys
-  const presets = [
-    { id: "starter-preps", titleKey: "presetStarterPreps", descKey: "presetStarterPrepsDesc" },
-    { id: "numbers-1-10", titleKey: "presetNumbers", descKey: "presetNumbersDesc" },
-    { id: "articles", titleKey: "presetArticles", descKey: "presetArticlesDesc" },
-    { id: "place-names", titleKey: "presetPlaceNames", descKey: "presetPlaceNamesDesc" },
-  ];
-  for (const p of presets) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "preset-card";
-    btn.dataset.preset = p.id;
-    const title = LABEL[state.lang || "en"]?.[p.titleKey] || p.id;
-    const desc = LABEL[state.lang || "en"]?.[p.descKey] || "";
-    btn.innerHTML = `<div class="preset-title">${esc(title)}</div><div class="preset-desc">${esc(desc)}</div>`;
-    btn.addEventListener("click", () => {
-      applyPreset(p.id);
-    });
-    container.appendChild(btn);
-  }
-}
-
-function applyPreset(name) {
-  // Reset filters first to defaults
-  state.categories = [];
-  state.families = ["Soft", "Aspirate", "Nasal", "None"];
-  state.outcomes = ["SM", "AM", "NM", "NONE"];
-  state.triggerQuery = "";
-  state.nilOnly = false;
-  if (name === "starter-preps") {
-    state.categories = ["Preposition"];
-  } else if (name === "numbers-1-10") {
-    state.categories = ["Numerals"];
-  } else if (name === "articles") {
-    state.categories = ["Article"];
-  } else if (name === "place-names") {
-    state.categories = ["PlaceName"];
-  }
-  // Persist to localStorage
-  saveLS("wm_families", state.families);
-  saveLS("wm_categories", state.categories);
-  saveLS("wm_outcomes", state.outcomes);
-  saveLS("wm_trig", state.triggerQuery);
-  saveLS("wm_nil", state.nilOnly);
-  applyFilters();
-  rebuildDeck();
-  buildFilters();
-  render();
-}
 function applyFilters() {
   const allowedOutcomes = (state.outcomes && state.outcomes.length) ? state.outcomes : ["SM","AM","NM","NONE"];
   let list = state.rows.filter(r =>
@@ -843,6 +737,18 @@ function applyFilters() {
     (allowedOutcomes.includes((r.Outcome || "").toUpperCase()))
   );
   if (state.nilOnly) list = list.filter(r => (r.Outcome || "").toUpperCase() === "NONE");
+
+  // Preset trigger set (canonical, robust to glosses/parentheticals in CSV Trigger values)
+  if (state.presetTriggers && state.presetTriggers.length) {
+    const set = new Set(state.presetTriggers.map(canonicalTrigger));
+    list = list.filter(r => set.has(r.TriggerCanon || canonicalTrigger(r.Trigger)));
+  }
+
+  // Optional v1 limiter: keep the Articles preset beginner-friendly until we have a real Complexity column.
+  if (state.activePreset && PRESET_DEFS[state.activePreset]?.limitComplexity) {
+    list = list.filter(r => !isLikelyComplexRow(r));
+  }
+
   if ((state.triggerQuery || "").trim()) {
     const q = normalize(state.triggerQuery);
     list = list.filter(r => normalize(r.Trigger).includes(q));
@@ -860,7 +766,6 @@ function rebuildDeck() {
   state.p = 0;
   state.guess = "";
   state.revealed = false;
-  state.usedRevealThisCard = false;
   state.lastResult = null;
   state.freezeIdx = null;
   state.freezePos = null;
@@ -1210,8 +1115,6 @@ function renderPractice() {
   aux.className = "practice-actions-aux";
 
   const onCheck = () => {
-    // Prevent double-counting if the user triggers Check more than once.
-    if (state.lastResult) return;
     const ok = normalize(state.guess) === normalize(card.Answer);
     state.revealed = true;
     state.lastResult = ok ? "correct" : "wrong";
@@ -1233,23 +1136,6 @@ function renderPractice() {
     };
     state.history = [rec, ...state.history].slice(0, 500);
     saveLS("wm_hist", state.history);
-
-    // --- session stats (device-local) ---
-    const sess = state.session || loadSession();
-    sess.done += 1;
-    if (ok) {
-      sess.correct += 1;
-      sess.points += SESSION_POINTS_PER_CORRECT;
-      if (!state.usedRevealThisCard) sess.streak += 1;
-      else sess.streak = 0;
-      if (sess.streak > sess.bestStreak) sess.bestStreak = sess.streak;
-    } else {
-      sess.streak = 0;
-    }
-    bumpSessionBucket(sess.byOutcome, (shownCard.Outcome || "?").toUpperCase(), ok);
-    bumpSessionBucket(sess.byCategory, shownCard.RuleCategory || "Uncategorised", ok);
-    state.session = sess;
-    saveSession(sess);
 
     updateLeitner(cardId, ok ? "correct" : "wrong");
     if (!ok && state.practiceMode === "smart") {
@@ -1281,16 +1167,11 @@ function renderPractice() {
   btnHint.title = `${t.hint} (H)`;
 
   const btnReveal = btn(t.reveal, "btn-ghost", () => {
-    // Reveal counts as "used" for streak purposes on this card.
-    const turningOn = !state.revealed;
-    if (turningOn) state.usedRevealThisCard = true;
     state.revealed = !state.revealed;
     render();
   });
 
   const btnSkip = btn(t.skip, "btn-ghost", () => {
-    // Prevent double-counting if the user triggers Skip after already checking.
-    if (state.lastResult) return;
     state.guess = "";
     state.revealed = true;
     state.lastResult = "skipped";
@@ -1312,15 +1193,6 @@ function renderPractice() {
       skipped: true,
     });
     saveLS("wm_hist", state.history);
-
-    // --- session stats (device-local) ---
-    const sess = state.session || loadSession();
-    sess.done += 1;
-    sess.streak = 0;
-    bumpSessionBucket(sess.byOutcome, (shownCard.Outcome || "?").toUpperCase(), false);
-    bumpSessionBucket(sess.byCategory, shownCard.RuleCategory || "Uncategorised", false);
-    state.session = sess;
-    saveSession(sess);
 
     updateLeitner(cardId, "skipped");
     if (state.practiceMode === "smart") {
@@ -1478,132 +1350,29 @@ function computeStats() {
   return { total, correct, acc, by };
 }
 
-function renderSessionPanel() {
-  // Session panel lives in the practice view sidebar.
-  // It should show *session* stats (device-local), not lifetime.
-  const sess = state.session || loadSession();
-
-  const lang = (state.lang === "cy" ? "cy" : "en");
-  const L = LABEL[lang];
-
-  const done = Number(sess.done) || 0;
-  const correct = Number(sess.correct) || 0;
-  const acc = done ? Math.round((correct / done) * 100) : 0;
-
-  // Accuracy tile
-  if ($("#accBig")) $("#accBig").textContent = `${acc}%`;
-  if ($("#accText")) $("#accText").textContent = formatTpl(L.sessionCorrectFmt, { correct, done });
-
-  // Streak tile
-  const currentStreak = Number(sess.streak) || 0;
-  const prevStreak = (typeof state._lastRenderedSessStreak === "number") ? state._lastRenderedSessStreak : null;
-  if ($("#sessStreak")) $("#sessStreak").textContent = String(currentStreak);
-  if ($("#sessBestStreak")) $("#sessBestStreak").textContent = formatTpl(L.sessionBestFmt, { n: Number(sess.bestStreak) || 0 });
-
-  // Tiny “pop” when streak increases
-  if (prevStreak != null && currentStreak > prevStreak) {
-    const span = $("#sessStreak");
-    const tile = span?.closest?.("div.p-3") || span?.closest?.("div.rounded-2xl");
-    if (tile) {
-      tile.classList.remove("animate-pop");
-      // force reflow so the animation restarts
-      void tile.offsetWidth;
-      tile.classList.add("animate-pop");
-      setTimeout(() => tile.classList.remove("animate-pop"), 200);
-    }
-  }
-  state._lastRenderedSessStreak = currentStreak;
-
-  // ---- Mastery (this focus) ----
-  const pool = (state.filtered?.length || 0);
-  const boxCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  for (let i = 0; i < pool; i++) {
-    const id = getCardId(state.filtered[i], i);
-    const box = getBoxFor(id);
-    boxCounts[box] = (boxCounts[box] || 0) + 1;
-  }
-  const mastered = (boxCounts[4] || 0) + (boxCounts[5] || 0);
-  const masteryPct = pool ? Math.round((mastered / pool) * 100) : 0;
-
-  if ($("#masteryText")) $("#masteryText").textContent = formatTpl(L.sessionMasteredFmt, { mastered, pool });
-  const mb = $("#masteryBar");
-  if (mb) mb.style.width = `${masteryPct}%`;
-  if ($("#masteryBoxes")) $("#masteryBoxes").textContent = formatTpl(L.sessionBox1Fmt, { n: boxCounts[1] || 0 });
-
-  // ---- More info: by outcome (session) ----
-  const ulOutcome = $("#byOutcome");
-  if (ulOutcome) {
-    ulOutcome.innerHTML = "";
-    const entries = Object.entries(sess.byOutcome || {});
-    // stable order preferred (SM/AM/NM/NONE), then others.
-    const order = ["SM", "AM", "NM", "NONE"];
-    entries.sort((a, b) => {
-      const ak = String(a[0]).toUpperCase();
-      const bk = String(b[0]).toUpperCase();
-      const ai = order.indexOf(ak);
-      const bi = order.indexOf(bk);
-      if (ai !== -1 || bi !== -1) {
-        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-      }
-      return ak.localeCompare(bk);
-    });
-
-    for (const [k, v] of entries) {
-      const tot = Number(v?.done) || 0;
-      const ok = Number(v?.correct) || 0;
-      const li = document.createElement("li");
-      li.className = "flex justify-between";
-      li.innerHTML = `<span>${esc(String(k).toUpperCase())}</span><span class="text-slate-600">${ok}/${tot}</span>`;
-      ulOutcome.appendChild(li);
-    }
-  }
-
-  // ---- More info: by category (session) ----
-  const ulCat = $("#sessByCategory");
-  if (ulCat) {
-    ulCat.innerHTML = "";
-    const catEntries = Object.entries(sess.byCategory || {})
-      .map(([k, v]) => ({
-        k: String(k || "Uncategorised"),
-        done: Number(v?.done) || 0,
-        correct: Number(v?.correct) || 0
-      }))
-      .filter(x => x.done > 0)
-      .sort((a, b) => b.done - a.done);
-
-    const MAX = 6;
-    let shown = catEntries.slice(0, MAX);
-    const rest = catEntries.slice(MAX);
-    for (const it of shown) {
-      const li = document.createElement("li");
-      li.className = "flex justify-between";
-      li.innerHTML = `<span>${esc(label("categories", it.k))}</span><span class="text-slate-600">${it.correct}/${it.done}</span>`;
-      ulCat.appendChild(li);
-    }
-    if (rest.length) {
-      const otherDone = rest.reduce((a, x) => a + x.done, 0);
-      const otherCorrect = rest.reduce((a, x) => a + x.correct, 0);
-      const li = document.createElement("li");
-      li.className = "flex justify-between";
-      li.innerHTML = `<span>${esc(L.sessionOther)}</span><span class="text-slate-600">${otherCorrect}/${otherDone}</span>`;
-      ulCat.appendChild(li);
-    }
-  }
-}
-
-function renderLifetimeStatsView() {
-  // Stats page should show lifetime accuracy based on history.
+function renderStatsPanels() {
   const s = computeStats();
+
+  if ($("#accBig")) $("#accBig").textContent = `${s.acc}%`;
+  if ($("#accText")) $("#accText").textContent = `${s.correct} / ${s.total} correct`;
   if ($("#statsAcc")) $("#statsAcc").textContent = `${s.acc}%`;
   if ($("#statsText")) $("#statsText").textContent = `${s.correct} correct out of ${s.total}`;
 
-  const ul = $("#statsByOutcome");
-  if (ul) ul.innerHTML = "";
+  const ul1 = $("#byOutcome");
+  const ul2 = $("#statsByOutcome");
+  if (ul1) ul1.innerHTML = "";
+  if (ul2) ul2.innerHTML = "";
+
   for (const [k, v] of Object.entries(s.by)) {
-    const li = document.createElement("li");
-    li.className = "flex justify-between";
-    li.innerHTML = `<span>${esc(k)}</span><span class="text-slate-600">${v.ok}/${v.total}</span>`;
-    ul?.appendChild(li);
+    const li1 = document.createElement("li");
+    li1.className = "flex justify-between";
+    li1.innerHTML = `<span>${esc(k)}</span><span class="text-slate-600">${v.ok}/${v.total}</span>`;
+    ul1?.appendChild(li1);
+
+    const li2 = document.createElement("li");
+    li2.className = "flex justify-between";
+    li2.innerHTML = `<span>${esc(k)}</span><span class="text-slate-600">${v.ok}/${v.total}</span>`;
+    ul2?.appendChild(li2);
   }
 }
 
@@ -1614,12 +1383,7 @@ function render() {
 
   renderPractice();
   if (state.mode === "browse") renderBrowse();
-
-  // Always update the session sidebar (it exists on the practice page).
-  renderSessionPanel();
-
-  // Only update the lifetime stats view when visible.
-  if (state.mode === "stats") renderLifetimeStatsView();
+  renderStatsPanels();
 }
 
 function nextCard(offset = 1) {
@@ -1631,7 +1395,6 @@ function nextCard(offset = 1) {
     state.smartCount = (state.smartCount || 0) + 1;
     state.guess = "";
     state.revealed = false;
-    state.usedRevealThisCard = false;
     state.lastResult = null;
     render();
     return;
@@ -1657,7 +1420,6 @@ function nextCard(offset = 1) {
   state.p = (state.p + offset + state.deck.length) % state.deck.length;
   state.guess = "";
   state.revealed = false;
-  state.usedRevealThisCard = false;
   state.lastResult = null;
   render();
 }
@@ -1668,46 +1430,8 @@ function wireUi() {
 
   $("#onboardDismiss")?.addEventListener("click", () => $("#onboard")?.classList.add("hidden"));
 
-  // Session panel buttons
-  $("#btnNewSession")?.addEventListener("click", () => {
-    resetSession();
-    render();
-  });
-
-  $("#btnResetStreak")?.addEventListener("click", () => {
-    resetStreak(state.session);
-    render();
-  });
-
-  // Device reset (clears device-local progress and stats)
-  const confirmClearDevice = () => {
-    const msg = (state.lang === "cy")
-      ? "Bydd hyn yn clirio eich cynnydd a’ch ystadegau sydd wedi’u cadw ar y ddyfais hon (hanes, blychau Leitner, a’r sesiwn bresennol). Ni ellir dadwneud hyn. Parhau?"
-      : "This will clear your progress and stats saved on this device (history, Leitner boxes, and the current session). This cannot be undone. Continue?";
-    return window.confirm(msg);
-  };
-
-  const clearDeviceStats = () => {
-    try { localStorage.removeItem("wm_hist"); } catch (e) {}
-    try { localStorage.removeItem(LEITNER_LS_KEY); } catch (e) {}
-    try { localStorage.removeItem(SESSION_LS_KEY); } catch (e) {}
-
-    state.history = [];
-    state.leitner = {};
-    state.session = resetSession(); // creates a fresh session and persists it
-    state.usedRevealThisCard = false;
-    render();
-  };
-
-  $("#btnResetStats")?.addEventListener("click", () => {
-    if (!confirmClearDevice()) return;
-    clearDeviceStats();
-  });
-  $("#btnResetStats2")?.addEventListener("click", () => {
-    if (!confirmClearDevice()) return;
-    clearDeviceStats();
-  });
-
+  $("#btnResetStats")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
+  $("#btnResetStats2")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
 
   $("#btnTop")?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
@@ -1795,6 +1519,7 @@ function wireUi() {
   syncLangFromNavbar();
 
 })();
+
 
 
 
