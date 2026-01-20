@@ -191,6 +191,7 @@ function coerceRow(row) {
 
 /* ========= App State ========= */
 const state = {
+  sourceScope: loadLS("wm_source_scope", []), // restrict cards to specific CSV sources (presets)
   rows: [],
   filtered: [],
   families: loadLS("wm_families", ["Soft","Aspirate","Nasal","None"]),
@@ -417,6 +418,14 @@ function clearPresetLayer({ keepActivePreset = false } = {}) {
   if (!keepActivePreset) state.activePreset = "";
   state.presetTriggers = [];
   saveLS("wm_active_preset", state.activePreset);
+  // Pack scoping: only starter preps are locked to prep.csv
+if (presetId === "starter-preps") {
+  state.sourceScope = ["data/prep.csv"];
+} else {
+  state.sourceScope = [];
+}
+saveLS("wm_source_scope", state.sourceScope);
+
   saveLS("wm_preset_triggers", state.presetTriggers);
 }
 
@@ -572,8 +581,13 @@ async function loadAllDefault() {
     const url = resolveFromRoot(p, root);
     if (!url) continue;
     try {
-      const d = await loadCsvUrl(url);
-      merged = merged.concat(d);
+        const d = await loadCsvUrl(url);
+        // Stamp each row with its source CSV path
+        d.forEach(row => {
+  if (row && typeof row === "object") row.__src = p;
+});
+
+merged = merged.concat(d);
     } catch (err) {
       console.warn("Failed to load source:", url, err);
     }
@@ -592,11 +606,13 @@ async function initData() {
 
   const expected = ["CardId","RuleFamily","RuleCategory","Trigger","Base","WordCategory","Translate","Before","After","Answer","Outcome","Why","WhyCym"];
   const cleaned = rows.map(r => {
-    const m = coerceRow(r);
-    const o = {};
-    for (const k of expected) o[k] = (m?.[k] ?? "").toString().trim();
-    return o;
-  });
+  const src = (r && typeof r === "object" && r.__src) ? String(r.__src) : "";
+  const m = coerceRow(r);
+  const o = {};
+  for (const k of expected) o[k] = (m?.[k] ?? "").toString().trim();
+  o.Source = src; // 👈 preserve CSV origin
+  return o;
+});
 
   state.rows = cleaned;
 
@@ -665,7 +681,15 @@ function buildFilters() {
     const allCatsActive = !state.categories.length;
     const allLabel = label("categories", "All");
     catEl.appendChild(toggleBtn(allLabel, allCatsActive, () => {
-      clearPresetLayer();
+     function clearPresetLayer({ keepActivePreset = false } = {}) {
+  if (!keepActivePreset) state.activePreset = "";
+  state.presetTriggers = [];
+  state.sourceScope = []; // 👈 IMPORTANT
+  saveLS("wm_active_preset", state.activePreset);
+  saveLS("wm_preset_triggers", state.presetTriggers);
+  saveLS("wm_source_scope", state.sourceScope);
+}
+
       state.categories = [];
       saveLS("wm_categories", state.categories);
       applyFilters(); rebuildDeck(); buildFilters(); render();
@@ -753,6 +777,12 @@ function applyFilters() {
     const q = normalize(state.triggerQuery);
     list = list.filter(r => normalize(r.Trigger).includes(q));
   }
+  // Restrict to specific CSV source(s) if a preset has set a pack scope
+  if (Array.isArray(state.sourceScope) && state.sourceScope.length) {
+  const allowed = new Set(state.sourceScope);
+  list = list.filter(r => allowed.has(r.Source));
+  }
+
   state.filtered = list;
 }
 function rebuildDeck() {
@@ -1504,16 +1534,19 @@ function wireUi() {
     });
   }
 
-  if (getParam("preset") === "prepositions") {
-    state.categories = ["Preposition"];
-    saveLS("wm_categories", state.categories);
-  }
+  
 }
 
 /* ========= Boot ========= */
 (async function boot() {
   wireUi();
   await initData();
+  // Apply preset from URL (shareable tutor links)
+const preset = (getParam("preset") || "").trim();
+if (preset && PRESET_DEFS[preset]) {
+  applyPreset(preset, { fromUrl: true });
+}
+
 
   // Apply current language immediately (navbar.js also applies [data-lang] visibility)
   syncLangFromNavbar();
