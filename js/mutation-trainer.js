@@ -1,4 +1,3 @@
-
 /* ========= Utilities ========= */
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -231,7 +230,15 @@ function setCategories(next) {
   saveLS("wm_categories", state.categories);
 }
 
-state.categories = normalizeCategoryList(state.categories);
+state.families = Array.isArray(state.families) && state.families.length
+  ? state.families
+  : ["Soft","Aspirate","Nasal","None"];
+state.outcomes = Array.isArray(state.outcomes) && state.outcomes.length
+  ? state.outcomes
+  : ["SM","AM","NM","NONE"];
+state.categories = normalizeCategoryList(Array.isArray(state.categories) ? state.categories : []);
+state.presetTriggers = Array.isArray(state.presetTriggers) ? state.presetTriggers : [];
+state.sourceScope = Array.isArray(state.sourceScope) ? state.sourceScope : [];
 
 /* ========= UI Translations ========= */
 const LABEL = {
@@ -424,36 +431,43 @@ function isLikelyComplexRow(card) {
   return false;
 }
 
-
-saveLS("wm_source_scope", state.sourceScope);
-
+function clearPresetLayer() {
+  if (!state.activePreset && !state.presetTriggers?.length && !state.sourceScope?.length) return;
+  state.activePreset = "";
+  state.presetTriggers = [];
+  state.sourceScope = [];
+  saveLS("wm_active_preset", state.activePreset);
   saveLS("wm_preset_triggers", state.presetTriggers);
+  saveLS("wm_source_scope", state.sourceScope);
+}
+
+function updatePresetActiveClasses() {
+  $$("[data-preset]").forEach(el => {
+    const id = el.getAttribute("data-preset");
+    el.classList.toggle("preset-on", Boolean(id && id === state.activePreset));
+  });
+}
+
+function renderPresetTiles() {
+  wirePresetUi();
+  updatePresetActiveClasses();
 }
 
 function applyPreset(presetId, { fromUrl = false } = {}) {
   const p = PRESET_DEFS[presetId];
   if (!p) return;
-  
-function applyPreset(presetId, { fromUrl = false } = {}) {
+
   // FULL RESET FIRST
   state.triggerQuery = "";
   state.nilOnly = false;
   state.categories = [];
   state.families = ["Soft","Aspirate","Nasal","None"];
   state.outcomes = ["SM","AM","NM","NONE"];
+  state.sourceScope = [];
   saveLS("wm_trig", "");
   saveLS("wm_nil", false);
-
-  state.categories = [p.category];
-  state.presetTriggers = p.triggers.map(canonicalTrigger);
-
-  // Reset/clear potentially conflicting filters.
-  state.triggerQuery = "";
-  saveLS("wm_trig", state.triggerQuery);
-  state.nilOnly = false;
-  saveLS("wm_nil", state.nilOnly);
-  state.outcomes = ["SM","AM","NM","NONE"]; // keep full outcome set
   saveLS("wm_outcomes", state.outcomes);
+  saveLS("wm_source_scope", state.sourceScope);
 
   // Core preset filter targets.
   state.activePreset = presetId;
@@ -673,129 +687,256 @@ function toggleBtn(text, active, onToggle) {
   applyPillState($("#basicCatBtns"), categories, categoriesAllActive);
   applyPillState($("#catBtns"), categories, categoriesAllActive);
 }
-function buildFiltersUI() {
+function buildFilters() {
   const lang = state.lang || "en";
 
+  // Titles
+  if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
+  if ($("#presetsTitle")) $("#presetsTitle").textContent = LABEL[lang].headings.presets;
+  if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
+  if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
+  if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
+  if ($("#basicCategoriesTitle")) $("#basicCategoriesTitle").textContent = LABEL[lang].headings.categories;
+  if ($("#advCategoriesTitle")) $("#advCategoriesTitle").textContent = LABEL[lang].headings.categories;
+  if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
+  if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
 
+  // Presets
+  renderPresetTiles();
 
-    // Titles
-   if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
-   if ($("#presetsTitle")) $("#presetsTitle").textContent = LABEL[lang].headings.presets;
-   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
-   if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
-   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
-   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
-   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
- 
-   // Presets
-   renderPresetTiles();
- 
-   // Derive categories from data
-   const cats = new Set();
-   for (const r of state.rows) if (r.RuleCategory) cats.add(r.RuleCategory);
-   const allCats = Array.from(cats).sort();
- 
-   /* -----------------------------
-      RULE FAMILY (with All)
-   ------------------------------*/
-   const famEl = $("#familyBtns");
-   if (famEl) {
-     famEl.innerHTML = "";
- 
-+    const isAllFamilies = state.families.length === 4;
-+
-     // ALL pill
--    const allBtn = toggleBtn(label("categories", "All"), false, () => {
-+    const allBtn = toggleBtn(label("categories", "All"), isAllFamilies, () => {
-       clearPresetLayer();
-       state.families = ["Soft","Aspirate","Nasal","None"];
-       saveLS("wm_families", state.families);
-       applyFilters();
-       rebuildDeck();
-       refreshFilterPills();
-       render();
-       updatePresetActiveClasses();
-     });
-     allBtn.dataset.key = "__ALL__";
-     famEl.appendChild(allBtn);
- 
-     for (const f of ["Soft","Aspirate","Nasal","None"]) {
--      const b = toggleBtn(label("rulefamily", f), false, (on) => {
-+      const isOn = isAllFamilies || state.families.includes(f);
-+      const b = toggleBtn(label("rulefamily", f), isOn, () => {
-         clearPresetLayer();
- 
--        // multi-select
--        state.families = on
--          ? Array.from(new Set([...state.families, f]))
--          : state.families.filter(x => x !== f);
--
--        // if user turns them all off, snap back to All (prevents empty state confusion)
--        if (!state.families.length) state.families = ["Soft","Aspirate","Nasal","None"];
-+        if (isAllFamilies) {
-+          state.families = [f];
-+        } else {
-+          if (state.families.includes(f)) {
-+            state.families = state.families.filter(x => x !== f);
-+          } else {
-+            state.families = [...state.families, f];
-+          }
-+          if (!state.families.length) state.families = ["Soft","Aspirate","Nasal","None"];
-+        }
- 
-         saveLS("wm_families", state.families);
-         applyFilters();
-         rebuildDeck();
-         refreshFilterPills();
-         render();
-         updatePresetActiveClasses();
-       });
-       b.dataset.key = f;
-       famEl.appendChild(b);
-     }
-   }
- 
-   /* -----------------------------
-      OUTCOME (with All)
-   ------------------------------*/
-   const outEl = $("#outcomeBtns");
-   if (outEl) {
-     outEl.innerHTML = "";
- 
-     const allBtn = toggleBtn(label("categories", "All"), false, () => {
-       clearPresetLayer();
-       state.outcomes = ["SM","AM","NM","NONE"];
-       saveLS("wm_outcomes", state.outcomes);
-       applyFilters();
-@@ -1670,26 +1676,25 @@ function wireUi() {
-         }
-       });
-     });
-   }
- 
-   
- }
- 
- /* ========= Boot ========= */
- (async function boot() {
-   wireUi();
-   await initData();
-   // Apply preset from URL (shareable tutor links)
- const preset = (getParam("preset") || "").trim();
- if (preset && PRESET_DEFS[preset]) {
-   applyPreset(preset, { fromUrl: true });
- }
- 
- 
-   // Apply current language immediately (navbar.js also applies [data-lang] visibility)
-   syncLangFromNavbar();
- 
- })();
- 
+  // Derive categories from data
+  const cats = new Set();
+  for (const r of state.rows) if (r.RuleCategory) cats.add(r.RuleCategory);
+  const allCats = Array.from(cats).sort();
+  const commonCats = COMMON_CATEGORIES.filter(c => allCats.includes(c));
 
+  /* -----------------------------
+     RULE FAMILY (with All)
+  ------------------------------*/
+  const famEl = $("#familyBtns");
+  if (famEl) {
+    famEl.innerHTML = "";
+
+    const isAllFamilies = state.families.length === 4;
+
+    const allBtn = toggleBtn(label("categories", "All"), isAllFamilies, () => {
+      clearPresetLayer();
+      state.families = ["Soft","Aspirate","Nasal","None"];
+      saveLS("wm_families", state.families);
+      applyFilters();
+      rebuildDeck();
+      refreshFilterPills();
+      render();
+      updatePresetActiveClasses();
+    });
+    allBtn.dataset.key = "__ALL__";
+    famEl.appendChild(allBtn);
+
+    for (const f of ["Soft","Aspirate","Nasal","None"]) {
+      const isOn = isAllFamilies || state.families.includes(f);
+      const b = toggleBtn(label("rulefamily", f), isOn, () => {
+        clearPresetLayer();
+        if (isAllFamilies) {
+          state.families = [f];
+        } else {
+          if (state.families.includes(f)) {
+            state.families = state.families.filter(x => x !== f);
+          } else {
+            state.families = [...state.families, f];
+          }
+          if (!state.families.length) state.families = ["Soft","Aspirate","Nasal","None"];
+        }
+        saveLS("wm_families", state.families);
+        applyFilters();
+        rebuildDeck();
+        refreshFilterPills();
+        render();
+        updatePresetActiveClasses();
+      });
+      b.dataset.key = f;
+      famEl.appendChild(b);
+    }
+  }
+
+  /* -----------------------------
+     OUTCOME (with All)
+  ------------------------------*/
+  const outEl = $("#outcomeBtns");
+  if (outEl) {
+    outEl.innerHTML = "";
+    const isAllOutcomes = state.outcomes.length === 4;
+
+    const allBtn = toggleBtn(label("categories", "All"), isAllOutcomes, () => {
+      clearPresetLayer();
+      state.outcomes = ["SM","AM","NM","NONE"];
+      saveLS("wm_outcomes", state.outcomes);
+      applyFilters();
+      rebuildDeck();
+      refreshFilterPills();
+      render();
+      updatePresetActiveClasses();
+    });
+    allBtn.dataset.key = "__ALL__";
+    outEl.appendChild(allBtn);
+
+    for (const o of ["SM","AM","NM","NONE"]) {
+      const isOn = isAllOutcomes || state.outcomes.includes(o);
+      const b = toggleBtn(label("rulefamily", o), isOn, () => {
+        clearPresetLayer();
+        if (isAllOutcomes) {
+          state.outcomes = [o];
+        } else {
+          if (state.outcomes.includes(o)) {
+            state.outcomes = state.outcomes.filter(x => x !== o);
+          } else {
+            state.outcomes = [...state.outcomes, o];
+          }
+          if (!state.outcomes.length) state.outcomes = ["SM","AM","NM","NONE"];
+        }
+        saveLS("wm_outcomes", state.outcomes);
+        applyFilters();
+        rebuildDeck();
+        refreshFilterPills();
+        render();
+        updatePresetActiveClasses();
+      });
+      b.dataset.key = o;
+      outEl.appendChild(b);
+    }
+  }
+
+  const bindCategoryButtons = (container, categories) => {
+    if (!container) return;
+    container.innerHTML = "";
+    const categoriesAllActive = state.categories.length === 0;
+
+    const allBtn = toggleBtn(label("categories", "All"), categoriesAllActive, () => {
+      clearPresetLayer();
+      state.categories = [];
+      saveLS("wm_categories", state.categories);
+      applyFilters();
+      rebuildDeck();
+      refreshFilterPills();
+      render();
+      updatePresetActiveClasses();
+    });
+    allBtn.dataset.key = "__ALL__";
+    container.appendChild(allBtn);
+
+    for (const c of categories) {
+      const isOn = categoriesAllActive || state.categories.includes(c);
+      const b = toggleBtn(label("categories", c), isOn, () => {
+        clearPresetLayer();
+        if (categoriesAllActive) {
+          state.categories = [c];
+        } else if (state.categories.includes(c)) {
+          state.categories = state.categories.filter(x => x !== c);
+        } else {
+          state.categories = [...state.categories, c];
+        }
+        if (!state.categories.length) state.categories = [];
+        saveLS("wm_categories", state.categories);
+        applyFilters();
+        rebuildDeck();
+        refreshFilterPills();
+        render();
+        updatePresetActiveClasses();
+      });
+      b.dataset.key = c;
+      container.appendChild(b);
+    }
+  };
+
+  bindCategoryButtons($("#basicCatBtns"), commonCats);
+  bindCategoryButtons($("#catBtns"), allCats);
+
+  const trigEl = $("#triggerFilter");
+  if (trigEl) {
+    trigEl.value = state.triggerQuery || "";
+    trigEl.oninput = () => {
+      clearPresetLayer();
+      state.triggerQuery = trigEl.value;
+      saveLS("wm_trig", state.triggerQuery);
+      applyFilters();
+      rebuildDeck();
+      refreshFilterPills();
+      render();
+      updatePresetActiveClasses();
+    };
+  }
+
+  const nilEl = $("#nilOnly");
+  if (nilEl) {
+    nilEl.checked = Boolean(state.nilOnly);
+    nilEl.onchange = () => {
+      clearPresetLayer();
+      state.nilOnly = Boolean(nilEl.checked);
+      saveLS("wm_nil", state.nilOnly);
+      applyFilters();
+      rebuildDeck();
+      refreshFilterPills();
+      render();
+      updatePresetActiveClasses();
+    };
+  }
+
+  refreshFilterPills();
+  updatePresetActiveClasses();
+}
+
+function applyFilters() {
+  const preset = PRESET_DEFS[state.activePreset];
+  const trigRaw = (state.triggerQuery || "").trim();
+  const trigTokens = trigRaw
+    ? trigRaw.split(",").map(canonicalTrigger).filter(Boolean)
+    : [];
+
+  let list = state.rows.slice();
+
+  if (state.sourceScope?.length) {
+    const scope = new Set(state.sourceScope);
+    list = list.filter(r => scope.has(r.Source));
+  }
+
+  if (state.families?.length) {
+    const famSet = new Set(state.families);
+    list = list.filter(r => famSet.has(r.RuleFamily));
+  }
+
+  if (state.outcomes?.length) {
+    const outSet = new Set(state.outcomes);
+    list = list.filter(r => outSet.has((r.Outcome || "").toUpperCase()));
+  }
+
+  if (state.categories?.length) {
+    const catSet = new Set(state.categories);
+    list = list.filter(r => catSet.has(r.RuleCategory));
+  }
+
+  if (state.presetTriggers?.length) {
+    const presetSet = new Set(state.presetTriggers);
+    list = list.filter(r => presetSet.has(r.TriggerCanon || canonicalTrigger(r.Trigger)));
+  }
+
+  if (trigTokens.length) {
+    const trigSet = new Set(trigTokens);
+    list = list.filter(r => trigSet.has(r.TriggerCanon || canonicalTrigger(r.Trigger)));
+  }
+
+  if (state.nilOnly) {
+    list = list.filter(r => {
+      const out = (r.Outcome || "").toUpperCase();
+      return out === "NONE" || r.RuleFamily === "None";
+    });
+  }
+
+  if (preset?.limitComplexity) {
+    list = list.filter(r => !isLikelyComplexRow(r));
+  }
 
   state.filtered = list;
 }
+
 function rebuildDeck() {
   const n = state.filtered.length;
   const d = Array.from({ length: n }, (_, i) => i);
