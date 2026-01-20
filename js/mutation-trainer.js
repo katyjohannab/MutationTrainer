@@ -899,27 +899,111 @@ function applyFilters() {
     (allowedOutcomes.includes((r.Outcome || "").toUpperCase()))
   );
   if (state.nilOnly) list = list.filter(r => (r.Outcome || "").toUpperCase() === "NONE");
+  let list = state.rows.slice();
 
   // Preset trigger set (canonical, robust to glosses/parentheticals in CSV Trigger values)
   if (state.presetTriggers && state.presetTriggers.length) {
     const set = new Set(state.presetTriggers.map(canonicalTrigger));
     list = list.filter(r => set.has(r.TriggerCanon || canonicalTrigger(r.Trigger)));
+  /* ===== RuleFamily =====
+     Semantics: if 4 families selected => treat as ALL (no filtering)
+  */
+  if (Array.isArray(state.families) && state.families.length && state.families.length < 4) {
+    list = list.filter(r => state.families.includes(r.RuleFamily));
+  }
+
+  /* ===== Categories =====
+     Semantics: if "All" selected OR categories empty => treat as ALL (no filtering)
+  */
+  if (Array.isArray(state.categories) && state.categories.length && !state.categories.includes("All")) {
+    list = list.filter(r => state.categories.includes(r.RuleCategory));
+  }
+
+  /* ===== Outcomes =====
+     Semantics: if 4 outcomes selected => treat as ALL (no filtering)
+  */
+  if (Array.isArray(state.outcomes) && state.outcomes.length && state.outcomes.length < 4) {
+    list = list.filter(r => state.outcomes.includes((r.Outcome || "").toUpperCase()));
   }
 
   // Optional v1 limiter: keep the Articles preset beginner-friendly until we have a real Complexity column.
   if (state.activePreset && PRESET_DEFS[state.activePreset]?.limitComplexity) {
     list = list.filter(r => !isLikelyComplexRow(r));
+  /* ===== Nil-only ===== */
+  if (state.nilOnly) {
+    list = list.filter(r => (r.Outcome || "").toUpperCase() === "NONE");
   }
 
+  /* ===== Preset triggers (canonical) ===== */
+  if (Array.isArray(state.presetTriggers) && state.presetTriggers.length) {
+    const set = new Set(state.presetTriggers.map(canonicalTrigger));
+    list = list.filter(r => set.has(r.TriggerCanon || canonicalTrigger(r.Trigger)));
+  }
+
+  /* ===== Trigger search ===== */
   if ((state.triggerQuery || "").trim()) {
     const q = normalize(state.triggerQuery);
     list = list.filter(r => normalize(r.Trigger).includes(q));
+    list = list.filter(r => normalize(r.Trigger || "").includes(q));
   }
   // Restrict to specific CSV source(s) if a preset has set a pack scope
+
+  /* ===== Pack scope (only when preset sets it) ===== */
   if (Array.isArray(state.sourceScope) && state.sourceScope.length) {
   const allowed = new Set(state.sourceScope);
   list = list.filter(r => allowed.has(r.Source));
+    const allowed = new Set(state.sourceScope);
+    list = list.filter(r => allowed.has(r.Source));
   }
+
+  state.filtered = list;
+}
+function rebuildDeck() {
+  const n = state.filtered.length;
+  const d = Array.from({ length: n }, (_, i) => i);
+  for (let i = d.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [d[i], d[j]] = [d[j], d[i]];
+  }
+  state.deck = d;
+  state.p = 0;
+  state.guess = "";
+  state.revealed = false;
+  state.lastResult = null;
+  state.freezeIdx = null;
+  state.freezePos = null;
+  state.smartQueue = [];
+
+  if (state.practiceMode === "smart") {
+    state.smartCount = 0;
+    state.smartIdx = pickNextSmartIdx();
+  } else {
+    state.smartIdx = null;
+@@ -1670,26 +1687,25 @@ function wireUi() {
+        }
+      });
+    });
+  }
+
+  
+}
+
+/* ========= Boot ========= */
+(async function boot() {
+  wireUi();
+  await initData();
+  // Apply preset from URL (shareable tutor links)
+const preset = (getParam("preset") || "").trim();
+if (preset && PRESET_DEFS[preset]) {
+  applyPreset(preset, { fromUrl: true });
+}
+
+
+  // Apply current language immediately (navbar.js also applies [data-lang] visibility)
+  syncLangFromNavbar();
+
+})();
+
 
   state.filtered = list;
 }
