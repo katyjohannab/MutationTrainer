@@ -227,6 +227,28 @@ body{
   color: var(--muted);
 }
 
+.preset-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: white;
+  border: 1px solid var(--border-soft);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.preset-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.preset-on {
+  border-color: var(--indigo-500);
+  background: var(--indigo-50);
+}
+
+
 /* Advanced filters summary styling */
 #advFilters > summary{
   list-style: none;
