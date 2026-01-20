@@ -676,373 +676,122 @@ function toggleBtn(text, active, onToggle) {
 function buildFiltersUI() {
   const lang = state.lang || "en";
 
-  // Titles
-  if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
-  if ($("#presetsTitle")) $("#presetsTitle").textContent = LABEL[lang].headings.presets;
-  if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
-  if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
-  if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
-  if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
-  if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
-
-  // Presets
-  renderPresetTiles();
-
-  // Derive categories from data
-  const cats = new Set();
-  for (const r of state.rows) if (r.RuleCategory) cats.add(r.RuleCategory);
-  const allCats = Array.from(cats).sort();
-
-  /* -----------------------------
-     RULE FAMILY (with All)
-  ------------------------------*/
-  const famEl = $("#familyBtns");
-  if (famEl) {
-    famEl.innerHTML = "";
-
-    // ALL pill
-    const allBtn = toggleBtn(label("categories", "All"), false, () => {
-      clearPresetLayer();
-      state.families = ["Soft","Aspirate","Nasal","None"];
-      saveLS("wm_families", state.families);
-      applyFilters();
-      rebuildDeck();
-      refreshFilterPills();
-      render();
-      updatePresetActiveClasses();
-    });
-    allBtn.dataset.key = "__ALL__";
-    famEl.appendChild(allBtn);
-
-    for (const f of ["Soft","Aspirate","Nasal","None"]) {
-      const b = toggleBtn(label("rulefamily", f), false, (on) => {
-        clearPresetLayer();
-
-        // multi-select
-        state.families = on
-          ? Array.from(new Set([...state.families, f]))
-          : state.families.filter(x => x !== f);
-
-        // if user turns them all off, snap back to All (prevents empty state confusion)
-        if (!state.families.length) state.families = ["Soft","Aspirate","Nasal","None"];
-
-        saveLS("wm_families", state.families);
-        applyFilters();
-        rebuildDeck();
-        refreshFilterPills();
-        render();
-        updatePresetActiveClasses();
-      });
-      b.dataset.key = f;
-      famEl.appendChild(b);
-    }
-  }
-
-  /* -----------------------------
-     OUTCOME (with All)
-  ------------------------------*/
-  const outEl = $("#outcomeBtns");
-  if (outEl) {
-    outEl.innerHTML = "";
-
-    const allBtn = toggleBtn(label("categories", "All"), false, () => {
-      clearPresetLayer();
-      state.outcomes = ["SM","AM","NM","NONE"];
-      saveLS("wm_outcomes", state.outcomes);
-      applyFilters();
-      rebuildDeck();
-      refreshFilterPills();
-      render();
-      updatePresetActiveClasses();
-    });
-    allBtn.dataset.key = "__ALL__";
-    outEl.appendChild(allBtn);
-
-    const outcomes = ["SM","AM","NM","NONE"];
-    for (const o of outcomes) {
-      const b = toggleBtn(o, false, (on) => {
-        clearPresetLayer();
-
-        state.outcomes = on
-          ? Array.from(new Set([...state.outcomes, o]))
-          : state.outcomes.filter(x => x !== o);
-
-        if (!state.outcomes.length) state.outcomes = ["SM","AM","NM","NONE"];
-
-        saveLS("wm_outcomes", state.outcomes);
-        applyFilters();
-        rebuildDeck();
-        refreshFilterPills();
-        render();
-        updatePresetActiveClasses();
-      });
-      b.dataset.key = o;
-      outEl.appendChild(b);
-    }
-  }
-
-  /* -----------------------------
-     CATEGORIES — BASIC (common vs all) + All pill
-     NOTE: now multi-select (no more “only one” behaviour)
-  ------------------------------*/
-  const basicCatEl = $("#basicCatBtns");
-  if (basicCatEl) {
-    basicCatEl.innerHTML = "";
-
-    // BASIC categories: inject "All" pill first
-    const allActive = state.categories.includes("All") || state.categories.length === 0;
-    const allBtn = toggleBtn(LABEL[lang].categories.All, allActive, () => {
-      clearPresetLayer();
-      setCategories([]);
-      applyFilters();
-      rebuildDeck();
-      refreshFilterPills();
-      render();
-      updatePresetActiveClasses();
-    });
-    allBtn.dataset.key = "__ALL__";
-    basicCatEl.appendChild(allBtn);
-
-    const showAll = !!state.showAllCategories;
-    const displayCats = showAll
-      ? allCats
-      : COMMON_CATEGORIES.filter(c => cats.has(c));
-
-    for (const c of displayCats) {
-      if (!cats.has(c)) continue;
-
-      const b = toggleBtn(label("categories", c), false, (on) => {
-        clearPresetLayer();
-       if (on && state.categories.includes("All")) {
-          state.categories = state.categories.filter(x => x !== "All");
-        }
-           const nextCategories = on
-          ? [...state.categories, c]
-          : state.categories.filter(x => x !== c);
-
-        setCategories(nextCategories);
-        applyFilters();
-        rebuildDeck();
-        refreshFilterPills();
-        render();
-        updatePresetActiveClasses();
-      });
-
-      b.dataset.key = c;
-      basicCatEl.appendChild(b);
-    }
-
-    // Toggle common vs all categories view
-    const toggle = $("#catViewToggle") || document.createElement("button");
-    toggle.id = "catViewToggle";
-    toggle.type = "button";
-    toggle.className = "btn btn-ghost";
-    toggle.style.marginTop = "8px";
-    toggle.textContent = showAll ? LABEL[lang].categoryView.showCommon : LABEL[lang].categoryView.showAll;
-
-    toggle.onclick = () => {
-      state.showAllCategories = !state.showAllCategories;
-      saveLS("wm_show_all_cats", state.showAllCategories);
-      buildFiltersUI();
-      updatePresetActiveClasses();
-    };
-
-    basicCatEl.parentElement?.appendChild(toggle);
-  }
-
-  /* -----------------------------
-     CATEGORIES — ADVANCED (full list) + All pill
-  ------------------------------*/
-  const advCatEl = $("#catBtns");
-  if (advCatEl) {
-    advCatEl.innerHTML = "";
-
-    const allBtn = toggleBtn(label("categories", "All"), false, () => {
-      clearPresetLayer();
-      setCategories([]);
-      applyFilters();
-      rebuildDeck();
-      refreshFilterPills();
-      render();
-      updatePresetActiveClasses();
-    });
-    allBtn.dataset.key = "__ALL__";
-    advCatEl.appendChild(allBtn);
-
-    for (const c of allCats) {
-      const b = toggleBtn(label("categories", c), false, (on) => {
-        clearPresetLayer();
-
-        const nextCategories = on
-          ? [...state.categories, c]
-          : state.categories.filter(x => x !== c);
-
-        setCategories(nextCategories);
-        applyFilters();
-        rebuildDeck();
-        refreshFilterPills();
-        render();
-        updatePresetActiveClasses();
-      });
-      b.dataset.key = c;
-      advCatEl.appendChild(b);
-    }
-  }
-
-  /* -----------------------------
-     TRIGGER SEARCH
-  ------------------------------*/
-  const trig = $("#triggerFilter");
-  if (trig) {
-    trig.value = state.triggerQuery || "";
-    trig.oninput = (e) => {
-      clearPresetLayer();
-      state.triggerQuery = e.target.value;
-      saveLS("wm_trig", state.triggerQuery);
-      applyFilters();
-      rebuildDeck();
-      render();
-      updatePresetActiveClasses();
-    };
-  }
-
-  /* -----------------------------
-     NIL ONLY
-  ------------------------------*/
-  const nil = $("#nilOnly");
-  if (nil) {
-    nil.checked = !!state.nilOnly;
-    nil.onchange = (e) => {
-      clearPresetLayer();
-      state.nilOnly = e.target.checked;
-      saveLS("wm_nil", state.nilOnly);
-      applyFilters();
-      rebuildDeck();
-      render();
-      updatePresetActiveClasses();
-    };
-  }
-
-  state._filtersBound = true;
-
-  // IMPORTANT: ensure pills reflect current state right away
-  refreshFilterPills();
-}
-
-  
-function applyFilters() {
-  const allowedOutcomes = (state.outcomes && state.outcomes.length) ? state.outcomes : ["SM","AM","NM","NONE"];
-  const activeCategories = state.categories.filter(c => c !== "All");
-  let list = state.rows.filter(r =>
-    (state.families.length ? state.families.includes(r.RuleFamily) : true) &&
-    (activeCategories.length ? activeCategories.includes(r.RuleCategory) : true) &&
-    (allowedOutcomes.includes((r.Outcome || "").toUpperCase()))
-  );
-  if (state.nilOnly) list = list.filter(r => (r.Outcome || "").toUpperCase() === "NONE");
-  let list = state.rows.slice();
-
-  // Preset trigger set (canonical, robust to glosses/parentheticals in CSV Trigger values)
-  if (state.presetTriggers && state.presetTriggers.length) {
-    const set = new Set(state.presetTriggers.map(canonicalTrigger));
-    list = list.filter(r => set.has(r.TriggerCanon || canonicalTrigger(r.Trigger)));
-  /* ===== RuleFamily =====
-     Semantics: if 4 families selected => treat as ALL (no filtering)
-  */
-  if (Array.isArray(state.families) && state.families.length && state.families.length < 4) {
-    list = list.filter(r => state.families.includes(r.RuleFamily));
-  }
-
-  /* ===== Categories =====
-     Semantics: if "All" selected OR categories empty => treat as ALL (no filtering)
-  */
-  if (Array.isArray(state.categories) && state.categories.length && !state.categories.includes("All")) {
-    list = list.filter(r => state.categories.includes(r.RuleCategory));
-  }
-
-  /* ===== Outcomes =====
-     Semantics: if 4 outcomes selected => treat as ALL (no filtering)
-  */
-  if (Array.isArray(state.outcomes) && state.outcomes.length && state.outcomes.length < 4) {
-    list = list.filter(r => state.outcomes.includes((r.Outcome || "").toUpperCase()));
-  }
-
-  // Optional v1 limiter: keep the Articles preset beginner-friendly until we have a real Complexity column.
-  if (state.activePreset && PRESET_DEFS[state.activePreset]?.limitComplexity) {
-    list = list.filter(r => !isLikelyComplexRow(r));
-  /* ===== Nil-only ===== */
-  if (state.nilOnly) {
-    list = list.filter(r => (r.Outcome || "").toUpperCase() === "NONE");
-  }
-
-  /* ===== Preset triggers (canonical) ===== */
-  if (Array.isArray(state.presetTriggers) && state.presetTriggers.length) {
-    const set = new Set(state.presetTriggers.map(canonicalTrigger));
-    list = list.filter(r => set.has(r.TriggerCanon || canonicalTrigger(r.Trigger)));
-  }
-
-  /* ===== Trigger search ===== */
-  if ((state.triggerQuery || "").trim()) {
-    const q = normalize(state.triggerQuery);
-    list = list.filter(r => normalize(r.Trigger).includes(q));
-    list = list.filter(r => normalize(r.Trigger || "").includes(q));
-  }
-  // Restrict to specific CSV source(s) if a preset has set a pack scope
-
-  /* ===== Pack scope (only when preset sets it) ===== */
-  if (Array.isArray(state.sourceScope) && state.sourceScope.length) {
-  const allowed = new Set(state.sourceScope);
-  list = list.filter(r => allowed.has(r.Source));
-    const allowed = new Set(state.sourceScope);
-    list = list.filter(r => allowed.has(r.Source));
-  }
-
-  state.filtered = list;
-}
-function rebuildDeck() {
-  const n = state.filtered.length;
-  const d = Array.from({ length: n }, (_, i) => i);
-  for (let i = d.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [d[i], d[j]] = [d[j], d[i]];
-  }
-  state.deck = d;
-  state.p = 0;
-  state.guess = "";
-  state.revealed = false;
-  state.lastResult = null;
-  state.freezeIdx = null;
-  state.freezePos = null;
-  state.smartQueue = [];
-
-  if (state.practiceMode === "smart") {
-    state.smartCount = 0;
-    state.smartIdx = pickNextSmartIdx();
-  } else {
-    state.smartIdx = null;
-@@ -1670,26 +1687,25 @@ function wireUi() {
-        }
-      });
-    });
-  }
-
-  
-}
-
-/* ========= Boot ========= */
-(async function boot() {
-  wireUi();
-  await initData();
-  // Apply preset from URL (shareable tutor links)
-const preset = (getParam("preset") || "").trim();
-if (preset && PRESET_DEFS[preset]) {
-  applyPreset(preset, { fromUrl: true });
-}
 
 
-  // Apply current language immediately (navbar.js also applies [data-lang] visibility)
-  syncLangFromNavbar();
-
-})();
+    // Titles
+   if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
+   if ($("#presetsTitle")) $("#presetsTitle").textContent = LABEL[lang].headings.presets;
+   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
+   if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
+   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
+   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
+   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
+ 
+   // Presets
+   renderPresetTiles();
+ 
+   // Derive categories from data
+   const cats = new Set();
+   for (const r of state.rows) if (r.RuleCategory) cats.add(r.RuleCategory);
+   const allCats = Array.from(cats).sort();
+ 
+   /* -----------------------------
+      RULE FAMILY (with All)
+   ------------------------------*/
+   const famEl = $("#familyBtns");
+   if (famEl) {
+     famEl.innerHTML = "";
+ 
++    const isAllFamilies = state.families.length === 4;
++
+     // ALL pill
+-    const allBtn = toggleBtn(label("categories", "All"), false, () => {
++    const allBtn = toggleBtn(label("categories", "All"), isAllFamilies, () => {
+       clearPresetLayer();
+       state.families = ["Soft","Aspirate","Nasal","None"];
+       saveLS("wm_families", state.families);
+       applyFilters();
+       rebuildDeck();
+       refreshFilterPills();
+       render();
+       updatePresetActiveClasses();
+     });
+     allBtn.dataset.key = "__ALL__";
+     famEl.appendChild(allBtn);
+ 
+     for (const f of ["Soft","Aspirate","Nasal","None"]) {
+-      const b = toggleBtn(label("rulefamily", f), false, (on) => {
++      const isOn = isAllFamilies || state.families.includes(f);
++      const b = toggleBtn(label("rulefamily", f), isOn, () => {
+         clearPresetLayer();
+ 
+-        // multi-select
+-        state.families = on
+-          ? Array.from(new Set([...state.families, f]))
+-          : state.families.filter(x => x !== f);
+-
+-        // if user turns them all off, snap back to All (prevents empty state confusion)
+-        if (!state.families.length) state.families = ["Soft","Aspirate","Nasal","None"];
++        if (isAllFamilies) {
++          state.families = [f];
++        } else {
++          if (state.families.includes(f)) {
++            state.families = state.families.filter(x => x !== f);
++          } else {
++            state.families = [...state.families, f];
++          }
++          if (!state.families.length) state.families = ["Soft","Aspirate","Nasal","None"];
++        }
+ 
+         saveLS("wm_families", state.families);
+         applyFilters();
+         rebuildDeck();
+         refreshFilterPills();
+         render();
+         updatePresetActiveClasses();
+       });
+       b.dataset.key = f;
+       famEl.appendChild(b);
+     }
+   }
+ 
+   /* -----------------------------
+      OUTCOME (with All)
+   ------------------------------*/
+   const outEl = $("#outcomeBtns");
+   if (outEl) {
+     outEl.innerHTML = "";
+ 
+     const allBtn = toggleBtn(label("categories", "All"), false, () => {
+       clearPresetLayer();
+       state.outcomes = ["SM","AM","NM","NONE"];
+       saveLS("wm_outcomes", state.outcomes);
+       applyFilters();
+@@ -1670,26 +1676,25 @@ function wireUi() {
+         }
+       });
+     });
+   }
+ 
+   
+ }
+ 
+ /* ========= Boot ========= */
+ (async function boot() {
+   wireUi();
+   await initData();
+   // Apply preset from URL (shareable tutor links)
+ const preset = (getParam("preset") || "").trim();
+ if (preset && PRESET_DEFS[preset]) {
+   applyPreset(preset, { fromUrl: true });
+ }
+ 
+ 
+   // Apply current language immediately (navbar.js also applies [data-lang] visibility)
+   syncLangFromNavbar();
+ 
+ })();
+ 
 
 
   state.filtered = list;
