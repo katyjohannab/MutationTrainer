@@ -751,10 +751,11 @@ function buildFiltersUI() {
   if (basicCatEl) {
     basicCatEl.innerHTML = "";
 
-    // ALL = no category restriction (state.categories = [])
-    const allBtn = toggleBtn(label("categories", "All"), false, () => {
+    // BASIC categories: inject "All" pill first
+    const allActive = state.categories.includes("All") || state.categories.length === 0;
+    const allBtn = toggleBtn(LABEL[lang].categories.All, allActive, () => {
       clearPresetLayer();
-      state.categories = [];
+      state.categories = ["All"];
       saveLS("wm_categories", state.categories);
       applyFilters();
       rebuildDeck();
@@ -775,7 +776,9 @@ function buildFiltersUI() {
 
       const b = toggleBtn(label("categories", c), false, (on) => {
         clearPresetLayer();
-
+       if (on && state.categories.includes("All")) {
+          state.categories = state.categories.filter(x => x !== "All");
+        }
         state.categories = on
           ? Array.from(new Set([...state.categories, c]))
           : state.categories.filter(x => x !== c);
@@ -893,9 +896,10 @@ function buildFiltersUI() {
   
 function applyFilters() {
   const allowedOutcomes = (state.outcomes && state.outcomes.length) ? state.outcomes : ["SM","AM","NM","NONE"];
+  const activeCategories = state.categories.filter(c => c !== "All");
   let list = state.rows.filter(r =>
     (state.families.length ? state.families.includes(r.RuleFamily) : true) &&
-    (state.categories.length ? state.categories.includes(r.RuleCategory) : true) &&
+    (activeCategories.length ? activeCategories.includes(r.RuleCategory) : true) &&
     (allowedOutcomes.includes((r.Outcome || "").toUpperCase()))
   );
   if (state.nilOnly) list = list.filter(r => (r.Outcome || "").toUpperCase() === "NONE");
@@ -1285,10 +1289,11 @@ function renderPractice() {
     return c;
   };
 
+  const activeCategories = state.categories.filter(c => c !== "All");
   const anyRestriction =
     (state.families.length && state.families.length < 4) ||
     (state.outcomes.length && state.outcomes.length < 4) ||
-    state.categories.length ||
+    activeCategories.length ||
     (state.triggerQuery && state.triggerQuery.trim()) ||
     state.nilOnly;
 
@@ -1299,8 +1304,8 @@ function renderPractice() {
     if (state.outcomes.length && state.outcomes.length < 4) {
       state.outcomes.forEach(o => summary.appendChild(addChip(label("rulefamily", o))));
     }
-    if (state.categories.length) {
-      state.categories.forEach(ca => summary.appendChild(addChip(label("categories", ca))));
+    if (activeCategories.length) {
+      activeCategories.forEach(ca => summary.appendChild(addChip(label("categories", ca))));
     }
     if (state.triggerQuery && state.triggerQuery.trim()) {
       const trigLabel = (lang === "cy" ? "Sbardun" : "Trigger");
@@ -1774,6 +1779,3 @@ if (preset && PRESET_DEFS[preset]) {
   syncLangFromNavbar();
 
 })();
-
-
-
