@@ -662,8 +662,10 @@ function buildFiltersUI() {
   if (famEl) {
     famEl.innerHTML = "";
 
+    const isAllFamilies = state.families.length === 4;
+
     // ALL pill
-    const allBtn = toggleBtn(label("categories", "All"), false, () => {
+    const allBtn = toggleBtn(label("categories", "All"), isAllFamilies, () => {
       clearPresetLayer();
       state.families = ["Soft","Aspirate","Nasal","None"];
       saveLS("wm_families", state.families);
@@ -677,16 +679,20 @@ function buildFiltersUI() {
     famEl.appendChild(allBtn);
 
     for (const f of ["Soft","Aspirate","Nasal","None"]) {
-      const b = toggleBtn(label("rulefamily", f), false, (on) => {
+      const isOn = isAllFamilies || state.families.includes(f);
+      const b = toggleBtn(label("rulefamily", f), isOn, () => {
         clearPresetLayer();
 
-        // multi-select
-        state.families = on
-          ? Array.from(new Set([...state.families, f]))
-          : state.families.filter(x => x !== f);
-
-        // if user turns them all off, snap back to All (prevents empty state confusion)
-        if (!state.families.length) state.families = ["Soft","Aspirate","Nasal","None"];
+        if (isAllFamilies) {
+          state.families = [f];
+        } else {
+          if (state.families.includes(f)) {
+            state.families = state.families.filter(x => x !== f);
+          } else {
+            state.families = [...state.families, f];
+          }
+          if (!state.families.length) state.families = ["Soft","Aspirate","Nasal","None"];
+        }
 
         saveLS("wm_families", state.families);
         applyFilters();
@@ -1690,6 +1696,5 @@ if (preset && PRESET_DEFS[preset]) {
   syncLangFromNavbar();
 
 })();
-
 
 
