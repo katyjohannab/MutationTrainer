@@ -277,10 +277,13 @@ const LABEL = {
     presets: {
       starterPrepsTitle: "Starter prepositions",
       starterPrepsDesc: "Common contact-mutation prepositions",
+      starterPrepsTip: "Common prepositions that usually trigger soft mutation in simple phrases.",
       numbersTitle: "Numbers 1–10",
       numbersDesc: "Un, dau, tri ... deg",
+      numbersTip: "Count through the first ten numerals and the mutations they trigger.",
       articlesTitle: "Articles",
       articlesDesc: "y / yr / 'r (starter set)",
+      articlesTip: "Definite articles and the mutation patterns they create.",
       placeNamesTitle: "Place names",
       placeNamesDesc: "Early nasal-mutation practice",
       placeNamesTip: "Place names often take nasal mutation in common patterns (e.g. after certain structures)."
@@ -319,6 +322,10 @@ const LABEL = {
       sessionTitle: "This session",
       newSession: "New",
       clearFilters: "Clear filters",
+      focusHelper: "Pick a pack or build your own filter mix below.",
+      presetsHelper: "Quick packs to jump straight into a topic.",
+      coreFiltersHelper: "Mix families, outcomes, and categories to shape your deck.",
+      advCategoriesHelper: "Expanded list for finer filtering.",
       adminTools: "Admin tools",
       adminDataUrl: "Data URL",
       loadLocalCsv: "Load local CSV",
@@ -341,6 +348,9 @@ const LABEL = {
       reset: "Reset",
       bestLabel: "Best",
       clear: "Clear",
+      presetClearTitle: "Clear preset",
+      deckProgressLabel: "Deck progress",
+      cardsRemainingLabel: "Remaining",
     },
   },
   cy: {
@@ -348,10 +358,13 @@ const LABEL = {
     presets: {
       starterPrepsTitle: "Arddodiaid sylfaenol",
       starterPrepsDesc: "Arddodiaid cyffredin (treiglad cyswllt)",
+      starterPrepsTip: "Arddodiaid cyffredin sy'n sbarduno treiglad meddal mewn ymadroddion syml.",
       numbersTitle: "Rhifau 1–10",
       numbersDesc: "un, dau, tri ... deg",
+      numbersTip: "Ymarfer rhifau 1–10 a'r treigladau maen nhw'n eu sbarduno.",
       articlesTitle: "Erthyglau",
       articlesDesc: "y / yr / 'r (set ddechrau)",
+      articlesTip: "Erthyglau pendant a'r patrymau treiglad maen nhw'n eu creu.",
       placeNamesTitle: "Enwau lleoedd",
       placeNamesDesc: "Ymarfer treiglad trwynol cynnar",
       placeNamesTip: "Mae enwau lleoedd yn aml yn cymryd treiglad trwynol mewn patrymau cyffredin."
@@ -390,6 +403,10 @@ const LABEL = {
       sessionTitle: "Y sesiwn hon",
       newSession: "Newydd",
       clearFilters: "Clirio hidlwyr",
+      focusHelper: "Dewiswch becyn neu adeiladwch eich hidlwyr eich hun isod.",
+      presetsHelper: "Pecynnau cyflym i neidio'n syth i bwnc.",
+      coreFiltersHelper: "Cymysgwch deuluoedd, canlyniadau a chategorïau i siapio'ch dec.",
+      advCategoriesHelper: "Rhestr estynedig ar gyfer hidlo manylach.",
       adminTools: "Offerynnau gweinyddol",
       adminDataUrl: "URL data",
       loadLocalCsv: "Llwytho CSV lleol",
@@ -412,6 +429,9 @@ const LABEL = {
       reset: "Ailosod",
       bestLabel: "Gorau",
       clear: "Clirio",
+      presetClearTitle: "Clirio'r preset",
+      deckProgressLabel: "Cynnydd y dec",
+      cardsRemainingLabel: "Ar ôl",
     },
   }
 };
@@ -430,6 +450,7 @@ function applyLanguage() {
   document.documentElement.setAttribute("lang", lang);
 
   if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
+  if ($("#focusHelper")) $("#focusHelper").textContent = LABEL[lang].ui.focusHelper;
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
   if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
@@ -444,8 +465,11 @@ function applyLanguage() {
   if ($("#btnTop")) $("#btnTop").textContent = LABEL[lang].backToTop;
 
   // New UI translations
+  if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
   if ($("#coreFiltersTitle")) $("#coreFiltersTitle").textContent = LABEL[lang].ui.coreFilters;
+  if ($("#coreFiltersHelper")) $("#coreFiltersHelper").textContent = LABEL[lang].ui.coreFiltersHelper;
   if ($("#advToggle")) $("#advToggle").textContent = LABEL[lang].ui.advancedFilters;
+  if ($("#advCategoriesHelper")) $("#advCategoriesHelper").textContent = LABEL[lang].ui.advCategoriesHelper;
   if ($("#sessionTitle")) $("#sessionTitle").textContent = LABEL[lang].ui.sessionTitle;
   if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].ui.newSession;
   if ($("#btnCoreClear")) $("#btnCoreClear").textContent = LABEL[lang].ui.clearFilters;
@@ -505,6 +529,7 @@ const PRESET_DEFS = {
     id: "starter-preps",
     titleKey: "starterPrepsTitle",
     descKey: "starterPrepsDesc",
+    tipKey: "starterPrepsTip",
     triggers: [],
     sourceScope: ["prep.csv"],
   },
@@ -512,12 +537,14 @@ const PRESET_DEFS = {
     id: "numbers-1-10",
     titleKey: "numbersTitle",
     descKey: "numbersDesc",
+    tipKey: "numbersTip",
     triggers: ["un","dwy","dau","tri","tair","pedwar","pedair","pum","pump","chwech","chwe","saith","wyth","naw","deg"],
   },
   "articles": {
     id: "articles",
     titleKey: "articlesTitle",
     descKey: "articlesDesc",
+    tipKey: "articlesTip",
     category: "Article",
     triggers: [],
     sourceScope: ["article-sylfaen.csv"],
@@ -586,6 +613,12 @@ function updatePresetActiveClasses() {
     const isActive = Boolean(id && id === activeKey);
     el.classList.toggle("preset-on", isActive);
     el.setAttribute("aria-pressed", isActive ? "true" : "false");
+    const clearBtn = el.querySelector(".preset-clear");
+    if (clearBtn) {
+      clearBtn.classList.toggle("hidden", !isActive);
+      clearBtn.setAttribute("title", LABEL[state.lang || "en"].ui.presetClearTitle);
+      clearBtn.setAttribute("aria-label", LABEL[state.lang || "en"].ui.presetClearTitle);
+    }
   });
 }
 
@@ -611,6 +644,33 @@ function updateFocusIndicator() {
 function renderPresetTiles() {
   wirePresetUi();
   updatePresetActiveClasses();
+}
+
+function updatePresetTileContent() {
+  const lang = state.lang || "en";
+  $$("[data-preset]").forEach(el => {
+    const id = el.getAttribute("data-preset");
+    if (!id) return;
+    const p = PRESET_DEFS[id];
+    if (!p) return;
+    const title = LABEL[lang].presets[p.titleKey];
+    const desc = LABEL[lang].presets[p.descKey];
+    const tip = p.tipKey ? LABEL[lang].presets[p.tipKey] : "";
+    const tooltip = [desc, tip].filter(Boolean).join(" ");
+    const titleEl = el.querySelector(".preset-title");
+    const descEl = el.querySelector(".preset-desc");
+    if (titleEl) titleEl.textContent = title;
+    if (descEl) descEl.textContent = desc;
+    if (tooltip) {
+      el.setAttribute("title", tooltip);
+      el.setAttribute("aria-label", `${title}: ${tooltip}`);
+    }
+    const clearBtn = el.querySelector(".preset-clear");
+    if (clearBtn) {
+      clearBtn.setAttribute("title", LABEL[lang].ui.presetClearTitle);
+      clearBtn.setAttribute("aria-label", LABEL[lang].ui.presetClearTitle);
+    }
+  });
 }
 
 function applyPreset(presetId, { fromUrl = false } = {}) {
@@ -685,10 +745,35 @@ function wirePresetUi() {
       desc.className = "preset-desc";
       desc.textContent = LABEL[state.lang].presets[p.descKey];
 
-      if (p.tipKey) btn.title = LABEL[state.lang].presets[p.tipKey];
+      const tipText = p.tipKey ? LABEL[state.lang].presets[p.tipKey] : "";
+      const tooltipText = [desc.textContent, tipText].filter(Boolean).join(" ");
+      if (tooltipText) {
+        btn.title = tooltipText;
+        btn.setAttribute("aria-label", `${title.textContent}: ${tooltipText}`);
+      }
+
+      const clearBtn = document.createElement("button");
+      clearBtn.type = "button";
+      clearBtn.className = "preset-clear hidden";
+      clearBtn.textContent = "×";
+      clearBtn.setAttribute("aria-label", LABEL[state.lang].ui.presetClearTitle);
+      clearBtn.setAttribute("title", LABEL[state.lang].ui.presetClearTitle);
+      clearBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        clearPresetLayer();
+        applyFilters();
+        rebuildDeck();
+        buildFilters();
+        render();
+        if (typeof refreshFilterPills === "function") {
+          try { refreshFilterPills(); } catch (_) {}
+        }
+      });
 
       btn.appendChild(title);
       btn.appendChild(desc);
+      btn.appendChild(clearBtn);
       container.appendChild(btn);
     }
   }
@@ -727,6 +812,8 @@ function wirePresetUi() {
     el.classList.toggle("preset-on", isActive);
     el.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
+
+  updatePresetTileContent();
 }
 
 // Listen for clicks on the navbar language toggle.
@@ -891,14 +978,18 @@ function buildFilters() {
 
   // Titles
   if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
+  if ($("#focusHelper")) $("#focusHelper").textContent = LABEL[lang].ui.focusHelper;
   if ($("#presetsTitle")) $("#presetsTitle").textContent = LABEL[lang].headings.presets;
+  if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
   if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
   if ($("#basicCategoriesTitle")) $("#basicCategoriesTitle").textContent = LABEL[lang].headings.categories;
   if ($("#advCategoriesTitle")) $("#advCategoriesTitle").textContent = LABEL[lang].headings.categories;
+  if ($("#advCategoriesHelper")) $("#advCategoriesHelper").textContent = LABEL[lang].ui.advCategoriesHelper;
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
+  if ($("#coreFiltersHelper")) $("#coreFiltersHelper").textContent = LABEL[lang].ui.coreFiltersHelper;
 
   const advDetails = $("#advFilters");
   if (advDetails) {
@@ -1409,10 +1500,44 @@ function renderPractice() {
   header.className = "flex flex-wrap items-center justify-between gap-2 mb-2";
 
   const headerLeft = document.createElement("div");
-  headerLeft.className = "flex flex-wrap items-center gap-2 text-xs text-slate-500";
+  headerLeft.className = "flex flex-col gap-1 text-xs text-slate-500";
   const posSpan = document.createElement("span");
   posSpan.textContent = posText;
   headerLeft.appendChild(posSpan);
+
+  const deckTotal = state.practiceMode === "smart" ? n : state.deck.length;
+  const deckReviewed = state.practiceMode === "smart"
+    ? Math.min((state.smartCount || 0) + 1, deckTotal)
+    : Math.min((state.currentDeckPos >= 0 ? state.currentDeckPos + 1 : 0), deckTotal);
+  const deckRemaining = Math.max(deckTotal - deckReviewed, 0);
+
+  if (deckTotal > 0) {
+    const progressWrap = document.createElement("div");
+    progressWrap.className = "deck-progress";
+    progressWrap.setAttribute("aria-label", LABEL[lang].ui.deckProgressLabel);
+
+    const progressTop = document.createElement("div");
+    progressTop.className = "deck-progress-top";
+
+    const progressTitle = document.createElement("span");
+    progressTitle.textContent = LABEL[lang].ui.deckProgressLabel;
+
+    const progressRemaining = document.createElement("span");
+    progressRemaining.textContent = `${LABEL[lang].ui.cardsRemainingLabel}: ${deckRemaining}`;
+
+    progressTop.append(progressTitle, progressRemaining);
+
+    const progressTrack = document.createElement("div");
+    progressTrack.className = "deck-progress-track";
+
+    const progressFill = document.createElement("div");
+    progressFill.className = "deck-progress-fill";
+    progressFill.style.width = `${(deckReviewed / deckTotal) * 100}%`;
+
+    progressTrack.appendChild(progressFill);
+    progressWrap.append(progressTop, progressTrack);
+    headerLeft.appendChild(progressWrap);
+  }
 
   const headerRight = document.createElement("div");
   headerRight.className = "flex items-center gap-2";
