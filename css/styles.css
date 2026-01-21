@@ -945,14 +945,14 @@ body{
   -webkit-tap-highlight-color: transparent;
 
   box-shadow: 0 2px 0 rgba(153,27,27,0.14);
-  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+  transition: box-shadow .12s ease, border-color .12s ease, filter .12s ease;
 }
 .base-info-btn:hover,
 .sentence-info-btn:hover{
   border-color: var(--cymru-red-ink);
-  transform: translateY(-1px);
+  filter: brightness(1.03);
   box-shadow:
-    0 12px 18px rgba(2,6,23,0.10),
+    0 8px 14px rgba(2,6,23,0.10),
     0 0 0 3px rgba(185,28,28,0.10);
 }
 .base-info-btn:active,
@@ -965,9 +965,6 @@ body{
   top:-0.30rem;
   right:-0.50rem;
   transform: none;
-  top:50%;
-  right:-0.65rem;
-  transform: translate(50%, -50%);
 }
 
 @media (max-width: 480px){
@@ -975,14 +972,11 @@ body{
     padding-inline: 0.6rem;
   }
   #practiceCard .practice-base .base-word-capsule{
-    padding-right: 1.85rem !important;
+    padding-right: 1.75rem !important;
   }
   .base-info-btn{
-    top:-0.2rem;
-    right:-0.25rem;
-  .base-info-btn{
-    right:-0.3rem;
-    transform: translate(50%, -50%);
+    top:-0.30rem;
+    right:-0.50rem;
   }
 }
 
