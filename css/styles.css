@@ -907,6 +907,9 @@ body{
 
 .base-info-btn{
   position:absolute;
+  top:-0.30rem;
+  right:-0.50rem;
+  transform: none;
   top:50%;
   right:-0.65rem;
   transform: translate(50%, -50%);
@@ -916,6 +919,12 @@ body{
   #practiceCard .practice-base{
     padding-inline: 0.6rem;
   }
+  #practiceCard .practice-base .base-word-capsule{
+    padding-right: 1.85rem !important;
+  }
+  .base-info-btn{
+    top:-0.2rem;
+    right:-0.25rem;
   .base-info-btn{
     right:-0.3rem;
     transform: translate(50%, -50%);
