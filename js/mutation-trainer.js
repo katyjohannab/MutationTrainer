@@ -230,6 +230,46 @@ function normalizeCategoryList(list) {
   return Array.from(new Set((list || []).filter(Boolean).filter(c => c !== "All")));
 }
 
+function hasCustomFilters() {
+  const activeCategories = state.categories.filter(c => c !== "All");
+  return (
+    (state.families.length && state.families.length < 4) ||
+    (state.outcomes.length && state.outcomes.length < 4) ||
+    activeCategories.length ||
+    (state.triggerQuery && state.triggerQuery.trim()) ||
+    state.nilOnly
+  );
+}
+
+function getProgressFocusLabel() {
+  const lang = state.lang || "en";
+  const key = state.activePackKey || state.activePreset;
+  if (key) {
+    const presetDef = PRESET_DEFS[key];
+    if (presetDef?.titleKey) {
+      return LABEL?.[lang]?.presets?.[presetDef.titleKey] || key;
+    }
+    return key;
+  }
+  const fallbackKey = hasCustomFilters() ? "progressCustomFilters" : "progressAllCards";
+  return LABEL?.[lang]?.ui?.[fallbackKey] || (hasCustomFilters() ? "Custom filters" : "All cards");
+}
+
+function updateProgressLine({ currentIndex, totalCards }) {
+  const lineEl = $("#practiceProgressLine");
+  if (!lineEl) return;
+  const safeCurrent = Number.isFinite(currentIndex) ? currentIndex : 0;
+  const safeTotal = Number.isFinite(totalCards) ? totalCards : 0;
+  lineEl.textContent = `${getProgressFocusLabel()} · ${safeCurrent}/${safeTotal}`;
+  const barFill = $("#practiceProgressBarFill");
+  if (barFill) {
+    const pct = safeTotal > 0 ? Math.min((safeCurrent / safeTotal) * 100, 100) : 0;
+    barFill.style.width = `${pct}%`;
+  }
+  const bar = $("#practiceProgressBar");
+  if (bar) bar.classList.toggle("hidden", safeTotal === 0);
+}
+
 function setCategories(next) {
   state.categories = normalizeCategoryList(next);
   saveLS("wm_categories", state.categories);
@@ -338,6 +378,8 @@ const LABEL = {
       reset: "Reset",
       bestLabel: "Best",
       clear: "Clear",
+      progressAllCards: "All cards",
+      progressCustomFilters: "Custom filters",
       presetClearTitle: "Clear preset",
       deckProgressLabel: "Deck progress",
       cardsRemainingLabel: "Remaining",
@@ -419,6 +461,8 @@ const LABEL = {
       reset: "Ailosod",
       bestLabel: "Gorau",
       clear: "Clirio",
+      progressAllCards: "Pob cerdyn",
+      progressCustomFilters: "Hidlwyr personol",
       presetClearTitle: "Clirio'r preset",
       deckProgressLabel: "Cynnydd y dec",
       cardsRemainingLabel: "Ar ôl",
@@ -1456,6 +1500,7 @@ function renderPractice() {
   const n = state.filtered.length;
 
   if (!n) {
+    updateProgressLine({ currentIndex: 0, totalCards: n });
     host.innerHTML = `
       <div class="text-slate-700 panel rounded-xl p-4">
         ${lang === "cy" ? "Nid oes cardiau yn cyd-fynd â’ch hidlwyr." : "No cards match your filters."}
@@ -1479,11 +1524,13 @@ function renderPractice() {
 
   let idxNow;
   let posText = "";
+  let progressIndex = 0;
   if (state.practiceMode === "smart") {
     if (state.smartIdx == null) state.smartIdx = pickNextSmartIdx();
     idxNow = state.smartIdx;
     state.currentDeckPos = -1;
     const reviewed = (state.smartCount || 0) + 1;
+    progressIndex = Math.min(reviewed, n);
     posText = `${t.reviewedLabel} ${reviewed} · ${t.poolLabel} ${n}`;
     const cp = $("#cardPos");
     if (cp) cp.textContent = `${t.smartModeShort} · ${posText}`;
@@ -1492,10 +1539,12 @@ function renderPractice() {
     idxNow = state.deck[deckIdx];
     state.currentDeckPos = deckIdx;
     const pos = state.deck.length ? (deckIdx + 1) : 0;
+    progressIndex = pos;
     posText = `${t.cardLabel} ${pos} / ${state.deck.length || 0}`;
     const cp = $("#cardPos");
     if (cp) cp.textContent = posText;
   }
+  updateProgressLine({ currentIndex: progressIndex, totalCards: n });
 
   const idxShown = (state.revealed && state.freezeIdx != null) ? state.freezeIdx : idxNow;
   const card = state.filtered[idxShown];
@@ -1513,40 +1562,6 @@ function renderPractice() {
   headerLeft.appendChild(posSpan);
 
   const cardId = getCardId(card, idxShown);
-
-  const deckTotal = state.practiceMode === "smart" ? n : state.deck.length;
-  const deckReviewed = state.practiceMode === "smart"
-    ? Math.min((state.smartCount || 0) + 1, deckTotal)
-    : Math.min((state.currentDeckPos >= 0 ? state.currentDeckPos + 1 : 0), deckTotal);
-  const deckRemaining = Math.max(deckTotal - deckReviewed, 0);
-
-  if (deckTotal > 0) {
-    const progressWrap = document.createElement("div");
-    progressWrap.className = "deck-progress";
-    progressWrap.setAttribute("aria-label", LABEL[lang].ui.deckProgressLabel);
-
-    const progressTop = document.createElement("div");
-    progressTop.className = "deck-progress-top";
-
-    const progressTitle = document.createElement("span");
-    progressTitle.textContent = LABEL[lang].ui.deckProgressLabel;
-
-    const progressRemaining = document.createElement("span");
-    progressRemaining.textContent = `${LABEL[lang].ui.cardsRemainingLabel}: ${deckRemaining}`;
-
-    progressTop.append(progressTitle, progressRemaining);
-
-    const progressTrack = document.createElement("div");
-    progressTrack.className = "deck-progress-track";
-
-    const progressFill = document.createElement("div");
-    progressFill.className = "deck-progress-fill";
-    progressFill.style.width = `${(deckReviewed / deckTotal) * 100}%`;
-
-    progressTrack.appendChild(progressFill);
-    progressWrap.append(progressTop, progressTrack);
-    headerLeft.appendChild(progressWrap);
-  }
 
   const headerRight = document.createElement("div");
   headerRight.className = "flex items-center gap-2";
@@ -1605,14 +1620,7 @@ function renderPractice() {
   };
 
   const activeCategories = state.categories.filter(c => c !== "All");
-  const anyRestriction =
-    (state.families.length && state.families.length < 4) ||
-    (state.outcomes.length && state.outcomes.length < 4) ||
-    activeCategories.length ||
-    (state.triggerQuery && state.triggerQuery.trim()) ||
-    state.nilOnly;
-
-  if (anyRestriction) {
+  if (hasCustomFilters()) {
     if (state.families.length && state.families.length < 4) {
       state.families.forEach(f => summary.appendChild(addChip(label("rulefamily", f))));
     }
