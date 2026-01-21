@@ -1663,7 +1663,7 @@ function renderPractice() {
   chips.className = "practice-base text-2xl md:text-3xl font-medium";
 
   const capsule = document.createElement("div");
-  capsule.className = "inline-flex items-baseline bg-indigo-100 ring-1 ring-indigo-300 rounded-2xl px-5 py-2.5 shadow-sm";
+  capsule.className = "base-word-capsule inline-flex items-center bg-indigo-100 ring-1 ring-indigo-300 rounded-2xl px-5 py-2.5 shadow-sm";
   capsule.style.position = "relative";
 
   const baseSpan = document.createElement("span");
