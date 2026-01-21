@@ -665,6 +665,9 @@ body{
   align-items:center !important;
   justify-content:center !important;
   padding: .95rem 1.25rem !important;
+  border-radius: 999px;
+  background: rgba(4,120,87,0.08);
+  border: 1px solid rgba(4,120,87,0.22);
   box-shadow: 0 8px 18px rgba(2,6,23,0.08) !important;
 }
 #practiceCard .base-word-text{
@@ -672,6 +675,8 @@ body{
   letter-spacing: -0.02em;
   line-height: 1;
   display:block;
+  color: var(--emerald-ink);
+  font-weight: 700;
 }
 
 /* Answer box (keep your gold) */
@@ -828,7 +833,8 @@ body{
 .feedback-why{
   margin-top: 1rem;
   padding: 0.6rem 0.75rem;
-  background: rgba(148,163,184,0.12);
+  background: rgba(248,250,252,0.95);
+  border: 1px solid rgba(148,163,184,0.28);
   border-radius: 0.65rem;
 }
 
@@ -944,16 +950,14 @@ body{
   user-select:none;
   -webkit-tap-highlight-color: transparent;
 
-  box-shadow: 0 2px 0 rgba(153,27,27,0.14);
-  transition: box-shadow .12s ease, border-color .12s ease, filter .12s ease;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.12);
+  transition: box-shadow .15s ease, border-color .15s ease, transform .15s ease;
 }
 .base-info-btn:hover,
 .sentence-info-btn:hover{
   border-color: var(--cymru-red-ink);
-  filter: brightness(1.03);
-  box-shadow:
-    0 8px 14px rgba(2,6,23,0.10),
-    0 0 0 3px rgba(185,28,28,0.10);
+  box-shadow: 0 3px 8px rgba(2,6,23,0.12);
+  transform: translateY(-1px);
 }
 .base-info-btn:active,
 .sentence-info-btn:active{ transform: translateY(0px); box-shadow: 0 7px 12px rgba(2,6,23,0.08); }
@@ -1085,9 +1089,6 @@ body{
 }
 
 /* ---------- Filters panel sizing ---------- */
-#outcomeCol{ display:none; }
-#familyCol{ grid-column: 1 / -1; }
-
 @media (min-width: 768px){
   #filtersPanel{
     max-height: calc(100vh - 190px);
