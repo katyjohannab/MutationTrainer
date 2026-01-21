@@ -206,7 +206,11 @@ const state = {
   triggerQuery: loadLS("wm_trig", ""),
   // Presets are implemented as a thin layer over filters.
   activePreset: loadLS("wm_active_preset", ""),
+  activePackKey: loadLS("wm_active_pack", null),
   presetTriggers: loadLS("wm_preset_triggers", []), // canonical triggers for the active preset
+  presetForceFamily: loadLS("wm_preset_force_family", null),
+  presetLimitComplexity: loadLS("wm_preset_limit_complexity", false),
+  presetCategory: loadLS("wm_preset_category", null),
   showAllCategories: loadLS("wm_show_all_cats", false),
   nilOnly: loadLS("wm_nil", false),
   mode: loadLS("wm_mode", "practice"),
@@ -238,6 +242,20 @@ function setCategories(next) {
   saveLS("wm_categories", state.categories);
 }
 
+function resetFilters() {
+  state.families = ["Soft","Aspirate","Nasal","None"];
+  state.outcomes = ["SM","AM","NM","NONE"];
+  state.categories = [];
+  state.triggerQuery = "";
+  state.nilOnly = false;
+
+  saveLS("wm_families", state.families);
+  saveLS("wm_outcomes", state.outcomes);
+  saveLS("wm_categories", state.categories);
+  saveLS("wm_trig", state.triggerQuery);
+  saveLS("wm_nil", state.nilOnly);
+}
+
 state.families = Array.isArray(state.families) && state.families.length
   ? state.families
   : ["Soft","Aspirate","Nasal","None"];
@@ -247,6 +265,9 @@ state.outcomes = Array.isArray(state.outcomes) && state.outcomes.length
 state.categories = normalizeCategoryList(Array.isArray(state.categories) ? state.categories : []);
 state.presetTriggers = Array.isArray(state.presetTriggers) ? state.presetTriggers : [];
 state.sourceScope = Array.isArray(state.sourceScope) ? state.sourceScope : [];
+state.presetForceFamily = state.presetForceFamily || null;
+state.presetCategory = state.presetCategory || null;
+state.presetLimitComplexity = Boolean(state.presetLimitComplexity);
 
 /* ========= UI Translations ========= */
 const LABEL = {
@@ -529,13 +550,30 @@ function isLikelyComplexRow(card) {
 }
 
 function clearPresetLayer() {
-  if (!state.activePreset && !state.presetTriggers?.length && !state.sourceScope?.length) return;
+  const hasPresetLayer =
+    Boolean(state.activePreset) ||
+    Boolean(state.activePackKey) ||
+    Boolean(state.presetTriggers?.length) ||
+    Boolean(state.sourceScope?.length) ||
+    Boolean(state.presetForceFamily) ||
+    Boolean(state.presetCategory) ||
+    Boolean(state.presetLimitComplexity);
+
+  if (!hasPresetLayer) return;
   state.activePreset = "";
+  state.activePackKey = null;
   state.presetTriggers = [];
   state.sourceScope = [];
+  state.presetForceFamily = null;
+  state.presetCategory = null;
+  state.presetLimitComplexity = false;
   saveLS("wm_active_preset", state.activePreset);
+  saveLS("wm_active_pack", state.activePackKey);
   saveLS("wm_preset_triggers", state.presetTriggers);
   saveLS("wm_source_scope", state.sourceScope);
+  saveLS("wm_preset_force_family", state.presetForceFamily);
+  saveLS("wm_preset_category", state.presetCategory);
+  saveLS("wm_preset_limit_complexity", state.presetLimitComplexity);
 }
 
 function updatePresetActiveClasses() {
@@ -554,36 +592,31 @@ function applyPreset(presetId, { fromUrl = false } = {}) {
   const p = PRESET_DEFS[presetId];
   if (!p) return;
 
-  // FULL RESET FIRST
-  state.triggerQuery = "";
-  state.nilOnly = false;
-  state.categories = [];
-  state.families = ["Soft","Aspirate","Nasal","None"];
-  state.outcomes = ["SM","AM","NM","NONE"];
-  state.sourceScope = [];
-  saveLS("wm_trig", "");
-  saveLS("wm_nil", false);
-  saveLS("wm_outcomes", state.outcomes);
-  saveLS("wm_source_scope", state.sourceScope);
+  clearPresetLayer();
+  resetFilters();
 
   // Core preset filter targets.
   state.activePreset = presetId;
+  state.activePackKey = presetId;
   saveLS("wm_active_preset", state.activePreset);
+  saveLS("wm_active_pack", state.activePackKey);
 
-  state.categories = [p.category];
-  saveLS("wm_categories", state.categories);
-   state.sourceScope = Array.isArray(p.sourceScope)
+  state.sourceScope = Array.isArray(p.sourceScope)
     ? p.sourceScope.map(normalizeSourcePath)
     : [];
   saveLS("wm_source_scope", state.sourceScope);
 
-  // Families: default to all unless preset forces a specific family.
-  if (p.forceFamily) state.families = [p.forceFamily];
-  else state.families = ["Soft","Aspirate","Nasal","None"];
-  saveLS("wm_families", state.families);
-
   state.presetTriggers = (p.triggers || []).map(canonicalTrigger).filter(Boolean);
   saveLS("wm_preset_triggers", state.presetTriggers);
+
+  state.presetForceFamily = p.forceFamily || null;
+  saveLS("wm_preset_force_family", state.presetForceFamily);
+
+  state.presetCategory = p.category || null;
+  saveLS("wm_preset_category", state.presetCategory);
+
+  state.presetLimitComplexity = Boolean(p.limitComplexity);
+  saveLS("wm_preset_limit_complexity", state.presetLimitComplexity);
 
   // UX: start with the simpler category view.
   state.showAllCategories = false;
@@ -1004,7 +1037,6 @@ function buildFilters() {
 }
 
 function applyFilters() {
-  const preset = PRESET_DEFS[state.activePreset];
   const trigRaw = (state.triggerQuery || "").trim();
   const trigTokens = trigRaw
     ? trigRaw.split(",").map(canonicalTrigger).filter(Boolean)
@@ -1017,24 +1049,34 @@ function applyFilters() {
     list = list.filter(r => scope.has(normalizeSourcePath(r.Source)));
   }
 
-  if (state.families?.length) {
+  if (state.presetForceFamily) {
+    list = list.filter(r => r.RuleFamily === state.presetForceFamily);
+  }
+
+  if (state.presetCategory) {
+    list = list.filter(r => r.RuleCategory === state.presetCategory);
+  }
+
+  if (state.presetTriggers?.length) {
+    const presetSet = new Set(state.presetTriggers);
+    list = list.filter(r => presetSet.has(r.TriggerCanon || canonicalTrigger(r.Trigger)));
+  }
+
+  const allFamilies = ["Soft","Aspirate","Nasal","None"];
+  if (state.families?.length && state.families.length < allFamilies.length) {
     const famSet = new Set(state.families);
     list = list.filter(r => famSet.has(r.RuleFamily));
   }
 
-  if (state.outcomes?.length) {
-    const outSet = new Set(state.outcomes);
+  const allOutcomes = ["SM","AM","NM","NONE"];
+  if (state.outcomes?.length && state.outcomes.length < allOutcomes.length) {
+    const outSet = new Set(state.outcomes.map(o => (o || "").toUpperCase()));
     list = list.filter(r => outSet.has((r.Outcome || "").toUpperCase()));
   }
 
   if (state.categories?.length) {
     const catSet = new Set(state.categories);
     list = list.filter(r => catSet.has(r.RuleCategory));
-  }
-
-  if (state.presetTriggers?.length) {
-    const presetSet = new Set(state.presetTriggers);
-    list = list.filter(r => presetSet.has(r.TriggerCanon || canonicalTrigger(r.Trigger)));
   }
 
   if (trigTokens.length) {
@@ -1049,7 +1091,7 @@ function applyFilters() {
     });
   }
 
-  if (preset?.limitComplexity) {
+  if (state.presetLimitComplexity && typeof isLikelyComplexRow === "function") {
     list = list.filter(r => !isLikelyComplexRow(r));
   }
 
