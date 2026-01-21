@@ -195,7 +195,6 @@ const state = {
   filtered: [],
   families: loadLS("wm_families", ["Soft","Aspirate","Nasal","None"]),
   categories: loadLS("wm_categories", []),
-  outcomes: loadLS("wm_outcomes", ["SM","AM","NM","NONE"]),
   triggerQuery: loadLS("wm_trig", ""),
   // Presets are implemented as a thin layer over filters.
   activePreset: loadLS("wm_active_preset", ""),
@@ -234,7 +233,6 @@ function hasCustomFilters() {
   const activeCategories = state.categories.filter(c => c !== "All");
   return (
     (state.families.length && state.families.length < 4) ||
-    (state.outcomes.length && state.outcomes.length < 4) ||
     activeCategories.length ||
     (state.triggerQuery && state.triggerQuery.trim()) ||
     state.nilOnly
@@ -277,13 +275,11 @@ function setCategories(next) {
 
 function resetFilters() {
   state.families = ["Soft","Aspirate","Nasal","None"];
-  state.outcomes = ["SM","AM","NM","NONE"];
   state.categories = [];
   state.triggerQuery = "";
   state.nilOnly = false;
 
   saveLS("wm_families", state.families);
-  saveLS("wm_outcomes", state.outcomes);
   saveLS("wm_categories", state.categories);
   saveLS("wm_trig", state.triggerQuery);
   saveLS("wm_nil", state.nilOnly);
@@ -292,9 +288,6 @@ function resetFilters() {
 state.families = Array.isArray(state.families) && state.families.length
   ? state.families
   : ["Soft","Aspirate","Nasal","None"];
-state.outcomes = Array.isArray(state.outcomes) && state.outcomes.length
-  ? state.outcomes
-  : ["SM","AM","NM","NONE"];
 state.categories = normalizeCategoryList(Array.isArray(state.categories) ? state.categories : []);
 state.presetTriggers = Array.isArray(state.presetTriggers) ? state.presetTriggers : [];
 state.sourceScope = Array.isArray(state.sourceScope) ? state.sourceScope : [];
@@ -340,7 +333,7 @@ const LABEL = {
     reviewedLabel:"Reviewed",
     poolLabel:"Pool",
     answerLabel:"Answer",
-    statuses:{ correct:"Correct!", wrong:"Not quite", skipped:"Skipped" },
+    statuses:{ correct:"Correct!", wrong:"Not quite", skipped:"Skipped", revealed:"Revealed" },
     youTyped:"You typed",
     blank:"(blank)",
     hear:"Hear",
@@ -358,7 +351,7 @@ const LABEL = {
       clearFilters: "Clear filters",
       focusHelper: "Start with a pack or fine-tune below.",
       presetsHelper: "Quick packs to jump into a topic.",
-      coreFiltersHelper: "Choose mutation type, outcome, and category.",
+      coreFiltersHelper: "Choose mutation type and category.",
       advCategoriesHelper: "All categories plus trigger search.",
       commonCategoriesTitle: "Common categories",
       allCategoriesTitle: "All categories",
@@ -424,7 +417,7 @@ const LABEL = {
     reviewedLabel:"Wedi adolygu",
     poolLabel:"Set",
     answerLabel:"Ateb",
-    statuses:{ correct:"Cywir!", wrong:"Dim yn hollol gywir", skipped:"Wedi ei hepgor" },
+    statuses:{ correct:"Cywir!", wrong:"Dim yn hollol gywir", skipped:"Wedi ei hepgor", revealed:"Datgelwyd" },
     youTyped:"Teipioch chi",
     blank:"(gwag)",
     hear:"Gwrando",
@@ -442,7 +435,7 @@ const LABEL = {
       clearFilters: "Clirio hidlwyr",
       focusHelper: "Dechreuwch gyda pecyn neu fireiniwch isod.",
       presetsHelper: "Pecynnau cyflym i neidio i bwnc.",
-      coreFiltersHelper: "Dewiswch math treiglad, canlyniad, a chategori.",
+      coreFiltersHelper: "Dewiswch math treiglad a chategori.",
       advCategoriesHelper: "Pob categori a chwilio sbardun.",
       commonCategoriesTitle: "Categorïau cyffredin",
       allCategoriesTitle: "Pob categori",
@@ -490,7 +483,6 @@ function applyLanguage() {
   if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
   if ($("#focusHelper")) $("#focusHelper").textContent = LABEL[lang].ui.focusHelper;
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
-  if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
@@ -997,16 +989,6 @@ function toggleBtn(text, active, onClick) {
   }
   applyPillState($("#familyBtns"), familyKeys, familyAllActive);
 
-  const outcomeAll = ["SM","AM","NM","NONE"];
-  const outcomes = state.outcomes?.length ? state.outcomes : outcomeAll;
-  let outcomeAllActive = outcomes.length === outcomeAll.length;
-  let outcomeKeys = outcomeAllActive ? [] : outcomes;
-  if (hasPresetLayer) {
-    outcomeAllActive = false;
-    outcomeKeys = [];
-  }
-  applyPillState($("#outcomeBtns"), outcomeKeys, outcomeAllActive);
-
   const categories = state.categories || [];
   let categoriesAllActive = categories.length === 0;
   let categoryKeys = categoriesAllActive ? [] : categories;
@@ -1027,7 +1009,6 @@ function buildFilters() {
   if ($("#presetsTitle")) $("#presetsTitle").textContent = LABEL[lang].headings.presets;
   if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
-  if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
   if ($("#basicCategoriesTitle")) $("#basicCategoriesTitle").textContent = LABEL[lang].ui.commonCategoriesTitle;
   if ($("#advCategoriesTitle")) $("#advCategoriesTitle").textContent = LABEL[lang].ui.allCategoriesTitle;
@@ -1116,58 +1097,6 @@ function buildFilters() {
       });
       b.dataset.key = f;
       famEl.appendChild(b);
-    }
-  }
-
-  /* -----------------------------
-     OUTCOME (with All)
-  ------------------------------*/
-  const outEl = $("#outcomeBtns");
-  if (outEl) {
-    outEl.innerHTML = "";
-    const isAllOutcomes = state.outcomes.length === 4;
-    const allOutcomes = ["SM","AM","NM","NONE"];
-
-    const allBtn = toggleBtn(label("categories", "All"), isAllOutcomes, () => {
-      clearPresetLayer();
-      state.outcomes = [...allOutcomes];
-      saveLS("wm_outcomes", state.outcomes);
-      applyFilters();
-      rebuildDeck();
-      refreshFilterPills();
-      render();
-      updatePresetActiveClasses();
-    });
-    allBtn.dataset.key = "__ALL__";
-    outEl.appendChild(allBtn);
-
-    for (const o of ["SM","AM","NM","NONE"]) {
-      const isOn = !isAllOutcomes && state.outcomes.includes(o);
-      const b = toggleBtn(label("rulefamily", o), isOn, () => {
-        clearPresetLayer();
-        let outs = Array.isArray(state.outcomes) && state.outcomes.length
-          ? [...state.outcomes]
-          : [...allOutcomes];
-        const allActive = outs.length === allOutcomes.length;
-        if (allActive) {
-          outs = [o];
-        } else if (outs.includes(o)) {
-          outs = outs.filter(x => x !== o);
-        } else {
-          outs.push(o);
-        }
-        if (!outs.length) outs = [...allOutcomes];
-
-        state.outcomes = outs;
-        saveLS("wm_outcomes", state.outcomes);
-        applyFilters();
-        rebuildDeck();
-        refreshFilterPills();
-        render();
-        updatePresetActiveClasses();
-      });
-      b.dataset.key = o;
-      outEl.appendChild(b);
     }
   }
 
@@ -1301,12 +1230,6 @@ function applyFilters() {
   if (state.families?.length && state.families.length < allFamilies.length) {
     const famSet = new Set(state.families);
     list = list.filter(r => famSet.has(r.RuleFamily));
-  }
-
-  const allOutcomes = ["SM","AM","NM","NONE"];
-  if (state.outcomes?.length && state.outcomes.length < allOutcomes.length) {
-    const outSet = new Set(state.outcomes.map(o => (o || "").toUpperCase()));
-    list = list.filter(r => outSet.has((r.Outcome || "").toUpperCase()));
   }
 
   if (state.categories?.length) {
@@ -1511,12 +1434,10 @@ function renderPractice() {
     $("#btnClearFilters")?.addEventListener("click", () => {
       state.families = ["Soft","Aspirate","Nasal","None"];
       state.categories = [];
-      state.outcomes = ["SM","AM","NM","NONE"];
       state.triggerQuery = "";
       state.nilOnly = false;
       saveLS("wm_families", state.families);
       saveLS("wm_categories", state.categories);
-      saveLS("wm_outcomes", state.outcomes);
       saveLS("wm_trig", state.triggerQuery);
       saveLS("wm_nil", state.nilOnly);
       applyFilters(); rebuildDeck(); buildFilters(); render();
@@ -1626,9 +1547,6 @@ function renderPractice() {
     if (state.families.length && state.families.length < 4) {
       state.families.forEach(f => summary.appendChild(addChip(label("rulefamily", f))));
     }
-    if (state.outcomes.length && state.outcomes.length < 4) {
-      state.outcomes.forEach(o => summary.appendChild(addChip(label("rulefamily", o))));
-    }
     if (activeCategories.length) {
       activeCategories.forEach(ca => summary.appendChild(addChip(label("categories", ca))));
     }
@@ -1643,12 +1561,10 @@ function renderPractice() {
     summary.appendChild(addChip(clearLabel, () => {
       state.families = ["Soft","Aspirate","Nasal","None"];
       state.categories = [];
-      state.outcomes = ["SM","AM","NM","NONE"];
       state.triggerQuery = "";
       state.nilOnly = false;
       saveLS("wm_families", state.families);
       saveLS("wm_categories", state.categories);
-      saveLS("wm_outcomes", state.outcomes);
       saveLS("wm_trig", state.triggerQuery);
       saveLS("wm_nil", state.nilOnly);
       applyFilters(); rebuildDeck(); buildFilters(); render();
@@ -1665,11 +1581,11 @@ function renderPractice() {
   chips.className = "practice-base text-2xl md:text-3xl font-medium";
 
   const capsule = document.createElement("div");
-  capsule.className = "base-word-capsule inline-flex items-center bg-indigo-100 ring-1 ring-indigo-300 rounded-2xl px-5 py-2.5 shadow-sm";
+  capsule.className = "base-word-capsule";
   capsule.style.position = "relative";
 
   const baseSpan = document.createElement("span");
-  baseSpan.className = "base-word-text text-indigo-900 text-3xl md:text-4xl font-bold tracking-tight";
+  baseSpan.className = "base-word-text";
   baseSpan.textContent = (card.Base || "—");
 
   capsule.appendChild(baseSpan);
@@ -1756,10 +1672,21 @@ function renderPractice() {
   btnHint.id = "btnHint";
   btnHint.title = `${t.hint} (H)`;
 
-  const btnReveal = btn(t.reveal, "btn-ghost", () => {
-    state.revealed = !state.revealed;
+  const revealCard = () => {
+    if (state.revealed) return;
+    state.revealed = true;
+    if (!state.lastResult) state.lastResult = "revealed";
+    state.freezeIdx = idxNow;
+    state.freezePos = state.currentDeckPos;
+    const ab2 = $("#answerBox");
+    if (ab2) {
+      ab2.disabled = true;
+      ab2.classList.add("opacity-70", "cursor-not-allowed");
+    }
     render();
-  });
+  };
+
+  const btnReveal = btn(t.reveal, "btn-ghost", revealCard);
 
   const btnSkip = btn(t.skip, "btn-ghost btn-muted btn-skip", () => {
     state.guess = "";
@@ -1823,10 +1750,11 @@ function renderPractice() {
     feedback.classList.add("is-visible");
     const ok = state.lastResult === "correct";
     const skipped = state.lastResult === "skipped";
+    const revealed = state.lastResult === "revealed";
 
-    const statusIcon = skipped ? "⏭️" : (ok ? "✅" : "❌");
-    const statusColor = skipped ? "text-slate-800" : (ok ? "text-indigo-900" : "text-rose-900");
-    const statusText = skipped ? t.statuses.skipped : (ok ? t.statuses.correct : t.statuses.wrong);
+    const statusIcon = revealed ? "👀" : (skipped ? "⏭️" : (ok ? "✅" : "❌"));
+    const statusColor = revealed ? "text-slate-800" : (skipped ? "text-slate-800" : (ok ? "text-indigo-900" : "text-rose-900"));
+    const statusText = revealed ? t.statuses.revealed : (skipped ? t.statuses.skipped : (ok ? t.statuses.correct : t.statuses.wrong));
     const whyText = (state.lang === "cy" ? (card.WhyCym || card.Why) : card.Why) || "";
     const whyLabel = LABEL?.[lang]?.ui?.whyLabel || (lang === "cy" ? "Pam" : "Why");
     const isMobile = window.matchMedia("(max-width: 640px)").matches;
@@ -1845,7 +1773,7 @@ function renderPractice() {
           ${statusIcon} ${esc(statusText)}
         </div>
 
-        ${(!ok && !skipped)
+        ${(!ok && !skipped && !revealed)
           ? `<div class="mt-1 text-slate-700">${esc(t.youTyped)}: <b>${esc(state.guess) || esc(t.blank)}</b></div>`
           : ""
         }
