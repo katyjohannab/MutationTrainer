@@ -342,6 +342,7 @@ const LABEL = {
       deckProgressLabel: "Deck progress",
       cardsRemainingLabel: "Remaining",
       cardIdLabel: "Card ID",
+      reportIssue: "Report issue",
     },
   },
   cy: {
@@ -422,6 +423,7 @@ const LABEL = {
       deckProgressLabel: "Cynnydd y dec",
       cardsRemainingLabel: "Ar ôl",
       cardIdLabel: "ID Cerdyn",
+      reportIssue: "Adrodd problem",
     },
   }
 };
@@ -1511,12 +1513,6 @@ function renderPractice() {
   headerLeft.appendChild(posSpan);
 
   const cardId = getCardId(card, idxShown);
-  if (cardId) {
-    const cardIdLine = document.createElement("span");
-    cardIdLine.className = "text-[10px] uppercase tracking-wide text-slate-400";
-    cardIdLine.textContent = `${LABEL[lang].ui.cardIdLabel}: ${cardId}`;
-    headerLeft.appendChild(cardIdLine);
-  }
 
   const deckTotal = state.practiceMode === "smart" ? n : state.deck.length;
   const deckReviewed = state.practiceMode === "smart"
@@ -1864,7 +1860,37 @@ function renderPractice() {
   answerBlock.className = "practice-answerBlock";
   answerBlock.append(row, actions, hint, feedback);
 
-  wrap.append(header, summary, instruction, chips, answerBlock);
+  const cardSurface = document.createElement("div");
+  cardSurface.className = "practice-card-surface";
+
+  const cardFooter = document.createElement("div");
+  cardFooter.className = "practice-card-footer";
+
+  const cardMeta = document.createElement("div");
+  cardMeta.className = "practice-card-meta";
+  cardMeta.textContent = `${LABEL[lang].ui.cardIdLabel}: ${cardId || "—"}`;
+
+  const reportLabel = LABEL[lang]?.ui?.reportIssue || (lang === "cy" ? "Adrodd problem" : "Report issue");
+  const reportBtn = document.createElement("button");
+  reportBtn.type = "button";
+  reportBtn.className = "btn btn-ghost practice-report-btn";
+  reportBtn.textContent = reportLabel;
+  reportBtn.title = reportLabel;
+  reportBtn.addEventListener("click", () => {
+    const subject = encodeURIComponent(`${LABEL[lang].ui.cardIdLabel}: ${cardId || "—"}`);
+    const sentence = buildCompleteSentence({ Before: card.Before, Answer: card.Answer, After: card.After });
+    const body = encodeURIComponent([
+      `${LABEL[lang].ui.cardIdLabel}: ${cardId || "—"}`,
+      `Base: ${card.Base || ""}`,
+      `Sentence: ${sentence}`
+    ].join("\n"));
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  });
+
+  cardFooter.append(cardMeta, reportBtn);
+  cardSurface.append(instruction, chips, answerBlock, cardFooter);
+
+  wrap.append(header, summary, cardSurface);
   host.appendChild(wrap);
 
   const ab = $("#answerBox");
