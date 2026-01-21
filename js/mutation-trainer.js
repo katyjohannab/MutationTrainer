@@ -775,23 +775,36 @@ function toggleBtn(text, active, onToggle) {
     });
   };
 
+  const hasPresetLayer =
+    Boolean(state.activePreset) ||
+    (Array.isArray(state.presetTriggers) && state.presetTriggers.length) ||
+    (Array.isArray(state.sourceScope) && state.sourceScope.length) ||
+    Boolean(state.presetForceFamily) ||
+    Boolean(state.presetLimitComplexity);
+
   const familyAll = ["Soft","Aspirate","Nasal","None"];
   const families = state.families?.length ? state.families : familyAll;
-  const familyAllActive = families.length === familyAll.length;
-  applyPillState($("#familyBtns"), families, familyAllActive);
+  let familyAllActive = families.length === familyAll.length;
+  const familyKeys = hasPresetLayer && familyAllActive ? [] : families;
+  if (hasPresetLayer && familyAllActive) familyAllActive = false;
+  applyPillState($("#familyBtns"), familyKeys, familyAllActive);
 
   const outcomeAll = ["SM","AM","NM","NONE"];
   const outcomes = state.outcomes?.length ? state.outcomes : outcomeAll;
-  const outcomeAllActive = outcomes.length === outcomeAll.length;
-  applyPillState($("#outcomeBtns"), outcomes, outcomeAllActive);
+  let outcomeAllActive = outcomes.length === outcomeAll.length;
+  const outcomeKeys = hasPresetLayer && outcomeAllActive ? [] : outcomes;
+  if (hasPresetLayer && outcomeAllActive) outcomeAllActive = false;
+  applyPillState($("#outcomeBtns"), outcomeKeys, outcomeAllActive);
 
   const categories = state.categories || [];
-  const categoriesAllActive = categories.length === 0;
+  let categoriesAllActive = categories.length === 0;
+  if (hasPresetLayer && categoriesAllActive) categoriesAllActive = false;
   applyPillState($("#basicCatBtns"), categories, categoriesAllActive);
   applyPillState($("#catBtns"), categories, categoriesAllActive);
 }
 function buildFilters() {
   const lang = state.lang || "en";
+
 
   // Titles
   if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
