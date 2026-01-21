@@ -206,8 +206,9 @@ body{
 
 .pill-extra{
   font-weight: 600;
-  color: #64748b;
-  background: rgba(248,250,252,.9);
+  color: var(--emerald-ink);
+  border-color: var(--chip-bd);
+  background: rgba(4,120,87,0.08);
 }
 
 .pill-more{
@@ -215,6 +216,13 @@ body{
   border-style: dashed;
   background: rgba(241,245,249,.95);
   color: #0f172a;
+}
+
+.pill-clear{
+  font-weight: 700;
+  border-color: transparent;
+  background: rgba(185,28,28,0.08);
+  color: var(--cymru-red-ink);
 }
 
 /* ----- Phase 1: Preset cards ----- */

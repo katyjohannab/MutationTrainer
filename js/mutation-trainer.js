@@ -540,7 +540,7 @@ function applyLanguage() {
   if ($("#advToggle")) $("#advToggle").textContent = LABEL[lang].ui.advancedFiltersClosed;
   if ($("#sessionTitle")) $("#sessionTitle").textContent = LABEL[lang].ui.sessionTitle;
   if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].ui.newSession;
-  if ($("#btnCoreClear")) $("#btnCoreClear").textContent = LABEL[lang].ui.clearFilters;
+  if ($("#btnCoreClear")) $("#btnCoreClear").textContent = `${LABEL[lang].ui.clearFilters} ✕`;
   if ($("#accTitle")) $("#accTitle").textContent = LABEL[lang].ui.accuracyTitle;
   if ($("#streakTitle")) $("#streakTitle").textContent = LABEL[lang].ui.streakTitle;
   if ($("#practiceAccTitle")) $("#practiceAccTitle").textContent = LABEL[lang].ui.accuracyTitle;
@@ -1184,7 +1184,7 @@ function buildFilters() {
     const moreBtn = document.createElement("button");
     moreBtn.type = "button";
     moreBtn.id = "moreFiltersChip";
-    moreBtn.className = `pill pill-more`;
+    moreBtn.className = "pill pill-more";
     moreBtn.textContent = state.showMoreFilters
       ? LABEL[lang].ui.categoriesFewerFilters
       : LABEL[lang].ui.categoriesMoreFilters;
@@ -1225,6 +1225,13 @@ function buildFilters() {
         container.appendChild(b);
       }
     }
+
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.id = "btnCoreClear";
+    clearBtn.className = "pill pill-clear";
+    clearBtn.textContent = `${LABEL[lang].ui.clearFilters} ✕`;
+    container.appendChild(clearBtn);
   };
 
   bindCategoryButtons($("#categoryChips"), coreCats, extraCats);
