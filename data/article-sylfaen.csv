@@ -1,3 +1,4 @@
+CardId,RuleFamily,RuleCategory,Trigger,Base,Translate,WordCategory,Before,After,Answer,Outcome,TranslateSent,Why,Why-Cym
 a000001,Soft,Article,y,baner,flag,noun-fem,Mae'r ,yn y gegin.,faner,SM,The flag is in the kitchen.,After the definite article a singular feminine noun takes soft mutation.,Ar ôl y fannod mae enw benywaidd unigol yn treiglo'n feddal.
 a000002,Soft,Article,y,barf,beard,noun-fem,Dw i ddim yn hoffi'r ,o gwbl.,farf,SM,I don’t like the beard at all.,After the definite article a singular feminine noun takes soft mutation.,Ar ôl y fannod mae enw benywaidd unigol yn treiglo'n feddal.
 a000003,None,Article,yr,acen,accent,noun-fem,Mae ,e'n gryf.,acen,NONE,The accent is strong.,This noun is feminine but it starts with a vowel so there is no mutation after the article.,Mae'r enw yn fenywaidd ond mae'n dechrau gyda llafariad felly does dim treiglad ar ôl y fannod.
