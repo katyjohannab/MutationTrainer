@@ -1,4 +1,4 @@
-<!doctype html>
+!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -12,6 +12,29 @@
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inconsolata:wght@200;300&family=Josefin+Sans:wght@300;400&family=Karla:wght@200;300;500;600&family=Merriweather:ital,wght@1,900&family=Poppins:ital,wght@0,100;0,200;0,400;1,100&family=Slabo+13px&family=Slabo+27px&family=Ultra&family=Yeseva+One&display=swap');
+  </style>
+
+  <!-- Custom preset styles to enhance clickable behaviour and focus indicator -->
+  <style>
+    /* Make preset buttons accessible and interactive */
+    .preset-btn {
+      cursor: pointer;
+    }
+    .preset-btn:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+    .preset-btn[aria-pressed="true"],
+    .preset-on {
+      /* Use emerald tint for active presets */
+      border-color: rgba(4, 120, 87, 0.35);
+      background: rgba(4, 120, 87, 0.10);
+    }
+    /* Focus indicator styling */
+    #focusIndicator {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
   </style>
 
   <!-- PapaParse for CSV loading -->
@@ -91,54 +114,47 @@
         <!-- Right: filters + session -->
         <div class="md:col-span-1 flex flex-col gap-4">
           <div id="filtersPanel" class="panel rounded-2xl p-4">
-            <div id="adminPanel" class="hidden mb-4">
-              <div class="text-sm font-medium mb-2">Admin tools</div>
-              <label class="text-sm font-medium">Data URL </label>
-              <div class="mt-2 flex gap-2">
-                <input id="dataUrl" class="w-full border rounded-xl px-3 py-2" placeholder="Paste Google Sheet CSV (Publish → CSV)">
-                <button id="btnLoadUrl" class="btn btn-primary px-4 py-2">LOAD</button>
+            <!-- Focus section -->
+            <div id="focusSection" class="mb-4">
+              <div id="focusTitle" class="text-sm font-medium mb-2">Focus</div>
+              <div id="presetSection" class="mb-2">
+                <div id="presetsTitle" class="text-sm font-medium mb-2">Start here</div>
+                <div id="presetBtns" class="grid grid-cols-2 gap-2"></div>
+                <!-- Focus indicator shows which preset/pack is active (set by JS) -->
+                <div id="focusIndicator" class="text-xs font-medium text-slate-600 hidden mt-1"></div>
               </div>
-              <div class="mt-2 flex flex-wrap gap-2 text-sm">
-                <button id="btnShareable" class="btn btn-ghost px-3 py-1.5">Shareable link</button>
-                <button id="btnExportMisses" class="btn btn-ghost px-3 py-1.5">Export misses</button>
-              </div>
-              <div class="mt-3">
-                <div class="text-sm font-medium mb-1">Load local CSV</div>
-                <input id="fileCsv" type="file" accept=".csv" />
-              </div>
-              <hr class="my-4" />
             </div>
 
-            <div id="focusTitle" class="text-sm font-medium mb-2">Focus</div>
-
-            <!-- Phase 1: Presets -->
-            <div id="presetSection" class="mb-4">
-              <div id="presetsTitle" class="text-sm font-medium mb-2">Start here</div>
-              <div id="presetBtns" class="grid grid-cols-2 gap-2"></div>
-            </div>
-
-            <!-- Phase 1: Basic focus (Rule family, outcome, common categories) -->
-            <div id="basicFocus">
-              <div class="grid grid-cols-2 gap-2 text-sm">
-                <div id="familyCol">
-                  <div id="rulefamilyTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">RuleFamily</div>
-                  <div id="familyBtns" class="flex flex-wrap gap-1"></div>
+            <!-- Core filters section -->
+            <div id="coreFiltersSection" class="mb-4">
+              <div id="coreFiltersTitle" class="text-sm font-medium mb-2">Core filters</div>
+              <div id="basicFocus">
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                  <div id="familyCol">
+                    <div id="rulefamilyTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">RuleFamily</div>
+                    <div id="familyBtns" class="flex flex-wrap gap-1"></div>
+                  </div>
+                  <div id="outcomeCol">
+                    <div id="outcomeTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Outcome</div>
+                    <div id="outcomeBtns" class="flex flex-wrap gap-1"></div>
+                  </div>
+                  <div class="col-span-2">
+                    <div id="basicCategoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Categories</div>
+                    <div id="basicCatBtns" class="flex flex-wrap gap-1"></div>
+                  </div>
                 </div>
-                <div id="outcomeCol">
-                  <div id="outcomeTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Outcome</div>
-                  <div id="outcomeBtns" class="flex flex-wrap gap-1"></div>
-                </div>
-                <div class="col-span-2">
-                  <div id="basicCategoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Categories</div>
-                  <div id="basicCatBtns" class="flex flex-wrap gap-1"></div>
+                <!-- Clear filters button (core) -->
+                <div class="mt-3">
+                  <button id="btnCoreClear" type="button" class="btn btn-ghost px-3 py-1.5 text-sm">Clear filters</button>
                 </div>
               </div>
             </div>
 
-            <!-- Phase 1: Advanced filters collapsed by default -->
+            <!-- Advanced filters collapsed by default -->
             <details id="advFilters" class="mt-3">
               <summary id="advToggle" class="cursor-pointer text-sm font-medium select-none">Advanced filters</summary>
               <div class="mt-2">
+                <!-- Advanced categories (non-duplicated) -->
                 <div id="advCategoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Categories</div>
                 <div id="catBtns" class="flex flex-wrap gap-1"></div>
                 <div class="mt-2">
@@ -149,6 +165,25 @@
                   <input id="nilOnly" type="checkbox" />
                   <span id="nilOnlyText">Nil-cases only (no mutation expected)</span>
                 </label>
+
+                <!-- Admin tools relocated into Advanced -->
+                <div id="adminPanel" class="mt-4">
+                  <div class="text-sm font-medium mb-2">Admin tools</div>
+                  <label class="text-sm font-medium">Data URL </label>
+                  <div class="mt-2 flex gap-2">
+                    <input id="dataUrl" class="w-full border rounded-xl px-3 py-2" placeholder="Paste Google Sheet CSV (Publish → CSV)">
+                    <button id="btnLoadUrl" class="btn btn-primary px-4 py-2">LOAD</button>
+                  </div>
+                  <div class="mt-2 flex flex-wrap gap-2 text-sm">
+                    <button id="btnShareable" class="btn btn-ghost px-3 py-1.5">Shareable link</button>
+                    <button id="btnExportMisses" class="btn btn-ghost px-3 py-1.5">Export misses</button>
+                  </div>
+                  <div class="mt-3">
+                    <div class="text-sm font-medium mb-1">Load local CSV</div>
+                    <input id="fileCsv" type="file" accept=".csv" />
+                  </div>
+                  <hr class="my-4" />
+                </div>
               </div>
             </details>
           </div>
@@ -223,7 +258,7 @@
           <thead class="bg-slate-100 text-slate-700">
             <tr id="browseHead"></tr>
           </thead>
-          <tbody id="browseBody"></tbody>
+            <tbody id="browseBody"></tbody>
         </table>
       </div>
 
@@ -258,6 +293,8 @@
     </footer>
   </div>
 <script src="js/mutation-trainer.js" defer></script>
+<!-- Override script implements pack separation and filter reset logic -->
+<script src="js/override.js" defer></script>
 
 </body>
 </html>
