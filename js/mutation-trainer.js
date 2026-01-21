@@ -299,7 +299,7 @@ state.presetLimitComplexity = Boolean(state.presetLimitComplexity);
 /* ========= UI Translations ========= */
 const LABEL = {
   en: {
-    headings: { focus:"Focus", rulefamily:"Mutation type", outcome:"Outcome", categories:"Categories", trigger:"Filter by Trigger", nilOnly:"Nil-cases only (no mutation expected)", presets:"Start here" },
+    headings: { focus:"Focus", rulefamily:"Mutation type", outcome:"Outcome", categories:"Categories", trigger:"Filter by Trigger", nilOnly:"Nil-cases only (no mutation expected)", presets:"Quick packs" },
     presets: {
       starterPrepsTitle: "Starter prepositions",
       starterPrepsDesc: "Common contact-mutation prepositions",
@@ -310,7 +310,7 @@ const LABEL = {
       articlesTitle: "Articles",
       articlesDesc: "y / yr / 'r (starter set)",
       articlesTip: "Definite articles and the mutation patterns they create.",
-      placeNamesTitle: "Place names",
+      placeNamesTitle: "Place-name starter pack",
       placeNamesDesc: "Early nasal-mutation practice",
       placeNamesTip: "Place names often take nasal mutation in common patterns (e.g. after certain structures)."
     },
@@ -318,7 +318,7 @@ const LABEL = {
     categories: {
       All:"All","Adjective+Noun":"Adjective+Noun",Article:"Article","Bod+yn":"Bod+Yn",Complement:"Complement",Conjunction:"Conjunction",
       Deictic:"Deictic",Determiner:"Determiner",Intensifier:"Intensifier",Interrogative:"Interrogative",Idiom: "Idiom",Negation:"Negation",Numerals:"Numerals",
-      Particle:"Particle",PlaceName:"PlaceName",Possessive:"Possessive",Preposition:"Preposition",Presentative:"Presentative",Relative:"Relative",
+      Particle:"Particle",PlaceName:"Place names",Possessive:"Possessive",Preposition:"Preposition",Presentative:"Presentative",Relative:"Relative",
       SubjectBoundary:"SubjectBoundary",Subordinator:"Subordinator",TimeExpressions:"TimeExpressions"
     },
     rulefamily: { Soft:"Soft", Aspirate:"Aspirate", Nasal:"Nasal", None:"None", SM:"Soft", AM:"Aspirate", NM:"Nasal", NONE:"None" },
@@ -343,7 +343,7 @@ const LABEL = {
     resetStats:"Reset stats",
     backToTop:"Back to top",
     ui: {
-      coreFilters: "Core filters",
+      coreFilters: "Filters",
       advancedFilters: "More filters",
       advancedFiltersOpen: "Fewer filters",
       advancedFiltersClosed: "More filters",
@@ -351,8 +351,8 @@ const LABEL = {
       newSession: "New",
       clearFilters: "Clear filters",
       focusHelper: "Start with a pack or fine-tune below.",
-      presetsHelper: "Quick packs to jump into a topic.",
-      coreFiltersHelper: "Choose mutation type and category.",
+      presetsHelper: "Curated guided sets to jump into a topic.",
+      coreFiltersHelper: "Fine-tune across all cards.",
       advCategoriesHelper: "All categories plus trigger search.",
       commonCategoriesTitle: "Common categories",
       allCategoriesTitle: "All categories",
@@ -397,7 +397,7 @@ const LABEL = {
     },
   },
   cy: {
-    headings: { focus:"Ffocws", rulefamily:"Math treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)", presets:"Dechreuwch yma" },
+    headings: { focus:"Ffocws", rulefamily:"Math treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)", presets:"Pecynnau cyflym" },
     presets: {
       starterPrepsTitle: "Arddodiaid sylfaenol",
       starterPrepsDesc: "Arddodiaid cyffredin (treiglad cyswllt)",
@@ -408,7 +408,7 @@ const LABEL = {
       articlesTitle: "Erthyglau",
       articlesDesc: "y / yr / 'r (set ddechrau)",
       articlesTip: "Erthyglau pendant a'r patrymau treiglad maen nhw'n eu creu.",
-      placeNamesTitle: "Enwau lleoedd",
+      placeNamesTitle: "Pecyn cychwynnol enwau lleoedd",
       placeNamesDesc: "Ymarfer treiglad trwynol cynnar",
       placeNamesTip: "Mae enwau lleoedd yn aml yn cymryd treiglad trwynol mewn patrymau cyffredin."
     },
@@ -416,7 +416,7 @@ const LABEL = {
     categories: {
       All:"Pob un","Adjective+Noun":"Ansoddair+Enw",Article:"Erthygl","Bod+yn":"Bod+Yn",Complement:"Cyflenwad",Conjunction:"Cysylltair",
       Deictic:"Deictig",Determiner:"Penderfyniadur",Idiom:"Idiom",Intensifier:"Dwysydd",Interrogative:"Holiadol",Negation:"Negydd",Numerals:"Rhifau",
-      Particle:"Gronyn",PlaceName:"Enw lle",Possessive:"Meddiannol",Preposition:"Arddodiad",Presentative:"Cyflwyniadur",Relative:"Perthynol",
+      Particle:"Gronyn",PlaceName:"Enwau lleoedd",Possessive:"Meddiannol",Preposition:"Arddodiad",Presentative:"Cyflwyniadur",Relative:"Perthynol",
       SubjectBoundary:"Ar ôl pwnc",Subordinator:"Isgysylltair",TimeExpressions:"Mynegiadau Amser"
     },
     rulefamily: { Soft:"Meddal", Aspirate:"Llaes", Nasal:"Trwynol", None:"Dim", SM:"Meddal", AM:"Llaes", NM:"Trwynol", NONE:"Dim" },
@@ -441,7 +441,7 @@ const LABEL = {
     resetStats:"Ailosod ystadegau",
     backToTop:"Yn ôl i’r brig",
     ui: {
-      coreFilters: "Hidlyddion craidd",
+      coreFilters: "Hidlau",
       advancedFilters: "Mwy o hidlyddion",
       advancedFiltersOpen: "Llai o hidlyddion",
       advancedFiltersClosed: "Mwy o hidlyddion",
@@ -449,8 +449,8 @@ const LABEL = {
       newSession: "Newydd",
       clearFilters: "Clirio hidlwyr",
       focusHelper: "Dechreuwch gyda pecyn neu fireiniwch isod.",
-      presetsHelper: "Pecynnau cyflym i neidio i bwnc.",
-      coreFiltersHelper: "Dewiswch math treiglad a chategori.",
+      presetsHelper: "Setiau tywys wedi’u curadu i neidio i bwnc.",
+      coreFiltersHelper: "Mireinio ar draws pob cerdyn.",
       advCategoriesHelper: "Pob categori a chwilio sbardun.",
       commonCategoriesTitle: "Categorïau cyffredin",
       allCategoriesTitle: "Pob categori",
