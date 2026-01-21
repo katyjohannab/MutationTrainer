@@ -490,7 +490,7 @@ const PRESET_DEFS = {
     id: "numbers-1-10",
     titleKey: "numbersTitle",
     descKey: "numbersDesc",
-    triggers: ["un","dau","dwy","tri","tair","pedwar","chwech","chwe","pum","pump","saith","wyth","naw","deg"],
+    triggers: ["un","dwy","dau","tri","tair","pedwar","pedair","pum","pump","chwech","chwe","saith","wyth","naw","deg"],
   },
   "articles": {
     id: "articles",
@@ -498,6 +498,7 @@ const PRESET_DEFS = {
     descKey: "articlesDesc",
     category: "Article",
     triggers: [],
+    sourceScope: ["article-sylfaen.csv"],
   },
   "place-names": {
     id: "place-names",
