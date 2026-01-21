@@ -12,7 +12,13 @@ function normalize(s) {
     .trim()
     .replace(/\s+/g, " ");
 }
-
+function normalizeSourcePath(s) {
+  return (s || "")
+    .toString()
+    .trim()
+    .replace(/^https?:\/\/[^/]+\/?/i, "")
+    .replace(/^\/+/, "");
+}
 // Canonicalise Trigger values for reliable matching (presets + URL params).
 // - lowercases, trims, normalises apostrophes
 // - removes bracketed glosses: "i (to)" -> "i"; "y [the]" -> "y"
@@ -568,7 +574,9 @@ function applyPreset(presetId, { fromUrl = false } = {}) {
 
   state.categories = [p.category];
   saveLS("wm_categories", state.categories);
-  state.sourceScope = Array.isArray(p.sourceScope) ? [...p.sourceScope] : [];
+   state.sourceScope = Array.isArray(p.sourceScope)
+    ? p.sourceScope.map(normalizeSourcePath)
+    : [];
   saveLS("wm_source_scope", state.sourceScope);
 
   // Families: default to all unless preset forces a specific family.
@@ -729,13 +737,13 @@ async function initData() {
 
   const expected = ["CardId","RuleFamily","RuleCategory","Trigger","Base","WordCategory","Translate","Before","After","Answer","Outcome","Why","WhyCym"];
   const cleaned = rows.map(r => {
-  const src = (r && typeof r === "object" && r.__src) ? String(r.__src) : "";
-  const m = coerceRow(r);
-  const o = {};
-  for (const k of expected) o[k] = (m?.[k] ?? "").toString().trim();
-  o.Source = src; // 👈 preserve CSV origin
-  return o;
-});
+     const src = (r && typeof r === "object" && r.__src) ? String(r.__src) : "";
+    const m = coerceRow(r);
+    const o = {};
+    for (const k of expected) o[k] = (m?.[k] ?? "").toString().trim();
+    o.Source = normalizeSourcePath(src); // 👈 preserve CSV origin
+    return o;
+  });
 
   state.rows = cleaned;
 
@@ -992,8 +1000,8 @@ function applyFilters() {
   let list = state.rows.slice();
 
   if (state.sourceScope?.length) {
-    const scope = new Set(state.sourceScope);
-    list = list.filter(r => scope.has(r.Source));
+    const scope = new Set(state.sourceScope.map(normalizeSourcePath));
+    list = list.filter(r => scope.has(normalizeSourcePath(r.Source)));
   }
 
   if (state.families?.length) {
