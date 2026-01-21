@@ -313,6 +313,69 @@
       </div>
     </main>
 
+    <div id="reportModal" class="fixed inset-0 z-[10050] hidden" aria-hidden="true">
+      <div class="absolute inset-0 bg-slate-900/60" data-report-close></div>
+      <div class="relative mx-auto flex min-h-full max-w-2xl items-center px-4 py-10">
+        <div class="panel w-full rounded-2xl p-6 md:p-7" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h2 id="reportModalTitle" class="text-xl font-semibold"></h2>
+              <p id="reportModalIntro" class="mt-1 text-sm text-slate-600"></p>
+            </div>
+            <button type="button" class="btn btn-ghost" data-report-close aria-label="Close">
+              ✕
+            </button>
+          </div>
+
+          <form id="reportForm" class="mt-5 space-y-4">
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="text-sm font-medium">
+                <span id="reportFieldCardIdLabel" class="text-slate-700"></span>
+                <input id="reportCardId" type="text" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" readonly>
+              </label>
+              <label class="text-sm font-medium">
+                <span id="reportFieldBaseLabel" class="text-slate-700"></span>
+                <input id="reportBaseWord" type="text" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" readonly>
+              </label>
+            </div>
+
+            <label class="text-sm font-medium block">
+              <span id="reportFieldSentenceLabel" class="text-slate-700"></span>
+              <textarea id="reportSentence" rows="2" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" readonly></textarea>
+            </label>
+
+            <label class="text-sm font-medium block">
+              <span id="reportFieldTranslationLabel" class="text-slate-700"></span>
+              <textarea id="reportTranslation" rows="2" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" readonly></textarea>
+            </label>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="text-sm font-medium">
+                <span id="reportFieldFocusLabel" class="text-slate-700"></span>
+                <input id="reportFocus" type="text" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" readonly>
+              </label>
+              <label class="text-sm font-medium">
+                <span id="reportFieldMutationLabel" class="text-slate-700"></span>
+                <input id="reportMutation" type="text" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" readonly>
+              </label>
+            </div>
+
+            <label class="text-sm font-medium block">
+              <span id="reportDetailsLabel" class="text-slate-700"></span>
+              <textarea id="reportDetails" rows="4" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" required></textarea>
+            </label>
+
+            <p id="reportSuccess" class="hidden text-sm font-medium text-emerald-700"></p>
+
+            <div class="flex flex-wrap justify-end gap-2">
+              <button id="reportCancel" type="button" class="btn btn-ghost" data-report-close></button>
+              <button id="reportSubmit" type="submit" class="btn btn-primary"></button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Mobile action bar -->
     <div id="mobileBar" class="fixed md:hidden bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t shadow-lg p-2">
       <div class="max-w-6xl mx-auto flex gap-2">

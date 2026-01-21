@@ -224,6 +224,7 @@ const state = {
   advOpen: loadLS("wm_adv_open", false),
   currentIdx: 0,
   currentDeckPos: -1,
+  reportContext: null,
 };
 function normalizeCategoryList(list) {
   return Array.from(new Set((list || []).filter(Boolean).filter(c => c !== "All")));
@@ -377,7 +378,21 @@ const LABEL = {
       deckProgressLabel: "Deck progress",
       cardsRemainingLabel: "Remaining",
       cardIdLabel: "Card ID",
-      reportIssue: "Report issue",
+      reportIssue: "Noticed an error?",
+      reportModalTitle: "Report an issue",
+      reportModalIntro: "We’ll pre-fill the card context to make reporting quick.",
+      reportFieldCardIdLabel: "Card ID",
+      reportFieldBaseLabel: "Base word",
+      reportFieldSentenceLabel: "Full sentence (CY)",
+      reportFieldTranslationLabel: "English translation (if available)",
+      reportFieldFocusLabel: "Focus label",
+      reportFieldMutationLabel: "Mutation type / outcome",
+      reportDetailsLabel: "What looks wrong?",
+      reportDetailsPlaceholder: "Describe what seems wrong or missing.",
+      reportSubmit: "Open GitHub issue draft",
+      reportCancel: "Cancel",
+      reportSuccess: "Issue draft opened in a new tab.",
+      reportIssueTitlePrefix: "Card issue: Card ID",
       whyLabel: "Why",
     },
   },
@@ -461,7 +476,21 @@ const LABEL = {
       deckProgressLabel: "Cynnydd y dec",
       cardsRemainingLabel: "Ar ôl",
       cardIdLabel: "ID Cerdyn",
-      reportIssue: "Adrodd problem",
+      reportIssue: "Wedi sylwi ar gamgymeriad?",
+      reportModalTitle: "Adrodd problem",
+      reportModalIntro: "Byddwn yn llenwi manylion y cerdyn ymlaen llaw er hwylustod.",
+      reportFieldCardIdLabel: "ID Cerdyn",
+      reportFieldBaseLabel: "Gair sylfaenol",
+      reportFieldSentenceLabel: "Brawddeg lawn (CY)",
+      reportFieldTranslationLabel: "Cyfieithiad Saesneg (os ar gael)",
+      reportFieldFocusLabel: "Label ffocws",
+      reportFieldMutationLabel: "Math treiglad / canlyniad",
+      reportDetailsLabel: "Beth sy’n anghywir?",
+      reportDetailsPlaceholder: "Disgrifiwch beth sy’n edrych yn anghywir neu ar goll.",
+      reportSubmit: "Agor drafft mater GitHub",
+      reportCancel: "Canslo",
+      reportSuccess: "Agorwyd drafft mater mewn tab newydd.",
+      reportIssueTitlePrefix: "Problem gyda cherdyn: ID Cerdyn",
       whyLabel: "Pam",
     },
   }
@@ -527,9 +556,30 @@ function applyLanguage() {
   if ($("#moreInfoSummary")) $("#moreInfoSummary").textContent = LABEL[lang].ui.moreInfo;
   if ($("#statsAccTitle")) $("#statsAccTitle").textContent = LABEL[lang].ui.statsAccuracyTitle;
   if ($("#statsByOutcomeTitle")) $("#statsByOutcomeTitle").textContent = LABEL[lang].ui.statsByOutcomeTitle;
+  applyReportModalLabels();
 
   buildFilters();
   render();
+}
+
+function applyReportModalLabels() {
+  const lang = (state.lang === "cy" ? "cy" : "en");
+  if ($("#reportModalTitle")) $("#reportModalTitle").textContent = LABEL[lang].ui.reportModalTitle;
+  if ($("#reportModalIntro")) $("#reportModalIntro").textContent = LABEL[lang].ui.reportModalIntro;
+  if ($("#reportFieldCardIdLabel")) $("#reportFieldCardIdLabel").textContent = LABEL[lang].ui.reportFieldCardIdLabel;
+  if ($("#reportFieldBaseLabel")) $("#reportFieldBaseLabel").textContent = LABEL[lang].ui.reportFieldBaseLabel;
+  if ($("#reportFieldSentenceLabel")) $("#reportFieldSentenceLabel").textContent = LABEL[lang].ui.reportFieldSentenceLabel;
+  if ($("#reportFieldTranslationLabel")) $("#reportFieldTranslationLabel").textContent = LABEL[lang].ui.reportFieldTranslationLabel;
+  if ($("#reportFieldFocusLabel")) $("#reportFieldFocusLabel").textContent = LABEL[lang].ui.reportFieldFocusLabel;
+  if ($("#reportFieldMutationLabel")) $("#reportFieldMutationLabel").textContent = LABEL[lang].ui.reportFieldMutationLabel;
+  if ($("#reportDetailsLabel")) $("#reportDetailsLabel").textContent = LABEL[lang].ui.reportDetailsLabel;
+  if ($("#reportDetails")) $("#reportDetails").setAttribute("placeholder", LABEL[lang].ui.reportDetailsPlaceholder);
+  if ($("#reportSubmit")) $("#reportSubmit").textContent = LABEL[lang].ui.reportSubmit;
+  if ($("#reportCancel")) $("#reportCancel").textContent = LABEL[lang].ui.reportCancel;
+  const success = $("#reportSuccess");
+  if (success && !success.classList.contains("hidden")) {
+    success.textContent = LABEL[lang].ui.reportSuccess;
+  }
 }
 
 function syncLangFromNavbar() {
@@ -859,6 +909,7 @@ document.addEventListener("click", (e) => {
 /* ========= Data loading (index list) ========= */
 const FALLBACK_INDEX_URL = "https://katyjohannab.github.io/mutationtrainer/data/index.json";
 const FALLBACK_SITE_ROOT = "https://katyjohannab.github.io/mutationtrainer/";
+const REPORT_ISSUE_BASE_URL = "https://github.com/katyjohannab/mutationtrainer/issues/new";
 
 async function loadCsvUrl(u) {
   return new Promise((resolve, reject) => {
@@ -1293,6 +1344,93 @@ function buildCompleteSentence(card) {
   s = s.replace(/\s+/g, " ").trim();
   s = s.replace(/\s+([,.;:!?])/g, "$1");
   return s;
+}
+
+function getReportIssueBaseUrl() {
+  const host = window.location.hostname || "";
+  if (host.endsWith("github.io")) {
+    const owner = host.split(".")[0];
+    const repo = (window.location.pathname || "").split("/").filter(Boolean)[0];
+    if (owner && repo) {
+      return `https://github.com/${owner}/${repo}/issues/new`;
+    }
+  }
+  return REPORT_ISSUE_BASE_URL;
+}
+
+function getMutationSummary(card) {
+  const lang = state.lang || "en";
+  const familyRaw = (card?.RuleFamily || "").trim();
+  const outcomeRaw = (card?.Outcome || "").toString().toUpperCase().trim();
+  const family = familyRaw ? (LABEL?.[lang]?.rulefamily?.[familyRaw] || familyRaw) : "";
+  const outcome = outcomeRaw ? (LABEL?.[lang]?.rulefamily?.[outcomeRaw] || outcomeRaw) : "";
+  if (family && outcome && family !== outcome) return `${family} / ${outcome}`;
+  return family || outcome || "—";
+}
+
+function openReportModal(card, cardId) {
+  const modal = $("#reportModal");
+  if (!modal) return;
+  const sentence = buildCompleteSentence({ Before: card.Before, Answer: card.Answer, After: card.After });
+  const translation = (card.Translate || "").trim();
+  const focusLabel = getProgressFocusLabel();
+  const mutationSummary = getMutationSummary(card);
+
+  $("#reportCardId").value = cardId || "—";
+  $("#reportBaseWord").value = card.Base || "—";
+  $("#reportSentence").value = sentence || "—";
+  $("#reportTranslation").value = translation || "—";
+  $("#reportFocus").value = focusLabel || "—";
+  $("#reportMutation").value = mutationSummary;
+  $("#reportDetails").value = "";
+  $("#reportSuccess")?.classList.add("hidden");
+
+  state.reportContext = {
+    cardId: cardId || "—",
+    base: card.Base || "",
+    sentence,
+    translation,
+    focusLabel,
+    mutationSummary,
+  };
+
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("overflow-hidden");
+  $("#reportDetails")?.focus();
+}
+
+function closeReportModal() {
+  const modal = $("#reportModal");
+  if (!modal) return;
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("overflow-hidden");
+}
+
+function submitReportIssue(detailsText) {
+  const lang = state.lang || "en";
+  const ctx = state.reportContext;
+  if (!ctx) return;
+  const title = `${LABEL[lang].ui.reportIssueTitlePrefix} ${ctx.cardId || "—"}`;
+  const bodyLines = [
+    `${LABEL[lang].ui.cardIdLabel}: ${ctx.cardId || "—"}`,
+    `${LABEL[lang].ui.reportFieldBaseLabel}: ${ctx.base || "—"}`,
+    `${LABEL[lang].ui.reportFieldSentenceLabel}: ${ctx.sentence || "—"}`,
+    `${LABEL[lang].ui.reportFieldTranslationLabel}: ${ctx.translation || "—"}`,
+    `${LABEL[lang].ui.reportFieldFocusLabel}: ${ctx.focusLabel || "—"}`,
+    `${LABEL[lang].ui.reportFieldMutationLabel}: ${ctx.mutationSummary || "—"}`,
+    "",
+    `${LABEL[lang].ui.reportDetailsLabel}`,
+    detailsText.trim(),
+  ];
+  const issueUrl = `${getReportIssueBaseUrl()}?title=${encodeURIComponent(title)}&body=${encodeURIComponent(bodyLines.join("\n"))}`;
+  window.open(issueUrl, "_blank", "noopener");
+  const success = $("#reportSuccess");
+  if (success) {
+    success.textContent = LABEL[lang].ui.reportSuccess;
+    success.classList.remove("hidden");
+  }
 }
 async function playPollySentence(sentence) {
   if (!sentence) throw new Error("No sentence to speak.");
@@ -1841,14 +1979,7 @@ function renderPractice() {
   reportBtn.textContent = reportLabel;
   reportBtn.title = reportLabel;
   reportBtn.addEventListener("click", () => {
-    const subject = encodeURIComponent(`${LABEL[lang].ui.cardIdLabel}: ${cardId || "—"}`);
-    const sentence = buildCompleteSentence({ Before: card.Before, Answer: card.Answer, After: card.After });
-    const body = encodeURIComponent([
-      `${LABEL[lang].ui.cardIdLabel}: ${cardId || "—"}`,
-      `Base: ${card.Base || ""}`,
-      `Sentence: ${sentence}`
-    ].join("\n"));
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    openReportModal(card, cardId);
   });
 
   cardFooter.append(cardMeta, reportBtn);
@@ -2044,6 +2175,19 @@ function wireUi() {
   // NOTE: Do NOT bind #btnLangToggle here. navbar.js owns that button.
 
   $("#onboardDismiss")?.addEventListener("click", () => $("#onboard")?.classList.add("hidden"));
+
+  $$("[data-report-close]").forEach((btn) => {
+    btn.addEventListener("click", () => closeReportModal());
+  });
+  $("#reportForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const details = $("#reportDetails")?.value || "";
+    if (!details.trim()) {
+      $("#reportDetails")?.focus();
+      return;
+    }
+    submitReportIssue(details);
+  });
 
   $("#btnResetStats")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
   $("#btnResetStats2")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
