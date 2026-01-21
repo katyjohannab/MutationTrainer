@@ -237,6 +237,7 @@ body{
   border: 1px solid rgba(148,163,184,0.35);
   box-shadow: 0 10px 20px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
   transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  position: relative;
 }
 
 .preset-btn:hover {
@@ -250,6 +251,36 @@ body{
   border-color: rgba(4, 120, 87, 0.75);
   background: rgba(16, 185, 129, 0.18);
   box-shadow: 0 12px 22px rgba(4, 120, 87, 0.12), inset 0 1px 0 rgba(255,255,255,0.75);
+}
+
+.preset-clear{
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,0.45);
+  background: rgba(255,255,255,0.9);
+  color: rgba(15,23,42,0.7);
+  font-size: 0.9rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.preset-clear:hover{
+  transform: translateY(-1px);
+  border-color: rgba(4,120,87,0.5);
+  box-shadow: 0 8px 16px rgba(2,6,23,0.12);
+}
+.preset-clear:focus-visible{
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.preset-clear.hidden{
+  display: none;
 }
 
 
@@ -436,6 +467,36 @@ body{
 #practiceCard > div{
   max-width: 46rem;
   margin-inline: auto;
+}
+
+.deck-progress{
+  display: grid;
+  gap: 0.35rem;
+}
+
+.deck-progress-top{
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+  color: rgba(71,85,105,0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.deck-progress-track{
+  height: 0.4rem;
+  border-radius: 999px;
+  background: rgba(15,23,42,0.12);
+  overflow: hidden;
+}
+
+.deck-progress-fill{
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--primary-from) 0%, var(--primary-mid) 45%, var(--primary-to) 100%);
+  transition: width .28s ease;
 }
 
 /* Instruction spacing */
