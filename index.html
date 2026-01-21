@@ -168,29 +168,33 @@
 
                 <!-- Admin tools relocated into Advanced -->
                 <div id="adminPanel" class="mt-4">
-                  <div class="text-sm font-medium mb-2">Admin tools</div>
-                  <label class="text-sm font-medium">Data URL </label>
+                  <!-- Provide id for translation of admin section title -->
+                  <div id="adminTitle" class="text-sm font-medium mb-2">Admin tools</div>
+                  <!-- Data URL label -->
+                  <label id="adminDataUrlLabel" class="text-sm font-medium">Data URL </label>
                   <div class="mt-2 flex gap-2">
                     <input id="dataUrl" class="w-full border rounded-xl px-3 py-2" placeholder="Paste Google Sheet CSV (Publish → CSV)">
                     <button id="btnLoadUrl" class="btn btn-primary px-4 py-2">LOAD</button>
                   </div>
-                  <div class="mt-2 flex flex-wrap gap-2 text-sm">
-                    <button id="btnShareable" class="btn btn-ghost px-3 py-1.5">Shareable link</button>
-                    <button id="btnExportMisses" class="btn btn-ghost px-3 py-1.5">Export misses</button>
-                  </div>
-                  <div class="mt-3">
-                    <div class="text-sm font-medium mb-1">Load local CSV</div>
-                    <input id="fileCsv" type="file" accept=".csv" />
-                  </div>
-                  <hr class="my-4" />
+                    <div class="mt-2 flex flex-wrap gap-2 text-sm">
+                      <button id="btnShareable" class="btn btn-ghost px-3 py-1.5">Shareable link</button>
+                      <button id="btnExportMisses" class="btn btn-ghost px-3 py-1.5">Export misses</button>
+                    </div>
+                    <div class="mt-3">
+                      <!-- Provide id for translation of load local CSV heading -->
+                      <div id="loadCsvTitle" class="text-sm font-medium mb-1">Load local CSV</div>
+                      <input id="fileCsv" type="file" accept=".csv" />
+                    </div>
+                    <hr class="my-4" />
                 </div>
               </div>
             </details>
           </div>
 
-          <aside id="sessionPanel" class="panel rounded-2xl p-4">
+            <aside id="sessionPanel" class="panel rounded-2xl p-4">
             <div class="flex items-center justify-between mb-3">
-              <div class="text-sm font-medium">This session</div>
+              <!-- Provide id for translation -->
+              <div id="sessionTitle" class="text-sm font-medium">This session</div>
               <div class="flex gap-2">
                 <button id="btnNewSession" class="btn btn-primary px-3 py-1.5">New</button>
                 <!-- Keep existing id so current JS reset still works -->
@@ -202,7 +206,8 @@
             <div class="grid grid-cols-3 gap-2">
               <!-- Accuracy (currently powered by existing JS via #accBig/#accText) -->
               <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-1">Accuracy</div>
+                <!-- Give an id to the title so it can be translated -->
+                <div id="accTitle" class="text-[11px] uppercase tracking-wide text-slate-500 mb-1">Accuracy</div>
                 <div id="accBig" class="text-3xl md:text-4xl font-semibold leading-none">0%</div>
                 <div id="accText" class="mt-1 text-xs text-slate-600">0 / 0 correct</div>
               </div>
@@ -210,7 +215,8 @@
               <!-- Streak (will be wired in later steps) -->
               <div class="rounded-2xl border border-slate-200 bg-white p-3">
                 <div class="flex items-center justify-between mb-1">
-                  <div class="text-[11px] uppercase tracking-wide text-slate-500">Streak</div>
+                  <!-- Give an id to the title so it can be translated -->
+                  <div id="streakTitle" class="text-[11px] uppercase tracking-wide text-slate-500">Streak</div>
                   <button id="btnResetStreak" class="btn btn-ghost px-2 py-1 text-xs" title="Reset streak" type="button">↺</button>
                 </div>
                 <div class="text-3xl md:text-4xl font-semibold leading-none"><span id="sessStreak">0</span> <span aria-hidden="true">🔥</span></div>
@@ -219,16 +225,19 @@
 
               <!-- Checked / position (currently powered by existing JS via #cardPos) -->
               <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-1">Card</div>
+                <!-- Give an id to the title so it can be translated -->
+                <div id="cardTitle" class="text-[11px] uppercase tracking-wide text-slate-500 mb-1">Card</div>
                 <div id="cardPos" class="text-base md:text-lg font-semibold text-slate-900 leading-snug">Card 0 / 0</div>
-                <div class="mt-1 text-xs text-slate-600">Use <span class="font-medium">New</span> to start a fresh run.</div>
+                <!-- Add id to hint text for translation -->
+                <div id="cardHint" class="mt-1 text-xs text-slate-600">Use <span class="font-medium">New</span> to start a fresh run.</div>
               </div>
             </div>
 
             <!-- Mastery (layout placeholder, wired later) -->
             <div class="mt-3">
               <div class="flex items-baseline justify-between">
-                <div class="text-[11px] uppercase tracking-wide text-slate-500">Mastery (this focus)</div>
+                <!-- Give an id for translation -->
+                <div id="masteryTitle" class="text-[11px] uppercase tracking-wide text-slate-500">Mastery (this focus)</div>
                 <div id="masteryText" class="text-xs text-slate-600">Mastered: 0 / 0</div>
               </div>
               <div class="mt-2 h-2 rounded-full bg-slate-200 overflow-hidden">
@@ -239,13 +248,17 @@
 
             <!-- More info (uses existing #byOutcome list so current JS still populates it) -->
             <details class="mt-3">
-              <summary class="cursor-pointer text-sm font-medium select-none">More info</summary>
+              <!-- Give an id to summary so it can be translated -->
+              <summary id="moreInfoSummary" class="cursor-pointer text-sm font-medium select-none">More info</summary>
               <div class="mt-2 text-sm">
-                <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">By outcome</div>
+                <!-- By outcome heading -->
+                <div id="byOutcomeTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">By outcome</div>
                 <ul id="byOutcome" class="space-y-1"></ul>
-                <div class="mt-2 text-xs text-slate-500">Legend: <b>SM</b>=Soft, <b>AM</b>=Aspirate, <b>NM</b>=Nasal, <b>NONE</b>=No mutation</div>
+                <!-- Legend text will be updated via JS for translation -->
+                <div id="legendText" class="mt-2 text-xs text-slate-500">Legend: <b>SM</b>=Soft, <b>AM</b>=Aspirate, <b>NM</b>=Nasal, <b>NONE</b>=No mutation</div>
 
-                <div class="mt-3 text-xs uppercase tracking-wide text-slate-500 mb-1">By category</div>
+                <!-- By category heading -->
+                <div id="byCategoryTitle" class="mt-3 text-xs uppercase tracking-wide text-slate-500 mb-1">By category</div>
                 <ul id="sessByCategory" class="space-y-1"></ul>
               </div>
             </details>
@@ -264,13 +277,14 @@
 
       <div id="statsView" class="hidden grid md:grid-cols-2 gap-4">
         <div class="panel rounded-2xl p-6">
-          <h2 class="text-lg font-medium mb-2">Accuracy</h2>
+          <!-- Provide id for translation of stats panel headings -->
+          <h2 id="statsAccTitle" class="text-lg font-medium mb-2">Accuracy</h2>
           <div id="statsAcc" class="text-5xl font-bold">0%</div>
           <div id="statsText" class="text-slate-600">0 correct out of 0</div>
           <button id="btnResetStats2" class="mt-4 btn btn-ghost px-3 py-1.5">Reset</button>
         </div>
         <div class="panel rounded-2xl p-6">
-          <h2 class="text-lg font-medium mb-2">By outcome</h2>
+          <h2 id="statsByOutcomeTitle" class="text-lg font-medium mb-2">By outcome</h2>
           <ul id="statsByOutcome" class="space-y-1 text-sm"></ul>
         </div>
       </div>
