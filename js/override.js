@@ -398,7 +398,7 @@
         try { refreshFilterPills(); } catch (_) {}
       }
 
-      // ---- Rebind core filter buttons so they do NOT clear the active preset
+      // ---- Rebind core filter buttons to clear any active preset pack
       (function rebindCoreFilters() {
         const allFamilies = ["Soft", "Aspirate", "Nasal", "None"];
         const allOutcomes = ["SM", "AM", "NM", "NONE"];
@@ -410,7 +410,23 @@
           }
         };
 
+        function clearPackIfNeeded() {
+          const hasPreset =
+            !!state.activePreset ||
+            !!state.activePackKey ||
+            (Array.isArray(state.presetTriggers) && state.presetTriggers.length) ||
+            (Array.isArray(state.sourceScope) && state.sourceScope.length) ||
+            !!state.presetForceFamily ||
+            !!state.presetCategory ||
+            !!state.presetLimitComplexity;
+
+          if (hasPreset) {
+            window.clearPresetLayer();
+          }
+        }
+
         function rerun() {
+          clearPackIfNeeded();
           window.applyFilters();
           if (typeof rebuildDeck === "function") rebuildDeck();
           safeRefreshPills();
