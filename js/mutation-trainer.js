@@ -283,6 +283,34 @@ const LABEL = {
     onboardDismiss:"Got it",
     resetStats:"Reset stats",
     backToTop:"Back to top",
+    ui: {
+      coreFilters: "Core filters",
+      advancedFilters: "Advanced filters",
+      sessionTitle: "This session",
+      newSession: "New",
+      clearFilters: "Clear filters",
+      adminTools: "Admin tools",
+      adminDataUrl: "Data URL",
+      loadLocalCsv: "Load local CSV",
+      load: "LOAD",
+      shareableLink: "Shareable link",
+      exportMisses: "Export misses",
+      accuracyTitle: "Accuracy",
+      streakTitle: "Streak",
+      resetStreakTitle: "Reset streak",
+      cardTitle: "Card",
+      cardHint: "Use New to start a fresh run.",
+      masteryTitle: "Mastery (this focus)",
+      byOutcomeTitle: "By outcome",
+      legend: "Legend: <b>SM</b>=Soft, <b>AM</b>=Aspirate, <b>NM</b>=Nasal, <b>NONE</b>=No mutation",
+      byCategoryTitle: "By category",
+      moreInfo: "More info",
+      statsAccuracyTitle: "Accuracy",
+      statsByOutcomeTitle: "By outcome",
+      reset: "Reset",
+      bestLabel: "Best",
+      clear: "Clear",
+    },
   },
   cy: {
     headings: { focus:"Ffocws", rulefamily:"Math Treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)", presets:"Dechreuwch yma" },
@@ -325,6 +353,34 @@ const LABEL = {
     onboardDismiss:"Iawn",
     resetStats:"Ailosod ystadegau",
     backToTop:"Yn ôl i’r brig",
+    ui: {
+      coreFilters: "Hidlyddion craidd",
+      advancedFilters: "Hidlyddion uwch",
+      sessionTitle: "Y sesiwn hon",
+      newSession: "Newydd",
+      clearFilters: "Clirio hidlwyr",
+      adminTools: "Offerynnau gweinyddol",
+      adminDataUrl: "URL data",
+      loadLocalCsv: "Llwytho CSV lleol",
+      load: "LLWYTHO",
+      shareableLink: "Dolen rhannu",
+      exportMisses: "Allforio anghywirion",
+      accuracyTitle: "Cywirdeb",
+      streakTitle: "Cyfres",
+      resetStreakTitle: "Ailosod cyfres",
+      cardTitle: "Cerdyn",
+      cardHint: "Defnyddiwch Newydd i ddechrau rhediad newydd.",
+      masteryTitle: "Meistrolaeth (y ffocws hwn)",
+      byOutcomeTitle: "Gan ganlyniad",
+      legend: "Esboniad: <b>SM</b>=Meddal, <b>AM</b>=Llaes, <b>NM</b>=Trwynol, <b>NONE</b>=Dim treiglad",
+      byCategoryTitle: "Gan gategori",
+      moreInfo: "Mwy o wybodaeth",
+      statsAccuracyTitle: "Cywirdeb",
+      statsByOutcomeTitle: "Gan ganlyniad",
+      reset: "Ailosod",
+      bestLabel: "Gorau",
+      clear: "Clirio",
+    },
   }
 };
 
@@ -334,7 +390,7 @@ function label(section, key) {
 }
 
 /* IMPORTANT: This does NOT toggle the navbar. navbar.js owns that.
-   This only updates ynamic UI and labels to match state.lang. */
+   This only updates dynamic UI and labels to match state.lang. */
 function applyLanguage() {
   const lang = (state.lang === "cy" ? "cy" : "en");
 
@@ -352,8 +408,38 @@ function applyLanguage() {
   if (dismiss) dismiss.textContent = LABEL[lang].onboardDismiss;
 
   if ($("#btnResetStats")) $("#btnResetStats").textContent = LABEL[lang].resetStats;
-  if ($("#btnResetStats2")) $("#btnResetStats2").textContent = LABEL[lang].resetStats;
+  if ($("#btnResetStats2")) $("#btnResetStats2").textContent = LABEL[lang].ui.reset;
   if ($("#btnTop")) $("#btnTop").textContent = LABEL[lang].backToTop;
+
+  // New UI translations
+  if ($("#coreFiltersTitle")) $("#coreFiltersTitle").textContent = LABEL[lang].ui.coreFilters;
+  if ($("#advToggle")) $("#advToggle").textContent = LABEL[lang].ui.advancedFilters;
+  if ($("#sessionTitle")) $("#sessionTitle").textContent = LABEL[lang].ui.sessionTitle;
+  if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].ui.newSession;
+  if ($("#btnCoreClear")) $("#btnCoreClear").textContent = LABEL[lang].ui.clearFilters;
+  if ($("#adminTitle")) $("#adminTitle").textContent = LABEL[lang].ui.adminTools;
+  if ($("#adminDataUrlLabel")) $("#adminDataUrlLabel").textContent = LABEL[lang].ui.adminDataUrl;
+  if ($("#loadCsvTitle")) $("#loadCsvTitle").textContent = LABEL[lang].ui.loadLocalCsv;
+  if ($("#btnLoadUrl")) $("#btnLoadUrl").textContent = LABEL[lang].ui.load;
+  if ($("#btnShareable")) $("#btnShareable").textContent = LABEL[lang].ui.shareableLink;
+  if ($("#btnExportMisses")) $("#btnExportMisses").textContent = LABEL[lang].ui.exportMisses;
+  if ($("#accTitle")) $("#accTitle").textContent = LABEL[lang].ui.accuracyTitle;
+  if ($("#streakTitle")) $("#streakTitle").textContent = LABEL[lang].ui.streakTitle;
+  if ($("#btnResetStreak")) $("#btnResetStreak").setAttribute("title", LABEL[lang].ui.resetStreakTitle);
+  if ($("#cardTitle")) $("#cardTitle").textContent = LABEL[lang].ui.cardTitle;
+  if ($("#cardHint")) {
+    // Replace placeholder "New" within the hint with the translated New text in a span
+    const newText = `<span class=\"font-medium\">${LABEL[lang].ui.newSession}</span>`;
+    const rawHint = LABEL[lang].ui.cardHint;
+    $("#cardHint").innerHTML = rawHint.replace(/New|Newydd/, newText);
+  }
+  if ($("#masteryTitle")) $("#masteryTitle").textContent = LABEL[lang].ui.masteryTitle;
+  if ($("#byOutcomeTitle")) $("#byOutcomeTitle").textContent = LABEL[lang].ui.byOutcomeTitle;
+  if ($("#legendText")) $("#legendText").innerHTML = LABEL[lang].ui.legend;
+  if ($("#byCategoryTitle")) $("#byCategoryTitle").textContent = LABEL[lang].ui.byCategoryTitle;
+  if ($("#moreInfoSummary")) $("#moreInfoSummary").textContent = LABEL[lang].ui.moreInfo;
+  if ($("#statsAccTitle")) $("#statsAccTitle").textContent = LABEL[lang].ui.statsAccuracyTitle;
+  if ($("#statsByOutcomeTitle")) $("#statsByOutcomeTitle").textContent = LABEL[lang].ui.statsByOutcomeTitle;
 
   buildFilters();
   render();
@@ -1111,8 +1197,8 @@ function renderPractice() {
   if (!n) {
     host.innerHTML = `
       <div class="text-slate-700 panel rounded-xl p-4">
-        No cards match your filters.
-        <button id="btnClearFilters" class="ml-2 btn btn-ghost px-2 py-1">Clear filters</button>
+        ${lang === "cy" ? "Nid oes cardiau yn cyd-fynd â’ch hidlwyr." : "No cards match your filters."}
+        <button id="btnClearFilters" class="ml-2 btn btn-ghost px-2 py-1">${LABEL[lang].ui.clearFilters}</button>
       </div>`;
     $("#btnClearFilters")?.addEventListener("click", () => {
       state.families = ["Soft","Aspirate","Nasal","None"];
@@ -1242,7 +1328,9 @@ function renderPractice() {
     }
     if (state.nilOnly) summary.appendChild(addChip(label("headings", "nilOnly")));
 
-    summary.appendChild(addChip(lang === "cy" ? "Clirio" : "Clear", () => {
+    // Use translated "Clear" label for the final chip
+    const clearLabel = LABEL[lang]?.ui?.clear || (lang === "cy" ? "Clirio" : "Clear");
+    summary.appendChild(addChip(clearLabel, () => {
       state.families = ["Soft","Aspirate","Nasal","None"];
       state.categories = [];
       state.outcomes = ["SM","AM","NM","NONE"];
@@ -1538,11 +1626,26 @@ function computeStats() {
 
 function renderStatsPanels() {
   const s = computeStats();
+  const lang = state.lang || "en";
 
   if ($("#accBig")) $("#accBig").textContent = `${s.acc}%`;
-  if ($("#accText")) $("#accText").textContent = `${s.correct} / ${s.total} correct`;
   if ($("#statsAcc")) $("#statsAcc").textContent = `${s.acc}%`;
-  if ($("#statsText")) $("#statsText").textContent = `${s.correct} correct out of ${s.total}`;
+
+  // Translate "correct out of" texts
+  if ($("#accText")) {
+    if (lang === "cy") {
+      $("#accText").textContent = `${s.correct} o ${s.total} yn gywir`;
+    } else {
+      $("#accText").textContent = `${s.correct} / ${s.total} correct`;
+    }
+  }
+  if ($("#statsText")) {
+    if (lang === "cy") {
+      $("#statsText").textContent = `${s.correct} yn gywir o ${s.total}`;
+    } else {
+      $("#statsText").textContent = `${s.correct} correct out of ${s.total}`;
+    }
+  }
 
   const ul1 = $("#byOutcome");
   const ul2 = $("#statsByOutcome");
@@ -1689,8 +1792,6 @@ function wireUi() {
       });
     });
   }
-
-  
 }
 
 /* ========= Boot ========= */
@@ -1698,13 +1799,11 @@ function wireUi() {
   wireUi();
   await initData();
   // Apply preset from URL (shareable tutor links)
-const preset = (getParam("preset") || "").trim();
-if (preset && PRESET_DEFS[preset]) {
-  applyPreset(preset, { fromUrl: true });
-}
-
+  const preset = (getParam("preset") || "").trim();
+  if (preset && PRESET_DEFS[preset]) {
+    applyPreset(preset, { fromUrl: true });
+  }
 
   // Apply current language immediately (navbar.js also applies [data-lang] visibility)
   syncLangFromNavbar();
-
 })();
