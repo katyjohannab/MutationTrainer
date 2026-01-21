@@ -385,6 +385,7 @@ const LABEL = {
       cardsRemainingLabel: "Remaining",
       cardIdLabel: "Card ID",
       reportIssue: "Report issue",
+      whyLabel: "Why",
     },
   },
   cy: {
@@ -468,6 +469,7 @@ const LABEL = {
       cardsRemainingLabel: "Ar ôl",
       cardIdLabel: "ID Cerdyn",
       reportIssue: "Adrodd problem",
+      whyLabel: "Pam",
     },
   }
 };
@@ -1818,12 +1820,24 @@ function renderPractice() {
   feedback.setAttribute("aria-live", "polite");
 
   if (state.revealed) {
+    feedback.classList.add("is-visible");
     const ok = state.lastResult === "correct";
     const skipped = state.lastResult === "skipped";
 
     const statusIcon = skipped ? "⏭️" : (ok ? "✅" : "❌");
     const statusColor = skipped ? "text-slate-800" : (ok ? "text-indigo-900" : "text-rose-900");
     const statusText = skipped ? t.statuses.skipped : (ok ? t.statuses.correct : t.statuses.wrong);
+    const whyText = (state.lang === "cy" ? (card.WhyCym || card.Why) : card.Why) || "";
+    const whyLabel = LABEL?.[lang]?.ui?.whyLabel || (lang === "cy" ? "Pam" : "Why");
+    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    const whyMarkup = whyText
+      ? `
+        <details class="feedback-why" ${isMobile ? "" : "open"}>
+          <summary>${esc(whyLabel)}</summary>
+          <div class="feedback-why-body text-slate-700">${esc(whyText)}</div>
+        </details>
+      `
+      : "";
 
     feedback.innerHTML = `
       <div class="feedback-box">
@@ -1847,10 +1861,7 @@ function renderPractice() {
           </button>
         </div>
 
-        ${(() => {
-          const whyText = (state.lang === "cy" ? (card.WhyCym || card.Why) : card.Why) || "";
-          return whyText ? `<div class="mt-4 text-slate-700">${esc(whyText)}</div>` : "";
-        })()}
+        ${whyMarkup}
 
         <div class="mt-4 flex justify-end">
           <button id="inlineNext"
@@ -1877,6 +1888,8 @@ function renderPractice() {
       }
       $("#inlineNext")?.addEventListener("click", () => nextCard(1));
     }, 0);
+  } else {
+    feedback.classList.add("is-hidden");
   }
 
   const answerBlock = document.createElement("div");
