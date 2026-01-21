@@ -205,6 +205,7 @@ const state = {
   mode: loadLS("wm_mode", "practice"),
   practiceMode: loadLS(PRACTICE_MODE_LS_KEY, "shuffle"),
   leitner: loadLS(LEITNER_LS_KEY, {}),
+  streakResetAt: loadLS("wm_streak_reset", 0),
   smartIdx: null,
   smartCount: 0,
   smartQueue: [],
@@ -298,6 +299,7 @@ const LABEL = {
       accuracyTitle: "Accuracy",
       streakTitle: "Streak",
       resetStreakTitle: "Reset streak",
+      moreStats: "More stats",
       cardTitle: "Card",
       cardHint: "Use New to start a fresh run.",
       masteryTitle: "Mastery (this focus)",
@@ -368,6 +370,7 @@ const LABEL = {
       accuracyTitle: "Cywirdeb",
       streakTitle: "Cyfres",
       resetStreakTitle: "Ailosod cyfres",
+      moreStats: "Mwy o ystadegau",
       cardTitle: "Cerdyn",
       cardHint: "Defnyddiwch Newydd i ddechrau rhediad newydd.",
       masteryTitle: "Meistrolaeth (y ffocws hwn)",
@@ -425,6 +428,9 @@ function applyLanguage() {
   if ($("#btnExportMisses")) $("#btnExportMisses").textContent = LABEL[lang].ui.exportMisses;
   if ($("#accTitle")) $("#accTitle").textContent = LABEL[lang].ui.accuracyTitle;
   if ($("#streakTitle")) $("#streakTitle").textContent = LABEL[lang].ui.streakTitle;
+  if ($("#practiceAccTitle")) $("#practiceAccTitle").textContent = LABEL[lang].ui.accuracyTitle;
+  if ($("#practiceStreakTitle")) $("#practiceStreakTitle").textContent = LABEL[lang].ui.streakTitle;
+  if ($("#moreStatsSummary")) $("#moreStatsSummary").textContent = LABEL[lang].ui.moreStats;
   if ($("#btnResetStreak")) $("#btnResetStreak").setAttribute("title", LABEL[lang].ui.resetStreakTitle);
   if ($("#cardTitle")) $("#cardTitle").textContent = LABEL[lang].ui.cardTitle;
   if ($("#cardHint")) {
@@ -1623,14 +1629,49 @@ function computeStats() {
   }
   return { total, correct, acc, by };
 }
+function computeStreaks() {
+  const resetAt = Number(state.streakResetAt) || 0;
+  const history = state.history
+    .filter(h => h && typeof h.t === "number" && h.t >= resetAt);
+
+  if (!history.length) return { current: 0, best: 0 };
+
+  const desc = [...history].sort((a, b) => b.t - a.t);
+  let current = 0;
+  for (const h of desc) {
+    if (h.ok) current += 1;
+    else break;
+  }
+
+  const asc = [...history].sort((a, b) => a.t - b.t);
+  let best = 0;
+  let run = 0;
+  for (const h of asc) {
+    if (h.ok) {
+      run += 1;
+      if (run > best) best = run;
+    } else {
+      run = 0;
+    }
+  }
+
+  return { current, best };
+}
 
 function renderStatsPanels() {
   const s = computeStats();
+   const streaks = computeStreaks();
   const lang = state.lang || "en";
 
   if ($("#accBig")) $("#accBig").textContent = `${s.acc}%`;
   if ($("#statsAcc")) $("#statsAcc").textContent = `${s.acc}%`;
-
+  if ($("#practiceAcc")) $("#practiceAcc").textContent = `${s.acc}%`;
+  if ($("#practiceStreak")) $("#practiceStreak").textContent = `${streaks.current}`;
+  if ($("#sessStreak")) $("#sessStreak").textContent = `${streaks.current}`;
+  if ($("#sessBestStreak")) {
+    const bestLabel = LABEL?.[lang]?.ui?.bestLabel || "Best";
+    $("#sessBestStreak").textContent = `${bestLabel}: ${streaks.best}`;
+  }
   // Translate "correct out of" texts
   if ($("#accText")) {
     if (lang === "cy") {
@@ -1722,6 +1763,11 @@ function wireUi() {
   $("#btnResetStats")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
   $("#btnResetStats2")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
 
+    $("#btnResetStreak")?.addEventListener("click", () => {
+    state.streakResetAt = Date.now();
+    saveLS("wm_streak_reset", state.streakResetAt);
+    render();
+  });
   $("#btnTop")?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
   document.addEventListener("keydown", (e) => {
