@@ -273,7 +273,7 @@ state.presetLimitComplexity = Boolean(state.presetLimitComplexity);
 /* ========= UI Translations ========= */
 const LABEL = {
   en: {
-    headings: { focus:"Focus", rulefamily:"RuleFamily", outcome:"Outcome", categories:"Categories", trigger:"Filter by Trigger", nilOnly:"Nil-cases only (no mutation expected)", presets:"Start here" },
+    headings: { focus:"Focus", rulefamily:"Mutation type", outcome:"Outcome", categories:"Categories", trigger:"Filter by Trigger", nilOnly:"Nil-cases only (no mutation expected)", presets:"Start here" },
     presets: {
       starterPrepsTitle: "Starter prepositions",
       starterPrepsDesc: "Common contact-mutation prepositions",
@@ -318,14 +318,18 @@ const LABEL = {
     backToTop:"Back to top",
     ui: {
       coreFilters: "Core filters",
-      advancedFilters: "Advanced filters",
+      advancedFilters: "More filters",
+      advancedFiltersOpen: "Fewer filters",
+      advancedFiltersClosed: "More filters",
       sessionTitle: "This session",
       newSession: "New",
       clearFilters: "Clear filters",
-      focusHelper: "Pick a pack or build your own filter mix below.",
-      presetsHelper: "Quick packs to jump straight into a topic.",
-      coreFiltersHelper: "Mix families, outcomes, and categories to shape your deck.",
-      advCategoriesHelper: "Expanded list for finer filtering.",
+      focusHelper: "Start with a pack or fine-tune below.",
+      presetsHelper: "Quick packs to jump into a topic.",
+      coreFiltersHelper: "Choose mutation type, outcome, and category.",
+      advCategoriesHelper: "All categories plus trigger search.",
+      commonCategoriesTitle: "Common categories",
+      allCategoriesTitle: "All categories",
       adminTools: "Admin tools",
       adminDataUrl: "Data URL",
       loadLocalCsv: "Load local CSV",
@@ -354,7 +358,7 @@ const LABEL = {
     },
   },
   cy: {
-    headings: { focus:"Ffocws", rulefamily:"Math Treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)", presets:"Dechreuwch yma" },
+    headings: { focus:"Ffocws", rulefamily:"Math treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)", presets:"Dechreuwch yma" },
     presets: {
       starterPrepsTitle: "Arddodiaid sylfaenol",
       starterPrepsDesc: "Arddodiaid cyffredin (treiglad cyswllt)",
@@ -399,14 +403,18 @@ const LABEL = {
     backToTop:"Yn ôl i’r brig",
     ui: {
       coreFilters: "Hidlyddion craidd",
-      advancedFilters: "Hidlyddion uwch",
+      advancedFilters: "Mwy o hidlyddion",
+      advancedFiltersOpen: "Llai o hidlyddion",
+      advancedFiltersClosed: "Mwy o hidlyddion",
       sessionTitle: "Y sesiwn hon",
       newSession: "Newydd",
       clearFilters: "Clirio hidlwyr",
-      focusHelper: "Dewiswch becyn neu adeiladwch eich hidlwyr eich hun isod.",
-      presetsHelper: "Pecynnau cyflym i neidio'n syth i bwnc.",
-      coreFiltersHelper: "Cymysgwch deuluoedd, canlyniadau a chategorïau i siapio'ch dec.",
-      advCategoriesHelper: "Rhestr estynedig ar gyfer hidlo manylach.",
+      focusHelper: "Dechreuwch gyda pecyn neu fireiniwch isod.",
+      presetsHelper: "Pecynnau cyflym i neidio i bwnc.",
+      coreFiltersHelper: "Dewiswch math treiglad, canlyniad, a chategori.",
+      advCategoriesHelper: "Pob categori a chwilio sbardun.",
+      commonCategoriesTitle: "Categorïau cyffredin",
+      allCategoriesTitle: "Pob categori",
       adminTools: "Offerynnau gweinyddol",
       adminDataUrl: "URL data",
       loadLocalCsv: "Llwytho CSV lleol",
@@ -468,7 +476,7 @@ function applyLanguage() {
   if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
   if ($("#coreFiltersTitle")) $("#coreFiltersTitle").textContent = LABEL[lang].ui.coreFilters;
   if ($("#coreFiltersHelper")) $("#coreFiltersHelper").textContent = LABEL[lang].ui.coreFiltersHelper;
-  if ($("#advToggle")) $("#advToggle").textContent = LABEL[lang].ui.advancedFilters;
+  if ($("#advToggle")) $("#advToggle").textContent = LABEL[lang].ui.advancedFiltersClosed;
   if ($("#advCategoriesHelper")) $("#advCategoriesHelper").textContent = LABEL[lang].ui.advCategoriesHelper;
   if ($("#sessionTitle")) $("#sessionTitle").textContent = LABEL[lang].ui.sessionTitle;
   if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].ui.newSession;
@@ -954,21 +962,30 @@ function toggleBtn(text, active, onClick) {
   const familyAll = ["Soft","Aspirate","Nasal","None"];
   const families = state.families?.length ? state.families : familyAll;
   let familyAllActive = families.length === familyAll.length;
-  const familyKeys = hasPresetLayer ? [] : families;
-  if (hasPresetLayer) familyAllActive = true;
+  let familyKeys = familyAllActive ? [] : families;
+  if (hasPresetLayer) {
+    familyAllActive = false;
+    familyKeys = [];
+  }
   applyPillState($("#familyBtns"), familyKeys, familyAllActive);
 
   const outcomeAll = ["SM","AM","NM","NONE"];
   const outcomes = state.outcomes?.length ? state.outcomes : outcomeAll;
   let outcomeAllActive = outcomes.length === outcomeAll.length;
-  const outcomeKeys = hasPresetLayer ? [] : outcomes;
-  if (hasPresetLayer) outcomeAllActive = true;
+  let outcomeKeys = outcomeAllActive ? [] : outcomes;
+  if (hasPresetLayer) {
+    outcomeAllActive = false;
+    outcomeKeys = [];
+  }
   applyPillState($("#outcomeBtns"), outcomeKeys, outcomeAllActive);
 
   const categories = state.categories || [];
   let categoriesAllActive = categories.length === 0;
-  if (hasPresetLayer) categoriesAllActive = true;
-  const categoryKeys = hasPresetLayer ? [] : categories;
+  let categoryKeys = categoriesAllActive ? [] : categories;
+  if (hasPresetLayer) {
+    categoriesAllActive = false;
+    categoryKeys = [];
+  }
   applyPillState($("#basicCatBtns"), categoryKeys, categoriesAllActive);
   applyPillState($("#catBtns"), categoryKeys, categoriesAllActive);
 }
@@ -984,8 +1001,8 @@ function buildFilters() {
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
   if ($("#outcomeTitle")) $("#outcomeTitle").textContent = LABEL[lang].headings.outcome;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
-  if ($("#basicCategoriesTitle")) $("#basicCategoriesTitle").textContent = LABEL[lang].headings.categories;
-  if ($("#advCategoriesTitle")) $("#advCategoriesTitle").textContent = LABEL[lang].headings.categories;
+  if ($("#basicCategoriesTitle")) $("#basicCategoriesTitle").textContent = LABEL[lang].ui.commonCategoriesTitle;
+  if ($("#advCategoriesTitle")) $("#advCategoriesTitle").textContent = LABEL[lang].ui.allCategoriesTitle;
   if ($("#advCategoriesHelper")) $("#advCategoriesHelper").textContent = LABEL[lang].ui.advCategoriesHelper;
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
@@ -994,11 +1011,19 @@ function buildFilters() {
   const advDetails = $("#advFilters");
   if (advDetails) {
     advDetails.open = Boolean(state.advOpen);
+    const advToggleLabel = advDetails.open
+      ? LABEL[lang].ui.advancedFiltersOpen
+      : LABEL[lang].ui.advancedFiltersClosed;
+    if ($("#advToggle")) $("#advToggle").textContent = advToggleLabel;
     if (advDetails.dataset._wmAdvBound !== "1") {
       advDetails.dataset._wmAdvBound = "1";
       advDetails.addEventListener("toggle", () => {
         state.advOpen = advDetails.open;
         saveLS("wm_adv_open", state.advOpen);
+        const nextLabel = advDetails.open
+          ? LABEL[state.lang || "en"].ui.advancedFiltersOpen
+          : LABEL[state.lang || "en"].ui.advancedFiltersClosed;
+        if ($("#advToggle")) $("#advToggle").textContent = nextLabel;
       });
     }
   }
@@ -1037,7 +1062,7 @@ function buildFilters() {
     famEl.appendChild(allBtn);
 
     for (const f of ["Soft","Aspirate","Nasal","None"]) {
-      const isOn = isAllFamilies || state.families.includes(f);
+      const isOn = !isAllFamilies && state.families.includes(f);
       const b = toggleBtn(label("rulefamily", f), isOn, () => {
         clearPresetLayer();
         let fams = Array.isArray(state.families) && state.families.length
@@ -1089,7 +1114,7 @@ function buildFilters() {
     outEl.appendChild(allBtn);
 
     for (const o of ["SM","AM","NM","NONE"]) {
-      const isOn = isAllOutcomes || state.outcomes.includes(o);
+      const isOn = !isAllOutcomes && state.outcomes.includes(o);
       const b = toggleBtn(label("rulefamily", o), isOn, () => {
         clearPresetLayer();
         let outs = Array.isArray(state.outcomes) && state.outcomes.length
@@ -1137,7 +1162,7 @@ function buildFilters() {
     container.appendChild(allBtn);
 
     for (const c of categories) {
-      const isOn = categoriesAllActive || state.categories.includes(c);
+      const isOn = !categoriesAllActive && state.categories.includes(c);
       const b = toggleBtn(label("categories", c), isOn, () => {
         clearPresetLayer();
         let cats = Array.isArray(state.categories) ? [...state.categories] : [];
