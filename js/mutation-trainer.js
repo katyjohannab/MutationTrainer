@@ -230,6 +230,7 @@ const state = {
   freezeIdx: null,
   freezePos: null,
   lang: wmGetLangLocal(),   // IMPORTANT: read same as navbar.js
+  advOpen: loadLS("wm_adv_open", false),
   currentIdx: 0,
   currentDeckPos: -1,
 };
@@ -574,15 +575,37 @@ function clearPresetLayer() {
   saveLS("wm_preset_force_family", state.presetForceFamily);
   saveLS("wm_preset_category", state.presetCategory);
   saveLS("wm_preset_limit_complexity", state.presetLimitComplexity);
+  updateFocusIndicator();
+  updatePresetActiveClasses();
 }
 
 function updatePresetActiveClasses() {
   $$("[data-preset]").forEach(el => {
     const id = el.getAttribute("data-preset");
-    const isActive = Boolean(id && id === state.activePreset);
+    const activeKey = state.activePackKey || state.activePreset;
+    const isActive = Boolean(id && id === activeKey);
     el.classList.toggle("preset-on", isActive);
     el.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
+}
+
+function updateFocusIndicator() {
+  const el = $("#focusIndicator");
+  if (!el) return;
+
+  const key = state.activePackKey || state.activePreset;
+  if (!key) {
+    el.classList.add("hidden");
+    return;
+  }
+
+  const presetDef = PRESET_DEFS[key];
+  const lang = state.lang || "en";
+  const title = presetDef?.titleKey ? (LABEL?.[lang]?.presets?.[presetDef.titleKey] || key) : key;
+  const focusLabel = LABEL?.[lang]?.headings?.focus || (lang === "cy" ? "Ffocws" : "Focus");
+
+  el.textContent = `${focusLabel}: ${title}`;
+  el.classList.remove("hidden");
 }
 
 function renderPresetTiles() {
@@ -810,12 +833,12 @@ async function initData() {
 }
 
 /* ========= Filters & Deck ========= */
-function toggleBtn(text, active, onToggle) {
+function toggleBtn(text, active, onClick) {
   const b = document.createElement("button");
   b.type = "button";
   b.className = `pill ${active ? "pill-on" : ""}`;
   b.textContent = text;
-  b.onclick = () => onToggle(!active);
+  b.onclick = onClick;
   return b;
 }
 
@@ -875,6 +898,18 @@ function buildFilters() {
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
 
+  const advDetails = $("#advFilters");
+  if (advDetails) {
+    advDetails.open = Boolean(state.advOpen);
+    if (advDetails.dataset._wmAdvBound !== "1") {
+      advDetails.dataset._wmAdvBound = "1";
+      advDetails.addEventListener("toggle", () => {
+        state.advOpen = advDetails.open;
+        saveLS("wm_adv_open", state.advOpen);
+      });
+    }
+  }
+
   // Presets
   renderPresetTiles();
 
@@ -892,11 +927,11 @@ function buildFilters() {
     famEl.innerHTML = "";
 
     const isAllFamilies = state.families.length === 4;
+    const allFamilies = ["Soft","Aspirate","Nasal","None"];
 
     // ALL pill
     const allBtn = toggleBtn(label("categories", "All"), isAllFamilies, () => {
-      clearPresetLayer();
-      state.families = ["Soft","Aspirate","Nasal","None"];
+      state.families = [...allFamilies];
       saveLS("wm_families", state.families);
       applyFilters();
       rebuildDeck();
@@ -910,19 +945,20 @@ function buildFilters() {
     for (const f of ["Soft","Aspirate","Nasal","None"]) {
       const isOn = isAllFamilies || state.families.includes(f);
       const b = toggleBtn(label("rulefamily", f), isOn, () => {
-        clearPresetLayer();
-
-        if (isAllFamilies) {
-          state.families = [f];
+        let fams = Array.isArray(state.families) && state.families.length
+          ? [...state.families]
+          : [...allFamilies];
+        const allActive = fams.length === allFamilies.length;
+        if (allActive) {
+          fams = [f];
+        } else if (fams.includes(f)) {
+          fams = fams.filter(x => x !== f);
         } else {
-          if (state.families.includes(f)) {
-            state.families = state.families.filter(x => x !== f);
-          } else {
-            state.families = [...state.families, f];
-          }
-          if (!state.families.length) state.families = ["Soft","Aspirate","Nasal","None"];
+          fams.push(f);
         }
+        if (!fams.length) fams = [...allFamilies];
 
+        state.families = fams;
         saveLS("wm_families", state.families);
         applyFilters();
         rebuildDeck();
@@ -942,10 +978,10 @@ function buildFilters() {
   if (outEl) {
     outEl.innerHTML = "";
     const isAllOutcomes = state.outcomes.length === 4;
+    const allOutcomes = ["SM","AM","NM","NONE"];
 
     const allBtn = toggleBtn(label("categories", "All"), isAllOutcomes, () => {
-      clearPresetLayer();
-      state.outcomes = ["SM","AM","NM","NONE"];
+      state.outcomes = [...allOutcomes];
       saveLS("wm_outcomes", state.outcomes);
       applyFilters();
       rebuildDeck();
@@ -959,17 +995,20 @@ function buildFilters() {
     for (const o of ["SM","AM","NM","NONE"]) {
       const isOn = isAllOutcomes || state.outcomes.includes(o);
       const b = toggleBtn(label("rulefamily", o), isOn, () => {
-        clearPresetLayer();
-        if (isAllOutcomes) {
-          state.outcomes = [o];
+        let outs = Array.isArray(state.outcomes) && state.outcomes.length
+          ? [...state.outcomes]
+          : [...allOutcomes];
+        const allActive = outs.length === allOutcomes.length;
+        if (allActive) {
+          outs = [o];
+        } else if (outs.includes(o)) {
+          outs = outs.filter(x => x !== o);
         } else {
-          if (state.outcomes.includes(o)) {
-            state.outcomes = state.outcomes.filter(x => x !== o);
-          } else {
-            state.outcomes = [...state.outcomes, o];
-          }
-          if (!state.outcomes.length) state.outcomes = ["SM","AM","NM","NONE"];
+          outs.push(o);
         }
+        if (!outs.length) outs = [...allOutcomes];
+
+        state.outcomes = outs;
         saveLS("wm_outcomes", state.outcomes);
         applyFilters();
         rebuildDeck();
@@ -988,7 +1027,6 @@ function buildFilters() {
     const categoriesAllActive = state.categories.length === 0;
 
     const allBtn = toggleBtn(label("categories", "All"), categoriesAllActive, () => {
-      clearPresetLayer();
       state.categories = [];
       saveLS("wm_categories", state.categories);
       applyFilters();
@@ -1003,15 +1041,18 @@ function buildFilters() {
     for (const c of categories) {
       const isOn = categoriesAllActive || state.categories.includes(c);
       const b = toggleBtn(label("categories", c), isOn, () => {
-        clearPresetLayer();
-        if (categoriesAllActive) {
-          state.categories = [c];
-        } else if (state.categories.includes(c)) {
-          state.categories = state.categories.filter(x => x !== c);
+        let cats = Array.isArray(state.categories) ? [...state.categories] : [];
+        const noneSelected = cats.length === 0;
+        if (noneSelected) {
+          cats = [c];
+        } else if (cats.includes(c)) {
+          cats = cats.filter(x => x !== c);
         } else {
-          state.categories = [...state.categories, c];
+          cats.push(c);
         }
-        if (!state.categories.length) state.categories = [];
+        if (!cats.length) cats = [];
+
+        state.categories = cats;
         saveLS("wm_categories", state.categories);
         applyFilters();
         rebuildDeck();
@@ -1031,7 +1072,6 @@ function buildFilters() {
   if (trigEl) {
     trigEl.value = state.triggerQuery || "";
     trigEl.oninput = () => {
-      clearPresetLayer();
       state.triggerQuery = trigEl.value;
       saveLS("wm_trig", state.triggerQuery);
       applyFilters();
@@ -1046,7 +1086,6 @@ function buildFilters() {
   if (nilEl) {
     nilEl.checked = Boolean(state.nilOnly);
     nilEl.onchange = () => {
-      clearPresetLayer();
       state.nilOnly = Boolean(nilEl.checked);
       saveLS("wm_nil", state.nilOnly);
       applyFilters();
@@ -1059,6 +1098,23 @@ function buildFilters() {
 
   refreshFilterPills();
   updatePresetActiveClasses();
+
+  const clearBtn = $("#btnCoreClear");
+  if (clearBtn && clearBtn.dataset._wmClearBound !== "1") {
+    clearBtn.dataset._wmClearBound = "1";
+    clearBtn.onclick = () => {
+      resetFilters();
+      applyFilters();
+      rebuildDeck();
+      buildFilters();
+      render();
+      refreshFilterPills();
+      updatePresetActiveClasses();
+      updateFocusIndicator();
+    };
+  }
+
+  updateFocusIndicator();
 }
 
 function applyFilters() {
