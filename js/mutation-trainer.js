@@ -482,24 +482,21 @@ const PRESET_DEFS = {
     id: "starter-preps",
     titleKey: "starterPrepsTitle",
     descKey: "starterPrepsDesc",
-    category: "Preposition",
-    triggers: ["am","ar","at","gan","i","o","trwy","drwy","tan","dros","tros","heb","hyd","wrth"],
+    triggers: [],
     sourceScope: ["data/prep.csv"],
   },
   "numbers-1-10": {
     id: "numbers-1-10",
     titleKey: "numbersTitle",
     descKey: "numbersDesc",
-    category: "Numerals",
-    triggers: ["un","dau","tri","pedwar","pump","chwech","saith","wyth","naw","deg"],
+    triggers: ["un","dau","dwy","tri","tair","pedwar","chwech","chwe","pum","pump","saith","wyth","naw","deg"],
   },
   "articles": {
     id: "articles",
     titleKey: "articlesTitle",
     descKey: "articlesDesc",
     category: "Article",
-    triggers: ["y","yr","'r","r"],
-    limitComplexity: true,
+    triggers: [],
   },
   "place-names": {
     id: "place-names",
@@ -507,7 +504,6 @@ const PRESET_DEFS = {
     descKey: "placeNamesDesc",
     category: "PlaceName",
     triggers: [],
-    forceFamily: "Nasal",
     tipKey: "placeNamesTip",
   },
 };
@@ -777,9 +773,11 @@ function toggleBtn(text, active, onToggle) {
 
   const hasPresetLayer =
     Boolean(state.activePreset) ||
+    Boolean(state.activePackKey) ||
     (Array.isArray(state.presetTriggers) && state.presetTriggers.length) ||
     (Array.isArray(state.sourceScope) && state.sourceScope.length) ||
     Boolean(state.presetForceFamily) ||
+    Boolean(state.presetCategory) ||
     Boolean(state.presetLimitComplexity);
 
   const familyAll = ["Soft","Aspirate","Nasal","None"];
@@ -1877,5 +1875,3 @@ function wireUi() {
   // Apply current language immediately (navbar.js also applies [data-lang] visibility)
   syncLangFromNavbar();
 })();
-
-
