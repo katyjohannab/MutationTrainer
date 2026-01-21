@@ -195,8 +195,18 @@
                     <div id="familyBtns" class="flex flex-wrap gap-1"></div>
                   </div>
                   <div class="col-span-1">
-                    <div id="basicCategoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Common categories</div>
-                    <div id="basicCatBtns" class="flex flex-wrap gap-1"></div>
+                    <div id="categoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Categories</div>
+                    <div id="categoryChips" class="flex flex-wrap gap-1"></div>
+                    <div id="categoryExtras" class="mt-2 hidden">
+                      <div class="mt-2">
+                        <label id="triggerLabel" class="text-xs uppercase tracking-wide text-slate-500">Filter by Trigger</label>
+                        <input id="triggerFilter" class="mt-1 w-full border rounded-xl px-3 py-1.5" placeholder="e.g. i, o, dwy, tri, y (article), neu" />
+                      </div>
+                      <label class="inline-flex items-center gap-2 text-sm mt-1">
+                        <input id="nilOnly" type="checkbox" />
+                        <span id="nilOnlyText">Nil-cases only (no mutation expected)</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
                 <!-- Clear filters button (core) -->
@@ -205,26 +215,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- Advanced filters collapsed by default -->
-            <details id="advFilters" class="mt-3">
-              <summary id="advToggle" class="cursor-pointer text-sm font-medium select-none">More filters</summary>
-              <div class="mt-2">
-                <!-- Advanced categories (non-duplicated) -->
-                <div id="advCategoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">All categories</div>
-                <div id="advCategoriesHelper" class="text-xs text-slate-500 mb-2"></div>
-                <div id="catBtns" class="flex flex-wrap gap-1"></div>
-                <div class="mt-2">
-                  <label id="triggerLabel" class="text-xs uppercase tracking-wide text-slate-500">Filter by Trigger</label>
-                  <input id="triggerFilter" class="mt-1 w-full border rounded-xl px-3 py-1.5" placeholder="e.g. i, o, dwy, tri, y (article), neu" />
-                </div>
-                <label class="inline-flex items-center gap-2 text-sm mt-1">
-                  <input id="nilOnly" type="checkbox" />
-                  <span id="nilOnlyText">Nil-cases only (no mutation expected)</span>
-                </label>
-
-              </div>
-            </details>
           </div>
 
             <!-- Session stats hidden under details -->

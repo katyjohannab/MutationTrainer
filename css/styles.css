@@ -199,6 +199,24 @@ body{
   transition: transform .08s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
 }
 
+.pill-core{
+  border-color: rgba(148,163,184,.5);
+  background: rgba(255,255,255,.95);
+}
+
+.pill-extra{
+  font-weight: 600;
+  color: #64748b;
+  background: rgba(248,250,252,.9);
+}
+
+.pill-more{
+  font-weight: 700;
+  border-style: dashed;
+  background: rgba(241,245,249,.95);
+  color: #0f172a;
+}
+
 /* ----- Phase 1: Preset cards ----- */
 .preset-card{
   background: var(--surface);
