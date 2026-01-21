@@ -42,13 +42,6 @@ function esc(s) {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"
   }[ch]));
 }
-function download(text, filename, type = "text/plain") {
-  const blob = new Blob([text], { type });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
 function getParam(k) { return new URLSearchParams(location.search).get(k); }
 function saveLS(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 function loadLS(k, d) { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
@@ -226,7 +219,6 @@ const state = {
   revealed: false,
   lastResult: null,
   history: loadLS("wm_hist", []),
-  admin: getParam("admin") === "1",
   freezeIdx: null,
   freezePos: null,
   lang: wmGetLangLocal(),   // IMPORTANT: read same as navbar.js
@@ -330,12 +322,6 @@ const LABEL = {
       advCategoriesHelper: "All categories plus trigger search.",
       commonCategoriesTitle: "Common categories",
       allCategoriesTitle: "All categories",
-      adminTools: "Admin tools",
-      adminDataUrl: "Data URL",
-      loadLocalCsv: "Load local CSV",
-      load: "LOAD",
-      shareableLink: "Shareable link",
-      exportMisses: "Export misses",
       accuracyTitle: "Accuracy",
       streakTitle: "Streak",
       resetStreakTitle: "Reset streak",
@@ -355,6 +341,7 @@ const LABEL = {
       presetClearTitle: "Clear preset",
       deckProgressLabel: "Deck progress",
       cardsRemainingLabel: "Remaining",
+      cardIdLabel: "Card ID",
     },
   },
   cy: {
@@ -415,12 +402,6 @@ const LABEL = {
       advCategoriesHelper: "Pob categori a chwilio sbardun.",
       commonCategoriesTitle: "Categorïau cyffredin",
       allCategoriesTitle: "Pob categori",
-      adminTools: "Offerynnau gweinyddol",
-      adminDataUrl: "URL data",
-      loadLocalCsv: "Llwytho CSV lleol",
-      load: "LLWYTHO",
-      shareableLink: "Dolen rhannu",
-      exportMisses: "Allforio anghywirion",
       accuracyTitle: "Cywirdeb",
       streakTitle: "Cyfres",
       resetStreakTitle: "Ailosod cyfres",
@@ -440,6 +421,7 @@ const LABEL = {
       presetClearTitle: "Clirio'r preset",
       deckProgressLabel: "Cynnydd y dec",
       cardsRemainingLabel: "Ar ôl",
+      cardIdLabel: "ID Cerdyn",
     },
   }
 };
@@ -471,6 +453,10 @@ function applyLanguage() {
   if ($("#btnResetStats")) $("#btnResetStats").textContent = LABEL[lang].resetStats;
   if ($("#btnResetStats2")) $("#btnResetStats2").textContent = LABEL[lang].ui.reset;
   if ($("#btnTop")) $("#btnTop").textContent = LABEL[lang].backToTop;
+  if ($("#btnResetStatsTop")) $("#btnResetStatsTop").setAttribute("title", LABEL[lang].resetStats);
+  if ($("#btnResetStatsTop")) $("#btnResetStatsTop").setAttribute("aria-label", LABEL[lang].resetStats);
+  if ($("#btnResetStreakTop")) $("#btnResetStreakTop").setAttribute("title", LABEL[lang].ui.resetStreakTitle);
+  if ($("#btnResetStreakTop")) $("#btnResetStreakTop").setAttribute("aria-label", LABEL[lang].ui.resetStreakTitle);
 
   // New UI translations
   if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
@@ -481,12 +467,6 @@ function applyLanguage() {
   if ($("#sessionTitle")) $("#sessionTitle").textContent = LABEL[lang].ui.sessionTitle;
   if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].ui.newSession;
   if ($("#btnCoreClear")) $("#btnCoreClear").textContent = LABEL[lang].ui.clearFilters;
-  if ($("#adminTitle")) $("#adminTitle").textContent = LABEL[lang].ui.adminTools;
-  if ($("#adminDataUrlLabel")) $("#adminDataUrlLabel").textContent = LABEL[lang].ui.adminDataUrl;
-  if ($("#loadCsvTitle")) $("#loadCsvTitle").textContent = LABEL[lang].ui.loadLocalCsv;
-  if ($("#btnLoadUrl")) $("#btnLoadUrl").textContent = LABEL[lang].ui.load;
-  if ($("#btnShareable")) $("#btnShareable").textContent = LABEL[lang].ui.shareableLink;
-  if ($("#btnExportMisses")) $("#btnExportMisses").textContent = LABEL[lang].ui.exportMisses;
   if ($("#accTitle")) $("#accTitle").textContent = LABEL[lang].ui.accuracyTitle;
   if ($("#streakTitle")) $("#streakTitle").textContent = LABEL[lang].ui.streakTitle;
   if ($("#practiceAccTitle")) $("#practiceAccTitle").textContent = LABEL[lang].ui.accuracyTitle;
@@ -1530,6 +1510,14 @@ function renderPractice() {
   posSpan.textContent = posText;
   headerLeft.appendChild(posSpan);
 
+  const cardId = getCardId(card, idxShown);
+  if (cardId) {
+    const cardIdLine = document.createElement("span");
+    cardIdLine.className = "text-[10px] uppercase tracking-wide text-slate-400";
+    cardIdLine.textContent = `${LABEL[lang].ui.cardIdLabel}: ${cardId}`;
+    headerLeft.appendChild(cardIdLine);
+  }
+
   const deckTotal = state.practiceMode === "smart" ? n : state.deck.length;
   const deckReviewed = state.practiceMode === "smart"
     ? Math.min((state.smartCount || 0) + 1, deckTotal)
@@ -2069,8 +2057,14 @@ function wireUi() {
 
   $("#btnResetStats")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
   $("#btnResetStats2")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
+  $("#btnResetStatsTop")?.addEventListener("click", () => { state.history = []; saveLS("wm_hist", state.history); render(); });
 
-    $("#btnResetStreak")?.addEventListener("click", () => {
+  $("#btnResetStreak")?.addEventListener("click", () => {
+    state.streakResetAt = Date.now();
+    saveLS("wm_streak_reset", state.streakResetAt);
+    render();
+  });
+  $("#btnResetStreakTop")?.addEventListener("click", () => {
     state.streakResetAt = Date.now();
     saveLS("wm_streak_reset", state.streakResetAt);
     render();
@@ -2099,52 +2093,6 @@ function wireUi() {
   $("#mbNext")?.addEventListener("click", () => $("#inlineNext")?.click() || nextCard(1));
   $("#mbHint")?.addEventListener("click", () => $("#btnHint")?.click());
 
-  if (state.admin) {
-    $("#adminPanel")?.classList.remove("hidden");
-
-    const dataUrl = $("#dataUrl");
-    if (dataUrl) dataUrl.value = getParam("sheet") || "";
-
-    $("#btnLoadUrl")?.addEventListener("click", async () => {
-      const u = ($("#dataUrl")?.value || "").trim();
-      if (!u) return;
-      const d = await loadCsvUrl(u);
-      state.rows = d.map(coerceRow);
-      applyFilters(); rebuildDeck(); buildFilters(); render();
-    });
-
-    $("#btnShareable")?.addEventListener("click", () => {
-      const u = ($("#dataUrl")?.value || "").trim();
-      if (!u) return alert("Enter a URL first.");
-      const link = location.origin + location.pathname + `?sheet=${encodeURIComponent(u)}`;
-      navigator.clipboard?.writeText(link);
-      alert("Copied: " + link);
-    });
-
-    $("#btnExportMisses")?.addEventListener("click", () => {
-      const misses = state.history.filter(h => !h.ok);
-      const lines = ["RuleCategory,Trigger,Base,Expected,Got,When"];
-      for (const m of misses) {
-        const [cat, trig, base] = (m.key || "").split(":");
-        lines.push([cat, trig, base, m.expected, m.got, new Date(m.t).toISOString()]
-          .map(s => `"${(s || "").replaceAll('"','""')}"`).join(","));
-      }
-      download(lines.join("\n"), "mutation-trainer-misses.csv", "text/csv");
-    });
-
-    $("#fileCsv")?.addEventListener("change", (e) => {
-      const f = e.target.files?.[0];
-      if (!f) return;
-      Papa.parse(f, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (res) => {
-          state.rows = res.data.map(coerceRow);
-          applyFilters(); rebuildDeck(); buildFilters(); render();
-        }
-      });
-    });
-  }
 }
 
 /* ========= Boot ========= */
