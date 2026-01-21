@@ -814,6 +814,7 @@ function buildFilters() {
 
     const isAllFamilies = state.families.length === 4;
 
+    // ALL pill
     const allBtn = toggleBtn(label("categories", "All"), isAllFamilies, () => {
       clearPresetLayer();
       state.families = ["Soft","Aspirate","Nasal","None"];
@@ -831,6 +832,7 @@ function buildFilters() {
       const isOn = isAllFamilies || state.families.includes(f);
       const b = toggleBtn(label("rulefamily", f), isOn, () => {
         clearPresetLayer();
+
         if (isAllFamilies) {
           state.families = [f];
         } else {
@@ -841,6 +843,7 @@ function buildFilters() {
           }
           if (!state.families.length) state.families = ["Soft","Aspirate","Nasal","None"];
         }
+
         saveLS("wm_families", state.families);
         applyFilters();
         rebuildDeck();
@@ -1853,3 +1856,5 @@ function wireUi() {
   // Apply current language immediately (navbar.js also applies [data-lang] visibility)
   syncLangFromNavbar();
 })();
+
+
