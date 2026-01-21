@@ -26,7 +26,16 @@
     // If the heuristic isn't available, don't exclude anything.
     return false;
   };
-
+  const safeNormalizeSourcePath = (s) => {
+    try {
+      if (typeof normalizeSourcePath === "function") return normalizeSourcePath(s);
+    } catch (_) {}
+    return (s || "")
+      .toString()
+      .trim()
+      .replace(/^https?:\/\/[^/]+\/?/i, "")
+      .replace(/^\/+/, "");
+  };
   // -----------------------------
   // Extend state (persisted)
   // -----------------------------
@@ -99,7 +108,9 @@
     safeFn("saveLS", () => {})("wm_active_pack", state.activePackKey);
 
     // Set source scope if the preset specifies CSV sources
-    state.sourceScope = Array.isArray(p.sourceScope) ? [...p.sourceScope] : [];
+       state.sourceScope = Array.isArray(p.sourceScope)
+      ? p.sourceScope.map(safeNormalizeSourcePath)
+      : [];
     safeFn("saveLS", () => {})("wm_source_scope", state.sourceScope);
 
     // Store canonical triggers for this preset
@@ -200,8 +211,8 @@
 
     // Pack-level: restrict by CSV sources if provided
     if (Array.isArray(state.sourceScope) && state.sourceScope.length) {
-      const scope = new Set(state.sourceScope);
-      list = list.filter((r) => scope.has(r.Source));
+    const scope = new Set(state.sourceScope.map(safeNormalizeSourcePath));
+      list = list.filter((r) => scope.has(safeNormalizeSourcePath(r.Source)));
     }
 
     // Pack-level: restrict by forced family
