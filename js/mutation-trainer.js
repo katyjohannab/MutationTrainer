@@ -203,7 +203,7 @@ const state = {
   presetForceFamily: loadLS("wm_preset_force_family", null),
   presetLimitComplexity: loadLS("wm_preset_limit_complexity", false),
   presetCategory: loadLS("wm_preset_category", null),
-  showAllCategories: loadLS("wm_show_all_cats", false),
+  showMoreFilters: loadLS("wm_show_more_filters", false),
   nilOnly: loadLS("wm_nil", false),
   mode: loadLS("wm_mode", "practice"),
   practiceMode: loadLS(PRACTICE_MODE_LS_KEY, "shuffle"),
@@ -221,7 +221,6 @@ const state = {
   freezeIdx: null,
   freezePos: null,
   lang: wmGetLangLocal(),   // IMPORTANT: read same as navbar.js
-  advOpen: loadLS("wm_adv_open", false),
   currentIdx: 0,
   currentDeckPos: -1,
   reportContext: null,
@@ -347,15 +346,15 @@ const LABEL = {
       advancedFilters: "More filters",
       advancedFiltersOpen: "Fewer filters",
       advancedFiltersClosed: "More filters",
+      categoriesMoreFilters: "More filters ▾",
+      categoriesFewerFilters: "Fewer filters ▴",
       sessionTitle: "This session",
       newSession: "New",
       clearFilters: "Clear filters",
       focusHelper: "Start with a pack or fine-tune below.",
       presetsHelper: "Curated guided sets to jump into a topic.",
       coreFiltersHelper: "Fine-tune across all cards.",
-      advCategoriesHelper: "All categories plus trigger search.",
-      commonCategoriesTitle: "Common categories",
-      allCategoriesTitle: "All categories",
+      triggerPlaceholder: "e.g. i, o, dwy, tri, y (article), neu",
       accuracyTitle: "Accuracy",
       streakTitle: "Streak",
       resetStreakTitle: "Reset streak",
@@ -445,15 +444,15 @@ const LABEL = {
       advancedFilters: "Mwy o hidlyddion",
       advancedFiltersOpen: "Llai o hidlyddion",
       advancedFiltersClosed: "Mwy o hidlyddion",
+      categoriesMoreFilters: "Mwy o hidlyddion ▾",
+      categoriesFewerFilters: "Llai o hidlyddion ▴",
       sessionTitle: "Y sesiwn hon",
       newSession: "Newydd",
       clearFilters: "Clirio hidlwyr",
       focusHelper: "Dechreuwch gyda pecyn neu fireiniwch isod.",
       presetsHelper: "Setiau tywys wedi’u curadu i neidio i bwnc.",
       coreFiltersHelper: "Mireinio ar draws pob cerdyn.",
-      advCategoriesHelper: "Pob categori a chwilio sbardun.",
-      commonCategoriesTitle: "Categorïau cyffredin",
-      allCategoriesTitle: "Pob categori",
+      triggerPlaceholder: "e.e. i, o, dwy, tri, y (erthygl), neu",
       accuracyTitle: "Cywirdeb",
       streakTitle: "Cyfres",
       resetStreakTitle: "Ailosod cyfres",
@@ -515,6 +514,13 @@ function applyLanguage() {
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
+  if ($("#triggerFilter")) $("#triggerFilter").setAttribute("placeholder", LABEL[lang].ui.triggerPlaceholder);
+  const moreChip = $("#moreFiltersChip");
+  if (moreChip) {
+    moreChip.textContent = state.showMoreFilters
+      ? LABEL[lang].ui.categoriesFewerFilters
+      : LABEL[lang].ui.categoriesMoreFilters;
+  }
 
   const dismiss = $("#onboardDismiss");
   if (dismiss) dismiss.textContent = LABEL[lang].onboardDismiss;
@@ -532,7 +538,6 @@ function applyLanguage() {
   if ($("#coreFiltersTitle")) $("#coreFiltersTitle").textContent = LABEL[lang].ui.coreFilters;
   if ($("#coreFiltersHelper")) $("#coreFiltersHelper").textContent = LABEL[lang].ui.coreFiltersHelper;
   if ($("#advToggle")) $("#advToggle").textContent = LABEL[lang].ui.advancedFiltersClosed;
-  if ($("#advCategoriesHelper")) $("#advCategoriesHelper").textContent = LABEL[lang].ui.advCategoriesHelper;
   if ($("#sessionTitle")) $("#sessionTitle").textContent = LABEL[lang].ui.sessionTitle;
   if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].ui.newSession;
   if ($("#btnCoreClear")) $("#btnCoreClear").textContent = LABEL[lang].ui.clearFilters;
@@ -591,7 +596,7 @@ function syncLangFromNavbar() {
 
 /* ========= Presets + Category view (progressive disclosure) ========= */
 
-const COMMON_CATEGORIES = [
+const CORE_CATEGORIES = [
   "Preposition",
   "Article",
   "Numerals",
@@ -782,8 +787,8 @@ function applyPreset(presetId, { fromUrl = false } = {}) {
   saveLS("wm_preset_limit_complexity", state.presetLimitComplexity);
 
   // UX: start with the simpler category view.
-  state.showAllCategories = false;
-  saveLS("wm_show_all_cats", state.showAllCategories);
+  state.showMoreFilters = false;
+  saveLS("wm_show_more_filters", state.showMoreFilters);
 
   applyFilters();
   rebuildDeck();
@@ -1047,8 +1052,7 @@ function toggleBtn(text, active, onClick) {
     categoriesAllActive = false;
     categoryKeys = [];
   }
-  applyPillState($("#basicCatBtns"), categoryKeys, categoriesAllActive);
-  applyPillState($("#catBtns"), categoryKeys, categoriesAllActive);
+  applyPillState($("#categoryChips"), categoryKeys, categoriesAllActive);
 }
 function buildFilters() {
   const lang = state.lang || "en";
@@ -1061,32 +1065,10 @@ function buildFilters() {
   if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
-  if ($("#basicCategoriesTitle")) $("#basicCategoriesTitle").textContent = LABEL[lang].ui.commonCategoriesTitle;
-  if ($("#advCategoriesTitle")) $("#advCategoriesTitle").textContent = LABEL[lang].ui.allCategoriesTitle;
-  if ($("#advCategoriesHelper")) $("#advCategoriesHelper").textContent = LABEL[lang].ui.advCategoriesHelper;
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
+  if ($("#triggerFilter")) $("#triggerFilter").setAttribute("placeholder", LABEL[lang].ui.triggerPlaceholder);
   if ($("#coreFiltersHelper")) $("#coreFiltersHelper").textContent = LABEL[lang].ui.coreFiltersHelper;
-
-  const advDetails = $("#advFilters");
-  if (advDetails) {
-    advDetails.open = Boolean(state.advOpen);
-    const advToggleLabel = advDetails.open
-      ? LABEL[lang].ui.advancedFiltersOpen
-      : LABEL[lang].ui.advancedFiltersClosed;
-    if ($("#advToggle")) $("#advToggle").textContent = advToggleLabel;
-    if (advDetails.dataset._wmAdvBound !== "1") {
-      advDetails.dataset._wmAdvBound = "1";
-      advDetails.addEventListener("toggle", () => {
-        state.advOpen = advDetails.open;
-        saveLS("wm_adv_open", state.advOpen);
-        const nextLabel = advDetails.open
-          ? LABEL[state.lang || "en"].ui.advancedFiltersOpen
-          : LABEL[state.lang || "en"].ui.advancedFiltersClosed;
-        if ($("#advToggle")) $("#advToggle").textContent = nextLabel;
-      });
-    }
-  }
 
   // Presets
   renderPresetTiles();
@@ -1095,7 +1077,8 @@ function buildFilters() {
   const cats = new Set();
   for (const r of state.rows) if (r.RuleCategory) cats.add(r.RuleCategory);
   const allCats = Array.from(cats).sort();
-  const commonCats = COMMON_CATEGORIES.filter(c => allCats.includes(c));
+  const coreCats = CORE_CATEGORIES.filter(c => allCats.includes(c));
+  const extraCats = allCats.filter(c => !coreCats.includes(c) && c !== "All");
 
   /* -----------------------------
      RULE FAMILY (with All)
@@ -1151,7 +1134,7 @@ function buildFilters() {
     }
   }
 
-  const bindCategoryButtons = (container, categories) => {
+  const bindCategoryButtons = (container, coreCategories, extraCategories) => {
     if (!container) return;
     container.innerHTML = "";
     const categoriesAllActive = state.categories.length === 0;
@@ -1167,9 +1150,10 @@ function buildFilters() {
       updatePresetActiveClasses();
     });
     allBtn.dataset.key = "__ALL__";
+    allBtn.classList.add("pill-core");
     container.appendChild(allBtn);
 
-    for (const c of categories) {
+    for (const c of coreCategories) {
       const isOn = !categoriesAllActive && state.categories.includes(c);
       const b = toggleBtn(label("categories", c), isOn, () => {
         clearPresetLayer();
@@ -1193,12 +1177,62 @@ function buildFilters() {
         updatePresetActiveClasses();
       });
       b.dataset.key = c;
+      b.classList.add("pill-core");
       container.appendChild(b);
+    }
+
+    const moreBtn = document.createElement("button");
+    moreBtn.type = "button";
+    moreBtn.id = "moreFiltersChip";
+    moreBtn.className = `pill pill-more`;
+    moreBtn.textContent = state.showMoreFilters
+      ? LABEL[lang].ui.categoriesFewerFilters
+      : LABEL[lang].ui.categoriesMoreFilters;
+    moreBtn.onclick = () => {
+      state.showMoreFilters = !state.showMoreFilters;
+      saveLS("wm_show_more_filters", state.showMoreFilters);
+      buildFilters();
+      refreshFilterPills();
+    };
+    container.appendChild(moreBtn);
+
+    if (state.showMoreFilters) {
+      for (const c of extraCategories) {
+        const isOn = !categoriesAllActive && state.categories.includes(c);
+        const b = toggleBtn(label("categories", c), isOn, () => {
+          clearPresetLayer();
+          let cats = Array.isArray(state.categories) ? [...state.categories] : [];
+          const noneSelected = cats.length === 0;
+          if (noneSelected) {
+            cats = [c];
+          } else if (cats.includes(c)) {
+            cats = cats.filter(x => x !== c);
+          } else {
+            cats.push(c);
+          }
+          if (!cats.length) cats = [];
+
+          state.categories = cats;
+          saveLS("wm_categories", state.categories);
+          applyFilters();
+          rebuildDeck();
+          refreshFilterPills();
+          render();
+          updatePresetActiveClasses();
+        });
+        b.dataset.key = c;
+        b.classList.add("pill-extra");
+        container.appendChild(b);
+      }
     }
   };
 
-  bindCategoryButtons($("#basicCatBtns"), commonCats);
-  bindCategoryButtons($("#catBtns"), allCats);
+  bindCategoryButtons($("#categoryChips"), coreCats, extraCats);
+
+  const categoryExtras = $("#categoryExtras");
+  if (categoryExtras) {
+    categoryExtras.classList.toggle("hidden", !state.showMoreFilters);
+  }
 
   const trigEl = $("#triggerFilter");
   if (trigEl) {
