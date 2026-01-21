@@ -44,6 +44,7 @@
       state.activePackKey = safeFn("loadLS", () => null)("wm_active_pack", null);
       state.presetForceFamily = safeFn("loadLS", () => null)("wm_preset_force_family", null);
       state.presetLimitComplexity = safeFn("loadLS", () => false)("wm_preset_limit_complexity", false);
+      state.presetCategory = safeFn("loadLS", () => null)("wm_preset_category", null);
 
       // Track whether Advanced panel is open (IA ticket)
       state.advOpen = safeFn("loadLS", () => false)("wm_adv_open", false);
@@ -108,7 +109,7 @@
     safeFn("saveLS", () => {})("wm_active_pack", state.activePackKey);
 
     // Set source scope if the preset specifies CSV sources
-       state.sourceScope = Array.isArray(p.sourceScope)
+    state.sourceScope = Array.isArray(p.sourceScope)
       ? p.sourceScope.map(safeNormalizeSourcePath)
       : [];
     safeFn("saveLS", () => {})("wm_source_scope", state.sourceScope);
@@ -120,6 +121,10 @@
     // Set forced family (pack-level) if provided
     state.presetForceFamily = p.forceFamily || null;
     safeFn("saveLS", () => {})("wm_preset_force_family", state.presetForceFamily);
+
+    // Set category (pack-level) if provided
+    state.presetCategory = p.category || null;
+    safeFn("saveLS", () => {})("wm_preset_category", state.presetCategory);
 
     // Complexity limitation for certain presets
     state.presetLimitComplexity = !!p.limitComplexity;
@@ -160,6 +165,7 @@
       (Array.isArray(state.presetTriggers) && state.presetTriggers.length) ||
       (Array.isArray(state.sourceScope) && state.sourceScope.length) ||
       !!state.presetForceFamily ||
+      !!state.presetCategory ||
       !!state.presetLimitComplexity;
 
     if (!hasAnything) return;
@@ -170,6 +176,7 @@
     state.sourceScope = [];
     state.presetForceFamily = null;
     state.presetLimitComplexity = false;
+    state.presetCategory = null;
 
     safeFn("saveLS", () => {})("wm_active_preset", state.activePreset);
     safeFn("saveLS", () => {})("wm_active_pack", state.activePackKey);
@@ -177,6 +184,7 @@
     safeFn("saveLS", () => {})("wm_source_scope", state.sourceScope);
     safeFn("saveLS", () => {})("wm_preset_force_family", state.presetForceFamily);
     safeFn("saveLS", () => {})("wm_preset_limit_complexity", state.presetLimitComplexity);
+    safeFn("saveLS", () => {})("wm_preset_category", state.presetCategory);
 
     if (typeof refreshFilterPills === "function") {
       try {
@@ -211,13 +219,18 @@
 
     // Pack-level: restrict by CSV sources if provided
     if (Array.isArray(state.sourceScope) && state.sourceScope.length) {
-    const scope = new Set(state.sourceScope.map(safeNormalizeSourcePath));
+      const scope = new Set(state.sourceScope.map(safeNormalizeSourcePath));
       list = list.filter((r) => scope.has(safeNormalizeSourcePath(r.Source)));
     }
 
     // Pack-level: restrict by forced family
     if (state.presetForceFamily) {
       list = list.filter((r) => r.RuleFamily === state.presetForceFamily);
+    }
+
+    // Pack-level: restrict by preset category
+    if (state.presetCategory) {
+      list = list.filter((r) => r.RuleCategory === state.presetCategory);
     }
 
     // Pack-level: restrict by preset triggers
@@ -639,4 +652,3 @@
     document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0));
   }
 })();
-
