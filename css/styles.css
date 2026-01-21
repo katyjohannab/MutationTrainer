@@ -659,7 +659,7 @@ body{
   justify-content:center;
   margin: .8rem 0 2rem;
 }
-#practiceCard .practice-base .bg-indigo-100.ring-1.ring-indigo-300.rounded-2xl{
+#practiceCard .practice-base .base-word-capsule{
   position: relative; /* anchor the “?” */
   display:inline-flex !important;
   align-items:center !important;
@@ -909,6 +909,20 @@ body{
   position:absolute;
   top:-0.30rem;
   right:-0.50rem;
+  transform: none;
+}
+
+@media (max-width: 480px){
+  #practiceCard .practice-base{
+    padding-inline: 0.6rem;
+  }
+  #practiceCard .practice-base .base-word-capsule{
+    padding-right: 1.85rem !important;
+  }
+  .base-info-btn{
+    top:-0.2rem;
+    right:-0.25rem;
+  }
 }
 
 .base-info-popover{
