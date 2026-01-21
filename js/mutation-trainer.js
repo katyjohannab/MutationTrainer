@@ -1693,6 +1693,12 @@ function renderPractice() {
   const main = document.createElement("div");
   main.className = "practice-actions-main";
 
+  const primary = document.createElement("div");
+  primary.className = "practice-actions-primary";
+
+  const secondary = document.createElement("div");
+  secondary.className = "practice-actions-secondary";
+
   const aux = document.createElement("div");
   aux.className = "practice-actions-aux";
 
@@ -1733,7 +1739,7 @@ function renderPractice() {
     setTimeout(() => $("#inlineNext")?.focus({ preventScroll: true }), 0);
   };
 
-  const btnCheck = btn(t.check, "btn-primary shadow", onCheck);
+  const btnCheck = btn(t.check, "btn-primary btn-check shadow", onCheck);
   btnCheck.id = "btnCheck";
   btnCheck.title = `${t.check} (Enter)`;
 
@@ -1753,7 +1759,7 @@ function renderPractice() {
     render();
   });
 
-  const btnSkip = btn(t.skip, "btn-ghost", () => {
+  const btnSkip = btn(t.skip, "btn-ghost btn-muted btn-skip", () => {
     state.guess = "";
     state.revealed = true;
     state.lastResult = "skipped";
@@ -1797,7 +1803,9 @@ function renderPractice() {
   btnShuffle.innerHTML = `<span aria-hidden="true">🔀</span><span>${esc(t.shuffleNow)}</span>`;
   btnShuffle.onclick = () => { rebuildDeck(); render(); };
 
-  main.append(btnCheck, btnHint, btnReveal, btnSkip);
+  primary.append(btnCheck);
+  secondary.append(btnHint, btnReveal, btnSkip);
+  main.append(primary, secondary);
   if (metaControls) {
     metaControls.appendChild(btnShuffle);
   } else {
