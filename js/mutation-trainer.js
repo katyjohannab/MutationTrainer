@@ -722,7 +722,8 @@ function wirePresetUi() {
   $$("[data-preset]").forEach(el => {
     const id = el.getAttribute("data-preset");
     if (!id) return;
-    const isActive = id === state.activePreset;
+    const activeKey = state.activePackKey || state.activePreset;
+    const isActive = id === activeKey;
     el.classList.toggle("preset-on", isActive);
     el.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
@@ -866,22 +867,23 @@ function toggleBtn(text, active, onClick) {
   const familyAll = ["Soft","Aspirate","Nasal","None"];
   const families = state.families?.length ? state.families : familyAll;
   let familyAllActive = families.length === familyAll.length;
-  const familyKeys = hasPresetLayer && familyAllActive ? [] : families;
-  if (hasPresetLayer && familyAllActive) familyAllActive = false;
+  const familyKeys = hasPresetLayer ? [] : families;
+  if (hasPresetLayer) familyAllActive = true;
   applyPillState($("#familyBtns"), familyKeys, familyAllActive);
 
   const outcomeAll = ["SM","AM","NM","NONE"];
   const outcomes = state.outcomes?.length ? state.outcomes : outcomeAll;
   let outcomeAllActive = outcomes.length === outcomeAll.length;
-  const outcomeKeys = hasPresetLayer && outcomeAllActive ? [] : outcomes;
-  if (hasPresetLayer && outcomeAllActive) outcomeAllActive = false;
+  const outcomeKeys = hasPresetLayer ? [] : outcomes;
+  if (hasPresetLayer) outcomeAllActive = true;
   applyPillState($("#outcomeBtns"), outcomeKeys, outcomeAllActive);
 
   const categories = state.categories || [];
   let categoriesAllActive = categories.length === 0;
-  if (hasPresetLayer && categoriesAllActive) categoriesAllActive = false;
-  applyPillState($("#basicCatBtns"), categories, categoriesAllActive);
-  applyPillState($("#catBtns"), categories, categoriesAllActive);
+  if (hasPresetLayer) categoriesAllActive = true;
+  const categoryKeys = hasPresetLayer ? [] : categories;
+  applyPillState($("#basicCatBtns"), categoryKeys, categoriesAllActive);
+  applyPillState($("#catBtns"), categoryKeys, categoriesAllActive);
 }
 function buildFilters() {
   const lang = state.lang || "en";
@@ -931,6 +933,7 @@ function buildFilters() {
 
     // ALL pill
     const allBtn = toggleBtn(label("categories", "All"), isAllFamilies, () => {
+      clearPresetLayer();
       state.families = [...allFamilies];
       saveLS("wm_families", state.families);
       applyFilters();
@@ -945,6 +948,7 @@ function buildFilters() {
     for (const f of ["Soft","Aspirate","Nasal","None"]) {
       const isOn = isAllFamilies || state.families.includes(f);
       const b = toggleBtn(label("rulefamily", f), isOn, () => {
+        clearPresetLayer();
         let fams = Array.isArray(state.families) && state.families.length
           ? [...state.families]
           : [...allFamilies];
@@ -981,6 +985,7 @@ function buildFilters() {
     const allOutcomes = ["SM","AM","NM","NONE"];
 
     const allBtn = toggleBtn(label("categories", "All"), isAllOutcomes, () => {
+      clearPresetLayer();
       state.outcomes = [...allOutcomes];
       saveLS("wm_outcomes", state.outcomes);
       applyFilters();
@@ -995,6 +1000,7 @@ function buildFilters() {
     for (const o of ["SM","AM","NM","NONE"]) {
       const isOn = isAllOutcomes || state.outcomes.includes(o);
       const b = toggleBtn(label("rulefamily", o), isOn, () => {
+        clearPresetLayer();
         let outs = Array.isArray(state.outcomes) && state.outcomes.length
           ? [...state.outcomes]
           : [...allOutcomes];
@@ -1027,6 +1033,7 @@ function buildFilters() {
     const categoriesAllActive = state.categories.length === 0;
 
     const allBtn = toggleBtn(label("categories", "All"), categoriesAllActive, () => {
+      clearPresetLayer();
       state.categories = [];
       saveLS("wm_categories", state.categories);
       applyFilters();
@@ -1041,6 +1048,7 @@ function buildFilters() {
     for (const c of categories) {
       const isOn = categoriesAllActive || state.categories.includes(c);
       const b = toggleBtn(label("categories", c), isOn, () => {
+        clearPresetLayer();
         let cats = Array.isArray(state.categories) ? [...state.categories] : [];
         const noneSelected = cats.length === 0;
         if (noneSelected) {
@@ -1072,6 +1080,7 @@ function buildFilters() {
   if (trigEl) {
     trigEl.value = state.triggerQuery || "";
     trigEl.oninput = () => {
+      clearPresetLayer();
       state.triggerQuery = trigEl.value;
       saveLS("wm_trig", state.triggerQuery);
       applyFilters();
@@ -1086,6 +1095,7 @@ function buildFilters() {
   if (nilEl) {
     nilEl.checked = Boolean(state.nilOnly);
     nilEl.onchange = () => {
+      clearPresetLayer();
       state.nilOnly = Boolean(nilEl.checked);
       saveLS("wm_nil", state.nilOnly);
       applyFilters();
