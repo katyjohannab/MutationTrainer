@@ -1196,6 +1196,13 @@ function buildFilters() {
     };
     container.appendChild(moreBtn);
 
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.id = "btnCoreClear";
+    clearBtn.className = "pill pill-more";
+    clearBtn.textContent = LABEL[lang].ui.clearFilters;
+    container.appendChild(clearBtn);
+
     if (state.showMoreFilters) {
       for (const c of extraCategories) {
         const isOn = !categoriesAllActive && state.categories.includes(c);
