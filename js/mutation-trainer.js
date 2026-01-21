@@ -17,7 +17,8 @@ function normalizeSourcePath(s) {
     .toString()
     .trim()
     .replace(/^https?:\/\/[^/]+\/?/i, "")
-    .replace(/^\/+/, "");
+    .replace(/^\/+/, "")
+    .replace(/^data\//i, "");
 }
 // Canonicalise Trigger values for reliable matching (presets + URL params).
 // - lowercases, trims, normalises apostrophes
@@ -483,7 +484,7 @@ const PRESET_DEFS = {
     titleKey: "starterPrepsTitle",
     descKey: "starterPrepsDesc",
     triggers: [],
-    sourceScope: ["data/prep.csv"],
+    sourceScope: ["prep.csv"],
   },
   "numbers-1-10": {
     id: "numbers-1-10",
