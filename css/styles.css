@@ -374,6 +374,20 @@ body{
   box-shadow: 0 10px 22px rgba(2,6,23,0.08);
 }
 
+.btn-muted{
+  background: rgba(148,163,184,0.10);
+  border-color: rgba(148,163,184,0.35);
+  color: var(--muted);
+  box-shadow: none;
+}
+.btn-muted:hover{
+  background: rgba(148,163,184,0.16);
+  border-color: rgba(148,163,184,0.45);
+  color: #334155;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(2,6,23,0.08);
+}
+
 /* ---------- Language toggle (fix pill-in-pill) ---------- */
 .btn-lang{
   display:inline-flex;
@@ -707,6 +721,21 @@ body{
   align-items:center;
   gap: 0.65rem;
 }
+#practiceCard .practice-actions-primary{
+  display:flex;
+  align-items:center;
+}
+#practiceCard .practice-actions-secondary{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap: 0.65rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#practiceCard .practice-actions-secondary .btn-skip{
+  margin-left:auto;
+}
 #practiceCard .practice-actions-aux{
   display:flex;
   align-items:center;
@@ -717,6 +746,36 @@ body{
 #practiceCard .practice-actions .btn-shuffle,
 #practiceCard .practice-actions .btn-shuffleNow{
   margin-left:auto;
+}
+
+@media (max-width: 640px){
+  #practiceCard .practice-actions{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #practiceCard .practice-actions-main{
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #practiceCard .practice-actions-primary{
+    width: 100%;
+  }
+  #practiceCard .practice-actions-primary .btn-check{
+    width: 100%;
+    justify-content: center;
+  }
+  #practiceCard .practice-actions-secondary{
+    width: 100%;
+    justify-content: flex-start;
+  }
+  #practiceCard .practice-actions-secondary .btn{
+    padding: .45rem .75rem;
+    font-size: 0.9rem;
+  }
+  #practiceCard .practice-actions-secondary .btn-skip{
+    margin-left: auto;
+  }
 }
 
 /*fix button alignment*/
