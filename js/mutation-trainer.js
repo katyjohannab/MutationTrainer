@@ -579,7 +579,9 @@ function clearPresetLayer() {
 function updatePresetActiveClasses() {
   $$("[data-preset]").forEach(el => {
     const id = el.getAttribute("data-preset");
-    el.classList.toggle("preset-on", Boolean(id && id === state.activePreset));
+    const isActive = Boolean(id && id === state.activePreset);
+    el.classList.toggle("preset-on", isActive);
+    el.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
 }
 
@@ -626,6 +628,10 @@ function applyPreset(presetId, { fromUrl = false } = {}) {
   rebuildDeck();
   buildFilters();
   render();
+  if (typeof refreshFilterPills === "function") {
+    try { refreshFilterPills(); } catch (_) {}
+  }
+  if (typeof updateFocusIndicator === "function") updateFocusIndicator();
 
   // If we applied it from URL params, don't clutter history - but do keep filters.
   if (fromUrl) {
@@ -646,6 +652,7 @@ function wirePresetUi() {
       btn.type = "button";
       btn.className = `preset-btn ${state.activePreset === id ? "preset-on" : ""}`;
       btn.dataset.preset = id;
+      btn.setAttribute("aria-pressed", state.activePreset === id ? "true" : "false");
 
       const title = document.createElement("div");
       title.className = "preset-title";
@@ -659,24 +666,42 @@ function wirePresetUi() {
 
       btn.appendChild(title);
       btn.appendChild(desc);
-      btn.addEventListener("click", () => applyPreset(id));
       container.appendChild(btn);
     }
   }
 
   // Static buttons (or the ones we just created)
   $$("[data-preset]").forEach(el => {
-    if (el.__wmPresetBound) return;
-    el.__wmPresetBound = true;
+    if (el.dataset._wmPresetBound === "1") return;
+    el.dataset._wmPresetBound = "1";
     const id = el.getAttribute("data-preset");
-    el.addEventListener("click", () => applyPreset(id));
+    el.onclick = (e) => {
+      e.preventDefault();
+      const current = state.activePackKey || state.activePreset;
+      if (current && current === id) {
+        clearPresetLayer();
+        applyFilters();
+        rebuildDeck();
+        buildFilters();
+        render();
+        if (typeof refreshFilterPills === "function") {
+          try { refreshFilterPills(); } catch (_) {}
+        }
+      } else {
+        applyPreset(id);
+      }
+      if (typeof updateFocusIndicator === "function") updateFocusIndicator();
+      updatePresetActiveClasses();
+    };
   });
 
   // Keep visual state in sync (works for both dynamic + static preset buttons).
   $$("[data-preset]").forEach(el => {
     const id = el.getAttribute("data-preset");
     if (!id) return;
-    el.classList.toggle("preset-on", id === state.activePreset);
+    const isActive = id === state.activePreset;
+    el.classList.toggle("preset-on", isActive);
+    el.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
 }
 
