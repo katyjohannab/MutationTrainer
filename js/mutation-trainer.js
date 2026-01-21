@@ -1550,6 +1550,8 @@ function renderPractice() {
 
   const headerRight = document.createElement("div");
   headerRight.className = "flex items-center gap-2";
+  const metaControls = $("#practiceMetaControls");
+  if (metaControls) metaControls.innerHTML = "";
 
   const seg = document.createElement("div");
   seg.className = "seg";
@@ -1577,7 +1579,8 @@ function renderPractice() {
     mkSegBtn(t.smartModeShort, "smart")
   );
 
-  headerRight.appendChild(seg);
+  const controlsMount = metaControls || headerRight;
+  controlsMount.appendChild(seg);
   header.append(headerLeft, headerRight);
 
   const summary = document.createElement("div");
@@ -1787,7 +1790,11 @@ function renderPractice() {
   btnShuffle.onclick = () => { rebuildDeck(); render(); };
 
   main.append(btnCheck, btnHint, btnReveal, btnSkip);
-  aux.append(btnShuffle);
+  if (metaControls) {
+    metaControls.appendChild(btnShuffle);
+  } else {
+    aux.append(btnShuffle);
+  }
   actions.append(main, aux);
 
   const feedback = document.createElement("div");
