@@ -1193,6 +1193,7 @@ function nextCard(offset = 1) {
     state.guess = "";
     state.revealed = false;
     state.lastResult = null;
+    state.cardState = "front";
     render();
     return;
   }
@@ -1218,6 +1219,7 @@ function nextCard(offset = 1) {
   state.guess = "";
   state.revealed = false;
   state.lastResult = null;
+  state.cardState = "front";
   render();
 }
 

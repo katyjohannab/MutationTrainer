@@ -624,6 +624,15 @@ body{
   box-shadow: 0 18px 36px rgba(15,23,42,0.08);
 }
 
+#practiceCard .practice-card-flip{
+  position: relative;
+}
+
+#practiceCard .practice-card-face{
+  transition: opacity 0.32s ease, transform 0.32s ease;
+  will-change: opacity, transform;
+}
+
 .practice-card-footer{
   display: flex;
   align-items: center;
@@ -664,6 +673,36 @@ body{
   }
   .practice-card-surface{
     padding: 1.6rem 1.4rem;
+  }
+  #practiceCard .practice-card-flip.is-front .practice-card-face.is-front{
+    position: relative;
+    opacity: 1;
+    transform: translateX(0);
+  }
+  #practiceCard .practice-card-flip.is-front .practice-card-face.is-back{
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateX(14px) rotateZ(0.4deg);
+    pointer-events: none;
+  }
+  #practiceCard .practice-card-flip.is-back .practice-card-face.is-front{
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateX(-14px) rotateZ(-0.4deg);
+    pointer-events: none;
+  }
+  #practiceCard .practice-card-flip.is-back .practice-card-face.is-back{
+    position: relative;
+    opacity: 1;
+    transform: translateX(0);
+  }
+  #practiceCard .btn-next-big{
+    width: 100%;
+    justify-content: center;
+    padding: 0.95rem 1.2rem;
+    font-size: 1.05rem;
   }
   .practice-card-footer{
     flex-direction: column;
@@ -814,6 +853,13 @@ body{
   }
   #practiceCard .practice-actions-secondary .btn-skip{
     margin-left: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  #practiceCard .practice-card-face{
+    transition: opacity 0.2s ease;
+    transform: none !important;
   }
 }
 

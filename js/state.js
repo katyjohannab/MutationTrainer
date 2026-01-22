@@ -111,6 +111,7 @@ export const state = {
   history: loadLS("wm_hist", []),
   freezeIdx: null,
   freezePos: null,
+  cardState: "front",
   lang: wmGetLangLocal(),   // IMPORTANT: read same as navbar.js
   currentIdx: 0,
   currentDeckPos: -1,
