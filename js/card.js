@@ -701,7 +701,10 @@ export function renderPractice() {
 
   const mobileBar = $("#mobileBar");
   if (mobileBar) {
-    mobileBar.classList.toggle("hidden", isMobileCard && state.cardState === "back");
+    const showNext = isMobileCard && state.cardState === "back";
+    mobileBar.classList.toggle("hidden", !isMobileCard);
+    $("#mobileActionAnswer")?.classList.toggle("hidden", showNext);
+    $("#mbNext")?.classList.toggle("hidden", !showNext);
   }
 
   const ab = $("#answerBox");
