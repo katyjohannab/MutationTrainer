@@ -144,6 +144,7 @@ function applyLanguage() {
   if ($("#mbHint")) $("#mbHint").textContent = LABEL[lang].hint;
   if ($("#mbReveal")) $("#mbReveal").textContent = LABEL[lang].reveal;
   if ($("#mbSkip")) $("#mbSkip").textContent = LABEL[lang].skip;
+  if ($("#mbNext")) $("#mbNext").textContent = LABEL[lang].next;
   applyReportModalLabels();
 
   buildFilters();
@@ -1300,6 +1301,7 @@ function wireUi() {
   $("#mbHint")?.addEventListener("click", () => $("#btnHint")?.click());
   $("#mbReveal")?.addEventListener("click", () => $("#btnReveal")?.click());
   $("#mbSkip")?.addEventListener("click", () => $("#btnSkip")?.click());
+  $("#mbNext")?.addEventListener("click", () => nextCard(1));
 
   $("#mobileFiltersToggle")?.addEventListener("click", () => {
     const isOpen = $("#practiceSidebar")?.classList.contains("is-open");
