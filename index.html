@@ -175,42 +175,44 @@
               <span id="mobileFiltersTitle" class="text-sm font-semibold">Filters</span>
               <button id="mobileFiltersApply" class="btn btn-primary px-3 py-1.5" type="button">Apply</button>
             </div>
-            <div id="filtersPanel" class="panel rounded-2xl p-4">
-            <!-- Focus section -->
-            <div id="focusSection" class="mb-4">
-              <div id="focusTitle" class="text-sm font-medium mb-2">Focus</div>
-              <div id="focusHelper" class="text-xs text-slate-500 mb-3"></div>
-              <div id="presetSection" class="mb-2">
-                <div id="presetsTitle" class="text-sm font-medium mb-2">Quick packs</div>
-                <div id="presetsHelper" class="text-xs text-slate-500 mb-2"></div>
-                <div id="presetBtns" class="grid grid-cols-2 gap-2"></div>
-                <!-- Focus indicator shows which preset/pack is active (set by JS) -->
-                <div id="focusIndicator" class="text-xs font-medium text-slate-600 hidden mt-1"></div>
+            <div class="mobile-filters-body">
+              <div id="filtersPanel" class="panel rounded-2xl p-4">
+              <!-- Focus section -->
+              <div id="focusSection" class="mb-4">
+                <div id="focusTitle" class="text-sm font-medium mb-2">Focus</div>
+                <div id="focusHelper" class="text-xs text-slate-500 mb-3"></div>
+                <div id="presetSection" class="mb-2">
+                  <div id="presetsTitle" class="text-sm font-medium mb-2">Quick packs</div>
+                  <div id="presetsHelper" class="text-xs text-slate-500 mb-2"></div>
+                  <div id="presetBtns" class="grid grid-cols-2 gap-2"></div>
+                  <!-- Focus indicator shows which preset/pack is active (set by JS) -->
+                  <div id="focusIndicator" class="text-xs font-medium text-slate-600 hidden mt-1"></div>
+                </div>
               </div>
-            </div>
 
-            <!-- Core filters section -->
-            <div id="coreFiltersSection" class="mb-4">
-                <div id="coreFiltersTitle" class="text-sm font-medium mb-2">Filters</div>
-              <div id="coreFiltersHelper" class="text-xs text-slate-500 mb-2"></div>
-              <div id="basicFocus">
-                <div class="grid grid-cols-1 gap-2 text-sm">
-                  <div id="familyCol">
-                    <div id="rulefamilyTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Mutation type</div>
-                    <div id="familyBtns" class="flex flex-wrap gap-1"></div>
-                  </div>
-                  <div class="col-span-1">
-                    <div id="categoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Categories</div>
-                    <div id="categoryChips" class="flex flex-wrap gap-1"></div>
-                    <div id="categoryExtras" class="mt-2 hidden">
-                      <div class="mt-2">
-                        <label id="triggerLabel" class="text-xs uppercase tracking-wide text-slate-500">Filter by Trigger</label>
-                        <input id="triggerFilter" class="mt-1 w-full border rounded-xl px-3 py-1.5" placeholder="e.g. i, o, dwy, tri, y (article), neu" />
+              <!-- Core filters section -->
+              <div id="coreFiltersSection" class="mb-4">
+                  <div id="coreFiltersTitle" class="text-sm font-medium mb-2">Filters</div>
+                <div id="coreFiltersHelper" class="text-xs text-slate-500 mb-2"></div>
+                <div id="basicFocus">
+                  <div class="grid grid-cols-1 gap-2 text-sm">
+                    <div id="familyCol">
+                      <div id="rulefamilyTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Mutation type</div>
+                      <div id="familyBtns" class="flex flex-wrap gap-1"></div>
+                    </div>
+                    <div class="col-span-1">
+                      <div id="categoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Categories</div>
+                      <div id="categoryChips" class="flex flex-wrap gap-1"></div>
+                      <div id="categoryExtras" class="mt-2 hidden">
+                        <div class="mt-2">
+                          <label id="triggerLabel" class="text-xs uppercase tracking-wide text-slate-500">Filter by Trigger</label>
+                          <input id="triggerFilter" class="mt-1 w-full border rounded-xl px-3 py-1.5" placeholder="e.g. i, o, dwy, tri, y (article), neu" />
+                        </div>
+                        <label class="inline-flex items-center gap-2 text-sm mt-1">
+                          <input id="nilOnly" type="checkbox" />
+                          <span id="nilOnlyText">Nil-cases only (no mutation expected)</span>
+                        </label>
                       </div>
-                      <label class="inline-flex items-center gap-2 text-sm mt-1">
-                        <input id="nilOnly" type="checkbox" />
-                        <span id="nilOnlyText">Nil-cases only (no mutation expected)</span>
-                      </label>
                     </div>
                   </div>
                 </div>
@@ -224,7 +226,7 @@
             </div>
 
             <!-- Session stats hidden under details -->
-            <details id="statsDetails" class="panel rounded-2xl p-4">
+            <details id="statsDetails" class="panel rounded-2xl p-4 hidden md:block">
               <summary id="moreStatsSummary" class="cursor-pointer text-sm font-medium select-none">More stats</summary>
               <div id="sessionPanel" class="mt-3">
                 <div class="flex items-center justify-between mb-3">
