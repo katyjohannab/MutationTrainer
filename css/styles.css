@@ -1043,7 +1043,36 @@ body{
   z-index: 10030;
   transform: translateY(calc(-1 * var(--keyboard-offset)));
   transition: transform 0.2s ease;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: rgba(255,255,255,0.92);
+  border-top-color: rgba(15,23,42,0.08);
+  box-shadow: 0 -6px 18px rgba(15,23,42,0.08);
+}
+
+.mobile-action-bar-inner{
+  padding-bottom: 0.75rem;
+}
+
+.mobile-action-bar .btn{
+  min-height: 2.4rem;
+  font-size: 0.95rem;
+}
+
+.mobile-action-bar .btn.btn-primary{
+  min-height: 2.65rem;
+}
+
+.mobile-action-secondary .btn{
+  font-size: 0.85rem;
+  min-height: 2.2rem;
+  padding: 0.4rem 0.65rem;
+  background: rgba(15,23,42,0.04);
+  border-color: rgba(15,23,42,0.12);
+  color: rgba(30,41,59,0.9);
+}
+
+.mobile-action-secondary .btn:hover{
+  background: rgba(15,23,42,0.08);
 }
 
 @media (max-width: 767px){
