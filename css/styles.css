@@ -1554,6 +1554,14 @@ body.onboard-modal-open{
     overflow: auto;
     overscroll-behavior: contain;
   }
+  #filtersPanel details > summary{
+    cursor: default;
+    list-style: none;
+    pointer-events: none;
+  }
+  #filtersPanel details > summary::-webkit-details-marker{
+    display: none;
+  }
   #filtersPanel::-webkit-scrollbar{ width: 10px; }
   #filtersPanel::-webkit-scrollbar-thumb{
     background: rgba(15,23,42,0.12);

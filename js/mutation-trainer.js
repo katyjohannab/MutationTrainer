@@ -90,12 +90,6 @@ function applyLanguage() {
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
   if ($("#triggerFilter")) $("#triggerFilter").setAttribute("placeholder", LABEL[lang].ui.triggerPlaceholder);
-  const moreChip = $("#moreFiltersChip");
-  if (moreChip) {
-    moreChip.textContent = state.showMoreFilters
-      ? LABEL[lang].ui.categoriesFewerFilters
-      : LABEL[lang].ui.categoriesMoreFilters;
-  }
 
   $$("[data-onboard-dismiss]").forEach((btn) => {
     btn.textContent = LABEL[lang].onboardDismiss;
@@ -988,14 +982,25 @@ function buildFilters() {
     };
   }
 
+  const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+  const quickPacksSection = $("#quickPacksSection");
+  if (quickPacksSection && isDesktop) {
+    quickPacksSection.open = true;
+  }
+  const coreFiltersSection = $("#coreFiltersSection");
+  if (coreFiltersSection && isDesktop) {
+    coreFiltersSection.open = true;
+  }
   const moreFiltersDetails = $("#moreFiltersDetails");
   if (moreFiltersDetails) {
-    moreFiltersDetails.open = Boolean(state.showMoreFilters);
+    moreFiltersDetails.open = isDesktop ? true : Boolean(state.showMoreFilters);
     if (moreFiltersDetails.dataset._wmBound !== "1") {
       moreFiltersDetails.dataset._wmBound = "1";
       moreFiltersDetails.addEventListener("toggle", () => {
-        state.showMoreFilters = moreFiltersDetails.open;
-        saveLS("wm_show_more_filters", state.showMoreFilters);
+        if (window.matchMedia("(max-width: 767px)").matches) {
+          state.showMoreFilters = moreFiltersDetails.open;
+          saveLS("wm_show_more_filters", state.showMoreFilters);
+        }
       });
     }
   }
