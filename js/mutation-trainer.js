@@ -1224,10 +1224,6 @@ function updateViewportMetrics() {
   const effectiveOffset = isTyping ? keyboardOffset : 0;
   document.documentElement.style.setProperty("--keyboard-offset", `${effectiveOffset}px`);
   document.body.classList.toggle("keyboard-open", effectiveOffset > 0);
-  const bar = $("#mobileBar");
-  if (bar) {
-    document.documentElement.style.setProperty("--mobile-actions-height", `${bar.offsetHeight}px`);
-  }
 }
 
 function render() {

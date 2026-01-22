@@ -1122,13 +1122,14 @@ body{
 
 :root{
   --keyboard-offset: 0px;
-  --mobile-actions-height: 0px;
+  --mobile-bar-height: 88px;
 }
 
 .mobile-action-bar{
   z-index: 10030;
   transform: translateY(calc(-1 * var(--keyboard-offset)));
   transition: transform 0.2s ease;
+  height: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: rgba(255,255,255,0.92);
   border-top-color: rgba(15,23,42,0.08);
@@ -1183,10 +1184,10 @@ body:not(.keyboard-open) .mobile-action-bar{
     min-width: 12.5rem;
   }
   #answerBox{
-    scroll-margin-bottom: calc(var(--mobile-actions-height) + var(--keyboard-offset) + 2.5rem);
+    scroll-margin-bottom: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom) + var(--keyboard-offset) + 2.5rem);
   }
   #practiceCard .practice-answerBlock{
-    scroll-margin-bottom: calc(var(--mobile-actions-height) + var(--keyboard-offset) + 2.5rem);
+    scroll-margin-bottom: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom) + var(--keyboard-offset) + 2.5rem);
   }
 }
 
@@ -1547,7 +1548,7 @@ body.onboard-modal-open{
     overflow-x: hidden;
   }
   #main{
-    padding-bottom: calc(var(--mobile-actions-height) + 1.5rem);
+    padding-bottom: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom));
   }
   #practiceSidebar{
     position: fixed;
