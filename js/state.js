@@ -276,7 +276,7 @@ export const LABEL = {
     },
     categoryView: { showAll: "Dangos pob categori", showCommon: "Dangos categorïau cyffredin" },
     categories: {
-      All:"Pob","Adjective+Noun":"Ansoddair+Enw",Article:"Erthygl",Bod+yn:"Bod+Yn",Complement:"Cwblhad",Conjunction:"Cydgysylltydd",
+      All:"Pob","Adjective+Noun":"Ansoddair+Enw",Article:"Erthygl","Bod+yn":"Bod+Yn",Complement:"Cwblhad",Conjunction:"Cydgysylltydd",
       Deictic:"Deictig",Determiner:"Pennod",Intensifier:"Dwysydd",Interrogative:"Holiadol",Idiom: "Idiom",Negation:"Negydd",Numerals:"Rhifau",
       Particle:"Gronyn",PlaceName:"Enw lle",Possessive:"Perchenogol",Preposition:"Arddodiad",Presentative:"Dangosol",Relative:"Perthynol",
       SubjectBoundary:"Ffin pwnc",Subordinator:"Isgysylltydd",TimeExpressions:"Mynegiadau amser"
