@@ -175,7 +175,7 @@
           <div class="practice-sidebar-sheet flex flex-col gap-4">
             <div class="mobile-filters-header md:hidden flex items-center justify-between gap-2">
               <span id="mobileFiltersTitle" class="text-sm font-semibold">Filters</span>
-              <button id="mobileFiltersClose" class="btn btn-ghost px-3 py-1.5" type="button">Close</button>
+              <button id="mobileFiltersApply" class="btn btn-primary px-3 py-1.5" type="button">Apply</button>
             </div>
             <div id="filtersPanel" class="panel rounded-2xl p-4">
             <!-- Focus section -->
@@ -219,6 +219,11 @@
               </div>
             </div>
           </div>
+
+            <div class="mobile-filters-actions md:hidden flex flex-wrap gap-2">
+              <button id="mobileClearFocus" class="btn btn-ghost flex-1" type="button">Clear focus</button>
+              <button id="mobileClearFilters" class="btn btn-ghost flex-1" type="button">Clear filters</button>
+            </div>
 
             <!-- Session stats hidden under details -->
             <details id="statsDetails" class="panel rounded-2xl p-4">
