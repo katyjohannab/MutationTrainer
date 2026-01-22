@@ -88,7 +88,6 @@ function applyLanguage() {
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
-  if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
   if ($("#triggerFilter")) $("#triggerFilter").setAttribute("placeholder", LABEL[lang].ui.triggerPlaceholder);
 
   $$("[data-onboard-dismiss]").forEach((btn) => {
@@ -115,7 +114,19 @@ function applyLanguage() {
   if ($("#coreFiltersHelper")) $("#coreFiltersHelper").textContent = LABEL[lang].ui.coreFiltersHelper;
   if ($("#sessionTitle")) $("#sessionTitle").textContent = LABEL[lang].ui.sessionTitle;
   if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].ui.newSession;
-  if ($("#btnFiltersClear")) $("#btnFiltersClear").textContent = LABEL[lang].ui.clearFilters;
+  const clearFiltersLabel = LABEL[lang].ui.clearFilters;
+  const clearFiltersBtn = $("#btnFiltersClear");
+  if (clearFiltersBtn) {
+    const labelEl = clearFiltersBtn.querySelector(".pill-label");
+    if (labelEl) labelEl.textContent = clearFiltersLabel;
+    else clearFiltersBtn.textContent = clearFiltersLabel;
+  }
+  const moreFiltersToggle = $("#moreFiltersToggle");
+  if (moreFiltersToggle) {
+    moreFiltersToggle.textContent = state.showMoreFilters
+      ? LABEL[lang].ui.advancedFiltersOpen
+      : LABEL[lang].ui.advancedFiltersClosed;
+  }
   if ($("#mobileClearFocus")) $("#mobileClearFocus").textContent = LABEL[lang].ui.clearFocus;
   if ($("#mobileClearFilters")) $("#mobileClearFilters").textContent = LABEL[lang].ui.clearFilters;
   if ($("#accTitle")) $("#accTitle").textContent = LABEL[lang].ui.accuracyTitle;
@@ -256,7 +267,6 @@ function getCustomFiltersLabelParts() {
     const trigLabel = (lang === "cy" ? "Sbardun" : "Trigger");
     parts.push(`${trigLabel}: ${state.triggerQuery.trim()}`);
   }
-  if (state.nilOnly) parts.push(label("headings", "nilOnly"));
   return parts;
 }
 
@@ -799,6 +809,7 @@ function toggleBtn(text, active, onClick) {
   }
   applyPillState($("#coreCategoryChips"), categoryKeys, categoriesAllActive);
   applyPillState($("#extraCategoryChips"), categoryKeys, categoriesAllActive);
+  applyPillState($("#allCategoryChips"), categoryKeys, categoriesAllActive);
 }
 function buildFilters() {
   const lang = state.lang || "en";
@@ -808,13 +819,10 @@ function buildFilters() {
   if ($("#focusHelper")) $("#focusHelper").textContent = LABEL[lang].ui.focusHelper;
   if ($("#quickPacksSummary")) $("#quickPacksSummary").textContent = LABEL[lang].headings.presets;
   if ($("#coreFiltersSummary")) $("#coreFiltersSummary").textContent = LABEL[lang].ui.coreFiltersTitle;
-  if ($("#moreFiltersToggle")) $("#moreFiltersToggle").textContent = LABEL[lang].ui.advancedFiltersClosed;
-  if ($("#moreFiltersClose")) $("#moreFiltersClose").textContent = LABEL[lang].ui.closeFilters;
   if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
-  if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
   if ($("#triggerFilter")) $("#triggerFilter").setAttribute("placeholder", LABEL[lang].ui.triggerPlaceholder);
   if ($("#coreFiltersHelper")) $("#coreFiltersHelper").textContent = LABEL[lang].ui.coreFiltersHelper;
 
@@ -951,21 +959,6 @@ function buildFilters() {
     };
   }
 
-  const nilEl = $("#nilOnly");
-  if (nilEl) {
-    nilEl.checked = Boolean(state.nilOnly);
-    nilEl.onchange = () => {
-      clearPresetLayer();
-      state.nilOnly = Boolean(nilEl.checked);
-      saveLS("wm_nil", state.nilOnly);
-      applyFilters();
-      rebuildDeck();
-      refreshFilterPills();
-      render();
-      updatePresetActiveClasses();
-    };
-  }
-
   refreshFilterPills();
   updatePresetActiveClasses();
 
@@ -989,17 +982,19 @@ function buildFilters() {
 
   const moreFiltersPanel = $("#moreFiltersPanel");
   const moreFiltersToggle = $("#moreFiltersToggle");
-  const moreFiltersClose = $("#moreFiltersClose");
+  const allCategoryChips = $("#allCategoryChips");
   const setMoreFiltersOpen = (isOpen, { save = false } = {}) => {
     if (moreFiltersPanel) {
       moreFiltersPanel.classList.toggle("is-hidden", !isOpen);
     }
-    if (moreFiltersToggle) {
-      moreFiltersToggle.classList.toggle("is-hidden", isOpen);
-      moreFiltersToggle.setAttribute("aria-expanded", String(isOpen));
+    if (allCategoryChips) {
+      allCategoryChips.classList.toggle("is-hidden", !isOpen);
     }
-    if (moreFiltersClose) {
-      moreFiltersClose.setAttribute("aria-expanded", String(isOpen));
+    if (moreFiltersToggle) {
+      moreFiltersToggle.setAttribute("aria-expanded", String(isOpen));
+      moreFiltersToggle.textContent = isOpen
+        ? LABEL[lang].ui.advancedFiltersOpen
+        : LABEL[lang].ui.advancedFiltersClosed;
     }
     if (save) {
       state.showMoreFilters = isOpen;
@@ -1012,13 +1007,7 @@ function buildFilters() {
   if (moreFiltersToggle && moreFiltersToggle.dataset._wmBound !== "1") {
     moreFiltersToggle.dataset._wmBound = "1";
     moreFiltersToggle.addEventListener("click", () => {
-      setMoreFiltersOpen(true, { save: true });
-    });
-  }
-  if (moreFiltersClose && moreFiltersClose.dataset._wmBound !== "1") {
-    moreFiltersClose.dataset._wmBound = "1";
-    moreFiltersClose.addEventListener("click", () => {
-      setMoreFiltersOpen(false, { save: true });
+      setMoreFiltersOpen(!state.showMoreFilters, { save: true });
     });
   }
 
@@ -1065,13 +1054,6 @@ function applyFilters() {
   if (trigTokens.length) {
     const trigSet = new Set(trigTokens);
     list = list.filter(r => trigSet.has(r.TriggerCanon || canonicalTrigger(r.Trigger)));
-  }
-
-  if (state.nilOnly) {
-    list = list.filter(r => {
-      const out = (r.Outcome || "").toUpperCase();
-      return out === "NONE" || r.RuleFamily === "None";
-    });
   }
 
   if (state.presetLimitComplexity && typeof isLikelyComplexRow === "function") {

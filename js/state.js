@@ -95,7 +95,6 @@ export const state = {
   presetLimitComplexity: loadLS("wm_preset_limit_complexity", false),
   presetCategory: loadLS("wm_preset_category", null),
   showMoreFilters: loadLS("wm_show_more_filters", false),
-  nilOnly: loadLS("wm_nil", false),
   mode: loadLS("wm_mode", "practice"),
   practiceMode: loadLS(PRACTICE_MODE_LS_KEY, "shuffle"),
   leitner: loadLS(LEITNER_LS_KEY, {}),
@@ -127,8 +126,7 @@ export function hasCustomFilters() {
   return (
     (state.families.length && state.families.length < 4) ||
     activeCategories.length ||
-    (state.triggerQuery && state.triggerQuery.trim()) ||
-    state.nilOnly
+    (state.triggerQuery && state.triggerQuery.trim())
   );
 }
 
@@ -141,12 +139,10 @@ export function resetFilters() {
   state.families = ["Soft","Aspirate","Nasal","None"];
   state.categories = [];
   state.triggerQuery = "";
-  state.nilOnly = false;
 
   saveLS("wm_families", state.families);
   saveLS("wm_categories", state.categories);
   saveLS("wm_trig", state.triggerQuery);
-  saveLS("wm_nil", state.nilOnly);
 }
 
 state.families = Array.isArray(state.families) && state.families.length
@@ -162,7 +158,7 @@ state.presetLimitComplexity = Boolean(state.presetLimitComplexity);
 /* ========= UI Translations ========= */
 export const LABEL = {
   en: {
-    headings: { focus:"Focus", rulefamily:"Mutation type", outcome:"Outcome", categories:"Categories", allCategories:"All categories", trigger:"Filter by Trigger", nilOnly:"Nil-cases only (no mutation expected)", presets:"Quick packs" },
+    headings: { focus:"Focus", rulefamily:"Mutation type", outcome:"Outcome", categories:"Categories", allCategories:"All categories", trigger:"Filter by Trigger", presets:"Quick packs" },
     presets: {
       starterPrepsTitle: "Starter prepositions",
       starterPrepsDesc: "Common contact-mutation prepositions",
@@ -271,7 +267,7 @@ export const LABEL = {
     },
   },
   cy: {
-    headings: { focus:"Ffocws", rulefamily:"Math treiglad", outcome:"Canlyniad", categories:"Categorïau", allCategories:"Pob categori", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)", presets:"Pecynnau cyflym" },
+    headings: { focus:"Ffocws", rulefamily:"Math treiglad", outcome:"Canlyniad", categories:"Categorïau", allCategories:"Pob categori", trigger:"Hidlo yn ôl y sbardun", presets:"Pecynnau cyflym" },
     presets: {
       starterPrepsTitle: "Arddodiaid dechreuol",
       starterPrepsDesc: "Arddodiaid treiglad-cyswllt cyffredin",
