@@ -115,7 +115,7 @@ function applyLanguage() {
   if ($("#coreFiltersHelper")) $("#coreFiltersHelper").textContent = LABEL[lang].ui.coreFiltersHelper;
   if ($("#sessionTitle")) $("#sessionTitle").textContent = LABEL[lang].ui.sessionTitle;
   if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].ui.newSession;
-  if ($("#btnCoreClear")) $("#btnCoreClear").textContent = `${LABEL[lang].ui.clearFilters} ✕`;
+  if ($("#btnFiltersClear")) $("#btnFiltersClear").textContent = LABEL[lang].ui.clearFilters;
   if ($("#mobileClearFocus")) $("#mobileClearFocus").textContent = LABEL[lang].ui.clearFocus;
   if ($("#mobileClearFilters")) $("#mobileClearFilters").textContent = LABEL[lang].ui.clearFilters;
   if ($("#accTitle")) $("#accTitle").textContent = LABEL[lang].ui.accuracyTitle;
@@ -798,7 +798,7 @@ function toggleBtn(text, active, onClick) {
     categoryKeys = [];
   }
   applyPillState($("#coreCategoryChips"), categoryKeys, categoriesAllActive);
-  applyPillState($("#allCategoryChips"), categoryKeys, categoriesAllActive);
+  applyPillState($("#extraCategoryChips"), categoryKeys, categoriesAllActive);
 }
 function buildFilters() {
   const lang = state.lang || "en";
@@ -813,7 +813,6 @@ function buildFilters() {
   if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
-  if ($("#allCategoriesTitle")) $("#allCategoriesTitle").textContent = LABEL[lang].headings.allCategories;
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
   if ($("#triggerFilter")) $("#triggerFilter").setAttribute("placeholder", LABEL[lang].ui.triggerPlaceholder);
@@ -932,14 +931,6 @@ function buildFilters() {
       container.appendChild(b);
     }
 
-    if (includeClear) {
-      const clearBtn = document.createElement("button");
-      clearBtn.type = "button";
-      clearBtn.id = "btnCoreClear";
-      clearBtn.className = "pill pill-clear";
-      clearBtn.textContent = `${LABEL[lang].ui.clearFilters} ✕`;
-      container.appendChild(clearBtn);
-    }
   };
 
   bindCategoryButtons($("#coreCategoryChips"), coreCats, { includeClear: true, includeAll: true, variant: "core" });
@@ -978,7 +969,7 @@ function buildFilters() {
   refreshFilterPills();
   updatePresetActiveClasses();
 
-  const clearBtn = $("#btnCoreClear");
+  const clearBtn = $("#btnFiltersClear");
   if (clearBtn && clearBtn.dataset._wmClearBound !== "1") {
     clearBtn.dataset._wmClearBound = "1";
     clearBtn.onclick = () => {
