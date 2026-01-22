@@ -133,6 +133,8 @@ function applyLanguage() {
   if ($("#streakTitle")) $("#streakTitle").textContent = LABEL[lang].ui.streakTitle;
   if ($("#practiceAccTitle")) $("#practiceAccTitle").textContent = LABEL[lang].ui.accuracyTitle;
   if ($("#practiceStreakTitle")) $("#practiceStreakTitle").textContent = LABEL[lang].ui.streakTitle;
+  if ($("#statAccuracy")) $("#statAccuracy").setAttribute("aria-label", LABEL[lang].ui.accuracyTitle);
+  if ($("#statStreak")) $("#statStreak").setAttribute("aria-label", LABEL[lang].ui.streakTitle);
   if ($("#moreStatsSummary")) $("#moreStatsSummary").textContent = LABEL[lang].ui.moreStats;
   if ($("#btnResetStreak")) $("#btnResetStreak").setAttribute("title", LABEL[lang].ui.resetStreakTitle);
   if ($("#cardTitle")) $("#cardTitle").textContent = LABEL[lang].ui.cardTitle;
@@ -1103,6 +1105,29 @@ function computeStats() {
   }
   return { total, correct, acc, by };
 }
+
+const STATS_ANIMATED_KEY = "wm_stats_animated";
+const STREAK_STORAGE_KEY = "wm_prev_streak";
+
+function prefersReducedMotion() {
+  return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function animateNumber(el, to, { duration = 700, suffix = "" } = {}) {
+  const target = Number(to) || 0;
+  const start = performance.now();
+  const from = 0;
+
+  const tick = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    const value = Math.round(from + (target - from) * progress);
+    el.textContent = `${value}${suffix}`;
+    if (progress < 1) requestAnimationFrame(tick);
+  };
+
+  requestAnimationFrame(tick);
+}
+
 function computeStreaks() {
   const resetAt = Number(state.streakResetAt) || 0;
   const history = state.history
@@ -1134,18 +1159,40 @@ function computeStreaks() {
 
 function renderStatsPanels() {
   const s = computeStats();
-   const streaks = computeStreaks();
+  const streaks = computeStreaks();
   const lang = state.lang || "en";
+  const shouldAnimateStats = !prefersReducedMotion() && !sessionStorage.getItem(STATS_ANIMATED_KEY);
+  const streakPill = $("#statStreak");
+  let previousStreak = Number(loadLS(STREAK_STORAGE_KEY, streaks.current));
+  if (!Number.isFinite(previousStreak)) previousStreak = streaks.current;
 
   if ($("#accBig")) $("#accBig").textContent = `${s.acc}%`;
   if ($("#statsAcc")) $("#statsAcc").textContent = `${s.acc}%`;
-  if ($("#practiceAcc")) $("#practiceAcc").textContent = `${s.acc}%`;
-  if ($("#practiceStreak")) $("#practiceStreak").textContent = `${streaks.current}`;
+  const practiceAccEl = $("#practiceAcc");
+  if (practiceAccEl) {
+    if (shouldAnimateStats) animateNumber(practiceAccEl, s.acc);
+    else practiceAccEl.textContent = `${s.acc}`;
+  }
+  const practiceStreakEl = $("#practiceStreak");
+  if (practiceStreakEl) {
+    if (shouldAnimateStats) animateNumber(practiceStreakEl, streaks.current);
+    else practiceStreakEl.textContent = `${streaks.current}`;
+  }
   if ($("#sessStreak")) $("#sessStreak").textContent = `${streaks.current}`;
   if ($("#sessBestStreak")) {
     const bestLabel = LABEL?.[lang]?.ui?.bestLabel || "Best";
     $("#sessBestStreak").textContent = `${bestLabel}: ${streaks.best}`;
   }
+  if (shouldAnimateStats) {
+    sessionStorage.setItem(STATS_ANIMATED_KEY, "1");
+  }
+  if (!prefersReducedMotion() && streaks.current > previousStreak && streakPill) {
+    streakPill.classList.remove("pulse");
+    void streakPill.offsetWidth;
+    streakPill.classList.add("pulse");
+    setTimeout(() => streakPill.classList.remove("pulse"), 450);
+  }
+  saveLS(STREAK_STORAGE_KEY, streaks.current);
   // Translate "correct out of" texts
   if ($("#accText")) {
     if (lang === "cy") {
