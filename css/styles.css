@@ -1122,7 +1122,7 @@ body{
 
 :root{
   --keyboard-offset: 0px;
-  --mobile-bar-height: 88px;
+  --mobile-bar-height: 78px;
 }
 
 .mobile-action-bar{
@@ -1143,24 +1143,25 @@ body:not(.keyboard-open) .mobile-action-bar{
 }
 
 .mobile-action-bar-inner{
-  padding-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
   width: 100%;
   max-width: 100%;
 }
 
 .mobile-action-bar .btn{
-  min-height: 2.4rem;
-  font-size: 0.95rem;
+  min-height: 2.25rem;
+  font-size: 0.92rem;
 }
 
 .mobile-action-bar .btn.btn-primary{
-  min-height: 2.65rem;
+  min-height: 2.5rem;
+  font-size: 1rem;
 }
 
 .mobile-action-secondary .btn{
   font-size: 0.85rem;
-  min-height: 2.2rem;
-  padding: 0.4rem 0.65rem;
+  min-height: 2.1rem;
+  padding: 0.35rem 0.6rem;
   background: rgba(15,23,42,0.04);
   border-color: rgba(15,23,42,0.12);
   color: rgba(30,41,59,0.9);
@@ -1188,6 +1189,20 @@ body:not(.keyboard-open) .mobile-action-bar{
   }
   #practiceCard .practice-answerBlock{
     scroll-margin-bottom: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom) + var(--keyboard-offset) + 2.5rem);
+  }
+  .mobile-action-bar-inner{
+    gap: 0.35rem;
+    padding-top: 0.4rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  #mobileActionAnswer{
+    gap: 0.35rem;
+  }
+  .mobile-action-secondary{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
   }
 }
 
