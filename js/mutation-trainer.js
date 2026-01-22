@@ -574,15 +574,25 @@ function parseCsvText(text) {
 
 async function loadCsvUrl(u) {
   if (window.Papa?.parse) {
-    return new Promise((resolve, reject) => {
-      window.Papa.parse(u, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: (res) => resolve(res.data),
-        error: reject
+    try {
+      return await new Promise((resolve, reject) => {
+        window.Papa.parse(u, {
+          download: true,
+          header: true,
+          skipEmptyLines: true,
+          complete: (res) => {
+            if (res?.errors?.length && !res?.data?.length) {
+              reject(new Error(res.errors[0]?.message || "PapaParse failed"));
+              return;
+            }
+            resolve(res.data || []);
+          },
+          error: reject
+        });
       });
-    });
+    } catch (err) {
+      console.warn("PapaParse failed, falling back to fetch+parse", err);
+    }
   }
   const res = await fetch(u, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch CSV: " + u);
