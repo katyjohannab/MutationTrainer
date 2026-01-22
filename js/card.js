@@ -218,11 +218,9 @@ export function renderPractice() {
       state.families = ["Soft","Aspirate","Nasal","None"];
       state.categories = [];
       state.triggerQuery = "";
-      state.nilOnly = false;
       saveLS("wm_families", state.families);
       saveLS("wm_categories", state.categories);
       saveLS("wm_trig", state.triggerQuery);
-      saveLS("wm_nil", state.nilOnly);
       cardCallbacks.applyFilters?.();
       cardCallbacks.rebuildDeck?.();
       cardCallbacks.buildFilters?.();
@@ -408,19 +406,15 @@ export function renderPractice() {
       const trigLabel = (lang === "cy" ? "Sbardun" : "Trigger");
       summary.appendChild(addChip(`${trigLabel}: ${state.triggerQuery.trim()}`));
     }
-    if (state.nilOnly) summary.appendChild(addChip(label("headings", "nilOnly")));
-
     // Use translated "Clear" label for the final chip
     const clearLabel = LABEL[lang]?.ui?.clear || (lang === "cy" ? "Clirio" : "Clear");
     summary.appendChild(addChip(clearLabel, () => {
       state.families = ["Soft","Aspirate","Nasal","None"];
       state.categories = [];
       state.triggerQuery = "";
-      state.nilOnly = false;
       saveLS("wm_families", state.families);
       saveLS("wm_categories", state.categories);
       saveLS("wm_trig", state.triggerQuery);
-      saveLS("wm_nil", state.nilOnly);
       cardCallbacks.applyFilters?.();
       cardCallbacks.rebuildDeck?.();
       cardCallbacks.buildFilters?.();
