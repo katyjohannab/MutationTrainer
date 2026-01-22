@@ -84,12 +84,14 @@ export function mountBaseTranslationUI(capsuleEl, card) {
 }
 
 export function initCardUi() {
-  document.addEventListener("click", () => {
+  const closePopovers = () => {
     $$(".base-info-popover").forEach(p => p.classList.add("hidden"));
-  });
+    $$(".meta-more-popover").forEach(p => p.classList.add("hidden"));
+  };
+  document.addEventListener("click", closePopovers);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      $$(".base-info-popover").forEach(p => p.classList.add("hidden"));
+      closePopovers();
     }
   });
 }
@@ -302,13 +304,25 @@ export function renderPractice() {
     mkSegBtn(t.smartModeShort, "smart")
   );
 
+  const moreWrap = document.createElement("div");
+  moreWrap.className = "meta-more-wrap";
+
   const moreBtn = document.createElement("button");
   moreBtn.type = "button";
   moreBtn.className = "btn btn-ghost meta-more";
   moreBtn.textContent = "⋯";
-  moreBtn.setAttribute("aria-label", LABEL[lang]?.ui?.moreStats || "More stats");
-  moreBtn.setAttribute("title", LABEL[lang]?.ui?.moreStats || "More stats");
-  moreBtn.onclick = () => {
+  moreBtn.setAttribute("aria-label", LABEL[lang]?.ui?.moreOptions || "More options");
+  moreBtn.setAttribute("title", LABEL[lang]?.ui?.moreOptions || "More options");
+
+  const moreMenu = document.createElement("div");
+  moreMenu.className = "meta-more-popover hidden animate-pop";
+  moreMenu.setAttribute("role", "menu");
+
+  const closeMoreMenu = () => {
+    moreMenu.classList.add("hidden");
+  };
+
+  const openStatsDetails = () => {
     const statsDetails = $("#statsDetails");
     if (statsDetails) {
       statsDetails.open = true;
@@ -316,8 +330,49 @@ export function renderPractice() {
     }
   };
 
+  const addMenuItem = (labelText, onClick) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "meta-more-item";
+    item.textContent = labelText;
+    item.setAttribute("role", "menuitem");
+    item.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeMoreMenu();
+      onClick();
+    });
+    return item;
+  };
+
+  moreMenu.append(
+    addMenuItem(t.shuffleNow, () => {
+      cardCallbacks.rebuildDeck?.();
+      cardCallbacks.render?.();
+    }),
+    addMenuItem(t.resetStats, () => {
+      state.history = [];
+      saveLS("wm_hist", state.history);
+      cardCallbacks.render?.();
+    }),
+    addMenuItem(LABEL[lang]?.ui?.onboardHelp || "Help", () => {
+      $("#onboardHelpBtn")?.click();
+    }),
+    addMenuItem(LABEL[lang]?.ui?.moreStats || "More stats", openStatsDetails)
+  );
+
+  moreBtn.onclick = (e) => {
+    e.stopPropagation();
+    const isHidden = moreMenu.classList.contains("hidden");
+    $$(".meta-more-popover").forEach(p => p.classList.add("hidden"));
+    if (isHidden) moreMenu.classList.remove("hidden");
+    else moreMenu.classList.add("hidden");
+  };
+
+  moreMenu.addEventListener("click", (e) => e.stopPropagation());
+  moreWrap.append(moreBtn, moreMenu);
+
   if (metaControls) {
-    metaControls.append(seg, moreBtn);
+    metaControls.append(seg, moreWrap);
   }
 
   const summary = document.createElement("div");
