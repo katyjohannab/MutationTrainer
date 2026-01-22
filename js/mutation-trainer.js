@@ -517,16 +517,87 @@ document.addEventListener("click", (e) => {
 /* ========= Data loading (index list) ========= */
 const FALLBACK_INDEX_URL = "https://katyjohannab.github.io/mutationtrainer/data/index.json";
 const FALLBACK_SITE_ROOT = "https://katyjohannab.github.io/mutationtrainer/";
-async function loadCsvUrl(u) {
-  return new Promise((resolve, reject) => {
-    Papa.parse(u, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: (res) => resolve(res.data),
-      error: reject
+function parseCsvText(text) {
+  const rows = [];
+  let row = [];
+  let cur = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === "\"") {
+        if (text[i + 1] === "\"") {
+          cur += "\"";
+          i += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        cur += ch;
+      }
+    } else if (ch === "\"") {
+      inQuotes = true;
+    } else if (ch === ",") {
+      row.push(cur);
+      cur = "";
+    } else if (ch === "\n") {
+      row.push(cur);
+      cur = "";
+      if (row.some(cell => cell.trim() !== "")) {
+        rows.push(row);
+      }
+      row = [];
+    } else if (ch !== "\r") {
+      cur += ch;
+    }
+  }
+
+  if (cur.length || row.length) {
+    row.push(cur);
+    if (row.some(cell => cell.trim() !== "")) {
+      rows.push(row);
+    }
+  }
+
+  if (!rows.length) return [];
+
+  const headers = rows.shift().map(h => h.trim());
+  return rows.map(cols => {
+    const out = {};
+    headers.forEach((h, idx) => {
+      out[h] = (cols[idx] ?? "").trim();
     });
+    return out;
   });
+}
+
+async function loadCsvUrl(u) {
+  if (window.Papa?.parse) {
+    try {
+      return await new Promise((resolve, reject) => {
+        window.Papa.parse(u, {
+          download: true,
+          header: true,
+          skipEmptyLines: true,
+          complete: (res) => {
+            if (res?.errors?.length && !res?.data?.length) {
+              reject(new Error(res.errors[0]?.message || "PapaParse failed"));
+              return;
+            }
+            resolve(res.data || []);
+          },
+          error: reject
+        });
+      });
+    } catch (err) {
+      console.warn("PapaParse failed, falling back to fetch+parse", err);
+    }
+  }
+  const res = await fetch(u, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch CSV: " + u);
+  const text = await res.text();
+  return parseCsvText(text);
 }
 function isAbsUrl(u) { return /^https?:\/\//i.test(u || ""); }
 function resolveFromRoot(path, root) {
