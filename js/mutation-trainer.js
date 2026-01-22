@@ -6,6 +6,7 @@ import {
   canonicalTrigger,
   esc,
   getParam,
+  loadLS,
   saveLS,
   wmGetLangLocal,
   state,
@@ -96,8 +97,16 @@ function applyLanguage() {
       : LABEL[lang].ui.categoriesMoreFilters;
   }
 
-  const dismiss = $("#onboardDismiss");
-  if (dismiss) dismiss.textContent = LABEL[lang].onboardDismiss;
+  $$("[data-onboard-dismiss]").forEach((btn) => {
+    btn.textContent = LABEL[lang].onboardDismiss;
+  });
+  const helpBtn = $("#onboardHelpBtn");
+  if (helpBtn) {
+    helpBtn.setAttribute("aria-label", LABEL[lang].ui.onboardHelp);
+    helpBtn.setAttribute("title", LABEL[lang].ui.onboardHelp);
+  }
+  if ($("#onboardModalTitle")) $("#onboardModalTitle").textContent = LABEL[lang].ui.onboardModalTitle;
+  if ($("#onboardModalDesc")) $("#onboardModalDesc").textContent = LABEL[lang].ui.onboardModalDesc;
 
   if ($("#btnResetStats")) $("#btnResetStats").textContent = LABEL[lang].resetStats;
   if ($("#btnResetStats2")) $("#btnResetStats2").textContent = LABEL[lang].ui.reset;
@@ -169,6 +178,19 @@ function applyReportModalLabels() {
   if (success && !success.classList.contains("hidden")) {
     success.textContent = LABEL[lang].ui.reportSuccess;
   }
+}
+
+const ONBOARD_DISMISS_KEY = "wm_onboard_dismissed";
+function isOnboardDismissed() {
+  return Boolean(loadLS(ONBOARD_DISMISS_KEY, false));
+}
+function setOnboardDismissed(next) {
+  saveLS(ONBOARD_DISMISS_KEY, Boolean(next));
+}
+function applyOnboardDismissedState() {
+  const onboard = $("#onboard");
+  if (!onboard) return;
+  onboard.classList.toggle("onboard-dismissed", isOnboardDismissed());
 }
 
 function syncLangFromNavbar() {
@@ -1261,7 +1283,33 @@ function wireUi() {
     });
   };
 
-  $("#onboardDismiss")?.addEventListener("click", () => $("#onboard")?.classList.add("hidden"));
+  applyOnboardDismissedState();
+  const openOnboardModal = () => {
+    const modal = $("#onboardModal");
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("onboard-modal-open");
+  };
+  const closeOnboardModal = () => {
+    const modal = $("#onboardModal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("onboard-modal-open");
+  };
+
+  $("#onboardHelpBtn")?.addEventListener("click", openOnboardModal);
+  $$("[data-onboard-close]").forEach((btn) => {
+    btn.addEventListener("click", closeOnboardModal);
+  });
+  $$("[data-onboard-dismiss]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setOnboardDismissed(true);
+      applyOnboardDismissedState();
+      closeOnboardModal();
+    });
+  });
 
   $$("[data-report-close]").forEach((btn) => {
     btn.addEventListener("click", () => closeReportModal());
@@ -1293,6 +1341,14 @@ function wireUi() {
   $("#btnTop")?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const modal = $("#onboardModal");
+      if (modal && !modal.classList.contains("hidden")) {
+        closeOnboardModal();
+      }
+    }
+    const onboardModal = $("#onboardModal");
+    if (onboardModal && !onboardModal.classList.contains("hidden")) return;
     const tag = (e.target && e.target.tagName) || "";
     if (["INPUT", "TEXTAREA"].includes(tag.toUpperCase())) return;
     if (state.mode !== "practice") return;
