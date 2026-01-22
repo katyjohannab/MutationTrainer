@@ -544,6 +544,10 @@ document.addEventListener("click", (e) => {
   setTimeout(syncLangFromNavbar, 0);
 }, true);
 
+document.addEventListener("wm:navbar-ready", () => {
+  syncLangFromNavbar();
+});
+
 
 /* ========= Data loading (index list) ========= */
 const FALLBACK_INDEX_URL = "https://katyjohannab.github.io/mutationtrainer/data/index.json";
@@ -1303,7 +1307,9 @@ function wireUi() {
   $("#mbSkip")?.addEventListener("click", () => $("#btnSkip")?.click());
   $("#mbNext")?.addEventListener("click", () => nextCard(1));
 
-  $("#mobileFiltersToggle")?.addEventListener("click", () => {
+  document.addEventListener("click", (e) => {
+    const toggle = e.target?.closest?.("#mobileFiltersToggle");
+    if (!toggle) return;
     const isOpen = $("#practiceSidebar")?.classList.contains("is-open");
     setMobileFiltersOpen(!isOpen);
   });
