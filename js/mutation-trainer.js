@@ -115,7 +115,7 @@ function applyLanguage() {
   if ($("#coreFiltersHelper")) $("#coreFiltersHelper").textContent = LABEL[lang].ui.coreFiltersHelper;
   if ($("#sessionTitle")) $("#sessionTitle").textContent = LABEL[lang].ui.sessionTitle;
   if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].ui.newSession;
-  if ($("#btnCoreClear")) $("#btnCoreClear").textContent = `${LABEL[lang].ui.clearFilters} ✕`;
+  if ($("#btnFiltersClear")) $("#btnFiltersClear").textContent = LABEL[lang].ui.clearFilters;
   if ($("#mobileClearFocus")) $("#mobileClearFocus").textContent = LABEL[lang].ui.clearFocus;
   if ($("#mobileClearFilters")) $("#mobileClearFilters").textContent = LABEL[lang].ui.clearFilters;
   if ($("#accTitle")) $("#accTitle").textContent = LABEL[lang].ui.accuracyTitle;
@@ -798,7 +798,7 @@ function toggleBtn(text, active, onClick) {
     categoryKeys = [];
   }
   applyPillState($("#coreCategoryChips"), categoryKeys, categoriesAllActive);
-  applyPillState($("#allCategoryChips"), categoryKeys, categoriesAllActive);
+  applyPillState($("#extraCategoryChips"), categoryKeys, categoriesAllActive);
 }
 function buildFilters() {
   const lang = state.lang || "en";
@@ -808,11 +808,11 @@ function buildFilters() {
   if ($("#focusHelper")) $("#focusHelper").textContent = LABEL[lang].ui.focusHelper;
   if ($("#quickPacksSummary")) $("#quickPacksSummary").textContent = LABEL[lang].headings.presets;
   if ($("#coreFiltersSummary")) $("#coreFiltersSummary").textContent = LABEL[lang].ui.coreFiltersTitle;
-  if ($("#moreFiltersSummary")) $("#moreFiltersSummary").textContent = LABEL[lang].ui.advancedFilters;
+  const moreFiltersToggle = $("#moreFiltersToggle");
+  if (moreFiltersToggle) moreFiltersToggle.textContent = LABEL[lang].ui.advancedFiltersClosed;
   if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
-  if ($("#allCategoriesTitle")) $("#allCategoriesTitle").textContent = LABEL[lang].headings.allCategories;
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
   if ($("#triggerFilter")) $("#triggerFilter").setAttribute("placeholder", LABEL[lang].ui.triggerPlaceholder);
@@ -826,6 +826,7 @@ function buildFilters() {
   for (const r of state.rows) if (r.RuleCategory) cats.add(r.RuleCategory);
   const allCats = Array.from(cats).sort();
   const coreCats = CORE_CATEGORIES.filter(c => allCats.includes(c));
+  const extraCats = allCats.filter(c => !coreCats.includes(c));
 
   /* -----------------------------
      RULE FAMILY (with All)
@@ -881,24 +882,26 @@ function buildFilters() {
     }
   }
 
-  const bindCategoryButtons = (container, categoryList, { includeClear = false, variant = "core" } = {}) => {
+  const bindCategoryButtons = (container, categoryList, { includeAll = true, variant = "core" } = {}) => {
     if (!container) return;
     container.innerHTML = "";
     const categoriesAllActive = state.categories.length === 0;
 
-    const allBtn = toggleBtn(label("categories", "All"), categoriesAllActive, () => {
-      clearPresetLayer();
-      state.categories = [];
-      saveLS("wm_categories", state.categories);
-      applyFilters();
-      rebuildDeck();
-      refreshFilterPills();
-      render();
-      updatePresetActiveClasses();
-    });
-    allBtn.dataset.key = "__ALL__";
-    allBtn.classList.add(variant === "core" ? "pill-core" : "pill-extra");
-    container.appendChild(allBtn);
+    if (includeAll) {
+      const allBtn = toggleBtn(label("categories", "All"), categoriesAllActive, () => {
+        clearPresetLayer();
+        state.categories = [];
+        saveLS("wm_categories", state.categories);
+        applyFilters();
+        rebuildDeck();
+        refreshFilterPills();
+        render();
+        updatePresetActiveClasses();
+      });
+      allBtn.dataset.key = "__ALL__";
+      allBtn.classList.add(variant === "core" ? "pill-core" : "pill-extra");
+      container.appendChild(allBtn);
+    }
 
     for (const c of categoryList) {
       const isOn = !categoriesAllActive && state.categories.includes(c);
@@ -928,18 +931,10 @@ function buildFilters() {
       container.appendChild(b);
     }
 
-    if (includeClear) {
-      const clearBtn = document.createElement("button");
-      clearBtn.type = "button";
-      clearBtn.id = "btnCoreClear";
-      clearBtn.className = "pill pill-clear";
-      clearBtn.textContent = `${LABEL[lang].ui.clearFilters} ✕`;
-      container.appendChild(clearBtn);
-    }
   };
 
-  bindCategoryButtons($("#coreCategoryChips"), coreCats, { includeClear: true, variant: "core" });
-  bindCategoryButtons($("#allCategoryChips"), allCats, { variant: "extra" });
+  bindCategoryButtons($("#coreCategoryChips"), coreCats, { includeAll: true, variant: "core" });
+  bindCategoryButtons($("#extraCategoryChips"), extraCats, { includeAll: false, variant: "extra" });
 
   const trigEl = $("#triggerFilter");
   if (trigEl) {
@@ -974,7 +969,7 @@ function buildFilters() {
   refreshFilterPills();
   updatePresetActiveClasses();
 
-  const clearBtn = $("#btnCoreClear");
+  const clearBtn = $("#btnFiltersClear");
   if (clearBtn && clearBtn.dataset._wmClearBound !== "1") {
     clearBtn.dataset._wmClearBound = "1";
     clearBtn.onclick = () => {
@@ -991,18 +986,34 @@ function buildFilters() {
   if (coreFiltersSection && isDesktop) {
     coreFiltersSection.open = true;
   }
-  const moreFiltersDetails = $("#moreFiltersDetails");
-  if (moreFiltersDetails) {
-    moreFiltersDetails.open = isDesktop ? true : Boolean(state.showMoreFilters);
-    if (moreFiltersDetails.dataset._wmBound !== "1") {
-      moreFiltersDetails.dataset._wmBound = "1";
-      moreFiltersDetails.addEventListener("toggle", () => {
-        if (window.matchMedia("(max-width: 767px)").matches) {
-          state.showMoreFilters = moreFiltersDetails.open;
-          saveLS("wm_show_more_filters", state.showMoreFilters);
-        }
-      });
+
+  const moreFiltersPanel = $("#moreFiltersPanel");
+  const moreFiltersToggleBtn = $("#moreFiltersToggle");
+  const setMoreFiltersOpen = (isOpen, { save = false } = {}) => {
+    if (moreFiltersPanel) {
+      moreFiltersPanel.classList.toggle("is-hidden", !isOpen);
     }
+    if (moreFiltersToggleBtn) {
+      moreFiltersToggleBtn.classList.toggle("pill-more", !isOpen);
+      moreFiltersToggleBtn.classList.toggle("pill-close", isOpen);
+      moreFiltersToggleBtn.textContent = isOpen
+        ? LABEL[lang].ui.closeFilters
+        : LABEL[lang].ui.advancedFiltersClosed;
+      moreFiltersToggleBtn.setAttribute("aria-expanded", String(isOpen));
+    }
+    if (save) {
+      state.showMoreFilters = isOpen;
+      saveLS("wm_show_more_filters", state.showMoreFilters);
+    }
+  };
+
+  setMoreFiltersOpen(Boolean(state.showMoreFilters));
+
+  if (moreFiltersToggleBtn && moreFiltersToggleBtn.dataset._wmBound !== "1") {
+    moreFiltersToggleBtn.dataset._wmBound = "1";
+    moreFiltersToggleBtn.addEventListener("click", () => {
+      setMoreFiltersOpen(!state.showMoreFilters, { save: true });
+    });
   }
 
   updateFocusIndicator();
