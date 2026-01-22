@@ -1,6 +1,6 @@
 <header id="siteHeader" class="sticky top-0 z-50">
   <div class="bg-white/95 backdrop-blur">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+    <div class="site-header-inner max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
 
       <a class="brand-lockup grow min-w-0" href="./home.html" aria-label="Home">
         <img
@@ -14,10 +14,11 @@
         </h1>
       </a>
 
-      <div class="flex flex-wrap items-center justify-start md:justify-end gap-2 md:gap-3">
+      <div class="header-actions flex flex-wrap items-center justify-start md:justify-end gap-2 md:gap-3">
         <nav class="flex flex-wrap items-center gap-2" aria-label="Primary">
         </nav>
 
+        <button id="mobileFiltersToggle" class="btn btn-ghost btn-mobile-filters md:hidden" type="button" aria-controls="practiceSidebar" aria-expanded="false">Filters</button>
         <div class="hidden md:block h-6 w-px bg-slate-200/80"></div>
         <button id="btnLangToggle" class="btn-lang" aria-label="Switch language" title="Switch language"></button>
       </div>
