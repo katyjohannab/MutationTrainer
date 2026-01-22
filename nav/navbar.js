@@ -54,10 +54,11 @@
     const btn = document.getElementById("btnLangToggle");
     if (!btn) return;
     const lang = wmGetLang();
+    const current = (lang === "en") ? "EN" : "CY";
     const next = (lang === "en") ? "CY" : "EN";
-    btn.innerHTML = `<span aria-hidden="true">🔁</span><span class="langtag">${next}</span>`;
-    btn.title = (lang === "en") ? "Switch to Cymraeg" : "Switch to English";
-    btn.setAttribute("aria-label", (lang === "en") ? "Switch language to Cymraeg" : "Switch language to English");
+    btn.innerHTML = `<span aria-hidden="true">🌐</span><span class="langtag">${current}→${next}</span>`;
+    btn.title = (lang === "en") ? "Switch language from English to Cymraeg" : "Switch language from Cymraeg to English";
+    btn.setAttribute("aria-label", (lang === "en") ? "Switch language from English to Cymraeg" : "Switch language from Cymraeg to English");
   }
 
   function wmBindLangToggle() {
@@ -125,5 +126,5 @@
   wmApplyActiveNav();
   wmInitDropdownClose();
   wmInitStickyShadow();
+  document.dispatchEvent(new CustomEvent("wm:navbar-ready"));
 })();
-

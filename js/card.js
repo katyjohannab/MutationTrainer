@@ -552,7 +552,7 @@ export function renderPractice() {
   }
   actions.append(main, aux);
 
-  const buildFeedbackBox = ({ nextClass }) => {
+  const buildFeedbackBox = ({ nextClass, showNext = true }) => {
     const ok = state.lastResult === "correct";
     const skipped = state.lastResult === "skipped";
     const revealed = state.lastResult === "revealed";
@@ -568,6 +568,19 @@ export function renderPractice() {
           <summary>${esc(whyLabel)}</summary>
           <div class="feedback-why-body text-slate-700">${esc(whyText)}</div>
         </details>
+      `
+      : "";
+
+    const nextMarkup = showNext
+      ? `
+        <div class="mt-4 flex justify-end">
+          <button id="inlineNext"
+                  class="${esc(nextClass)}"
+                  type="button"
+                  title="${esc(t.next)} (Enter)">
+            ${esc(t.next)}
+          </button>
+        </div>
       `
       : "";
 
@@ -595,14 +608,7 @@ export function renderPractice() {
 
         ${whyMarkup}
 
-        <div class="mt-4 flex justify-end">
-          <button id="inlineNext"
-                  class="${esc(nextClass)}"
-                  type="button"
-                  title="${esc(t.next)} (Enter)">
-            ${esc(t.next)}
-          </button>
-        </div>
+        ${nextMarkup}
       </div>
     `;
   };
@@ -684,7 +690,10 @@ export function renderPractice() {
       const backFeedback = document.createElement("div");
       backFeedback.className = "practice-feedback practice-feedback-back is-visible";
       backFeedback.setAttribute("aria-live", "polite");
-      backFeedback.innerHTML = buildFeedbackBox({ nextClass: "btn btn-primary btn-next-big shadow transition" });
+      backFeedback.innerHTML = buildFeedbackBox({
+        nextClass: "btn btn-primary btn-next-big shadow transition",
+        showNext: false
+      });
       backFace.append(backFeedback, createCardFooter());
       setTimeout(wireFeedbackActions, 0);
     } else {
