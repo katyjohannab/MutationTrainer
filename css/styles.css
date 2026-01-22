@@ -151,6 +151,9 @@ body{
   align-items:center;
   line-height:1;
   white-space:nowrap;
+  min-width: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 .title-hy{ color:var(--emerald-ink); }
 .title-trei{ color:var(--cymru-red-ink); margin-left:.06em; }
@@ -193,14 +196,18 @@ body{
   }
   .brand-lockup{
     gap: 0.5rem;
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     align-items: center;
   }
   .brand-dragon{
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     filter: drop-shadow(0 6px 10px rgba(2,6,23,0.12));
     transform: none;
+  }
+  .brand-title{
+    font-size: clamp(1.05rem, 4.2vw, 1.45rem);
+    letter-spacing: -0.01em;
   }
   .header-actions{
     margin-left: auto;
@@ -1576,7 +1583,15 @@ body.onboard-modal-open{
     overflow-x: hidden;
   }
   #main{
+    max-width: 100%;
+    width: 100%;
     padding-bottom: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom));
+  }
+  #practiceView,
+  .practice-panel{
+    max-width: 100%;
+    width: 100%;
+    min-width: 0;
   }
   #practiceSidebar{
     position: fixed;
@@ -1603,8 +1618,8 @@ body.onboard-modal-open{
     z-index: 1;
     width: 100%;
     max-width: 100%;
-    height: min(92vh, 92dvh);
-    max-height: 95vh;
+    height: min(100svh, 100dvh);
+    max-height: 100svh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1634,22 +1649,24 @@ body.onboard-modal-open{
     font-size: .75rem;
   }
   .mobile-filters-body{
-    padding: 0 1rem 5rem;
+    padding: 0 1rem 1.5rem;
     overflow-y: auto;
     flex: 1 1 auto;
     min-height: 0;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
   }
+  .mobile-filters-body:focus-within{
+    scroll-behavior: smooth;
+  }
   #filtersPanel{
     width: 100%;
   }
   .mobile-filters-actions{
-    position: sticky;
-    bottom: 0;
-    padding: 0 1rem calc(1rem + env(safe-area-inset-bottom));
+    flex: 0 0 auto;
+    padding: 0.85rem 1rem calc(1rem + env(safe-area-inset-bottom));
     background: #f8fafc;
-    z-index: 2;
+    border-top: 1px solid rgba(15,23,42,0.12);
   }
   .practice-filter-summary{
     display: none;

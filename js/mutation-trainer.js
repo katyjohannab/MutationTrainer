@@ -1263,12 +1263,29 @@ function wireUi() {
 
   initCardUi();
 
+  let mobileFiltersScrollY = 0;
   const setMobileFiltersOpen = (isOpen) => {
     const sidebar = $("#practiceSidebar");
     if (!sidebar) return;
     sidebar.classList.toggle("is-open", isOpen);
     document.body.classList.toggle("mobile-filters-open", isOpen);
     $("#mobileFiltersToggle")?.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    if (isOpen) {
+      mobileFiltersScrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${mobileFiltersScrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.width = "100%";
+      $(".mobile-filters-body")?.scrollTo({ top: 0 });
+    } else {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      window.scrollTo(0, mobileFiltersScrollY);
+    }
   };
   const bindMobileFiltersToggle = () => {
     const toggle = $("#mobileFiltersToggle");
