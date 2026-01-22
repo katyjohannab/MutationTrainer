@@ -841,14 +841,14 @@ body{
     position: absolute;
     inset: 0;
     opacity: 0;
-    transform: translateX(14px) rotateZ(0.4deg);
+    transform: translateX(14px);
     pointer-events: none;
   }
   #practiceCard .practice-card-flip.is-back .practice-card-face.is-front{
     position: absolute;
     inset: 0;
     opacity: 0;
-    transform: translateX(-14px) rotateZ(-0.4deg);
+    transform: translateX(-14px);
     pointer-events: none;
   }
   #practiceCard .practice-card-flip.is-back .practice-card-face.is-back{
@@ -868,6 +868,18 @@ body{
   }
   #practiceCard .practice-actions{
     gap: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  #practiceCard .practice-card-face{
+    transition: none;
+  }
+  #practiceCard .practice-card-face.is-front,
+  #practiceCard .practice-card-face.is-back,
+  #practiceCard .practice-card-flip.is-front .practice-card-face.is-back,
+  #practiceCard .practice-card-flip.is-back .practice-card-face.is-front{
+    transform: none;
   }
 }
 
