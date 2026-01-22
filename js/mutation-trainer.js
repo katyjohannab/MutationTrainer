@@ -989,9 +989,13 @@ function buildFilters() {
 
   const moreFiltersPanel = $("#moreFiltersPanel");
   const moreFiltersToggleBtn = $("#moreFiltersToggle");
+  const extraCategoryChips = $("#extraCategoryChips");
   const setMoreFiltersOpen = (isOpen, { save = false } = {}) => {
     if (moreFiltersPanel) {
       moreFiltersPanel.classList.toggle("is-hidden", !isOpen);
+    }
+    if (extraCategoryChips) {
+      extraCategoryChips.classList.toggle("is-hidden", !isOpen);
     }
     if (moreFiltersToggleBtn) {
       moreFiltersToggleBtn.classList.toggle("pill-more", !isOpen);
