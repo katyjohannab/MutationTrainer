@@ -304,11 +304,26 @@ body{
   color: #0f172a;
 }
 
+.pill-close{
+  font-weight: 700;
+  border-color: rgba(148,163,184,.6);
+  background: rgba(226,232,240,.8);
+  color: #334155;
+}
+
 .pill-clear{
   font-weight: 700;
   border-color: transparent;
   background: rgba(185,28,28,0.08);
   color: var(--cymru-red-ink);
+}
+
+.filters-extra{
+  margin-top: 0.75rem;
+}
+
+.is-hidden{
+  display: none !important;
 }
 
 /* ----- Phase 1: Preset cards ----- */
