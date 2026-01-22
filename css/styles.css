@@ -770,6 +770,11 @@ body{
     display: flex;
     flex-direction: column;
   }
+  .practice-panel{
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
   #practiceView{
     flex: 1;
   }
@@ -798,11 +803,13 @@ body{
   }
   .practice-meta-left{
     font-size: 0.72rem;
+    color: rgba(100,116,139,0.8);
   }
   .practice-meta-left .meta-label{
     text-transform: none;
     letter-spacing: 0.02em;
     font-size: 0.7rem;
+    color: rgba(148,163,184,0.85);
   }
   .practice-meta-left .meta-streak .meta-label{
     display: none;
@@ -825,6 +832,11 @@ body{
   }
   .practice-progress-bar{
     height: 0.22rem;
+    background: rgba(15,23,42,0.06);
+  }
+  .practice-progress-line{
+    font-size: 0.68rem;
+    color: rgba(100,116,139,0.75);
   }
   .practice-filter-summary{
     display: none;
@@ -868,6 +880,25 @@ body{
   }
   #practiceCard .practice-actions{
     gap: 0.75rem;
+  }
+  #practiceCard .practice-instruction{
+    font-size: 0.98rem;
+    color: rgba(100,116,139,0.85);
+    margin-bottom: 0.85rem !important;
+  }
+  #practiceCard .practice-base{
+    margin: 0.6rem 0 1.5rem;
+  }
+  #practiceCard .base-word-text{
+    font-size: clamp(2.8rem, 9vw, 3.5rem);
+    color: var(--emerald-ink);
+  }
+  #practiceCard .practice-sentenceLine{
+    font-size: 1.2rem;
+    color: rgba(15,23,42,0.9);
+  }
+  #practiceCard .practice-sentenceLine span{
+    color: rgba(15,23,42,0.82);
   }
 }
 
@@ -1046,7 +1077,7 @@ body{
   padding-bottom: env(safe-area-inset-bottom);
   background: rgba(255,255,255,0.92);
   border-top-color: rgba(15,23,42,0.08);
-  box-shadow: 0 -6px 18px rgba(15,23,42,0.08);
+  box-shadow: 0 -3px 10px rgba(15,23,42,0.05);
 }
 
 .mobile-action-bar-inner{
