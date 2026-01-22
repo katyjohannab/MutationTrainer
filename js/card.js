@@ -271,19 +271,8 @@ export function renderPractice() {
 
   const wrap = document.createElement("div");
 
-  const header = document.createElement("div");
-  header.className = "flex flex-wrap items-center justify-between gap-2 mb-2";
-
-  const headerLeft = document.createElement("div");
-  headerLeft.className = "flex flex-col gap-1 text-xs text-slate-500";
-  const posSpan = document.createElement("span");
-  posSpan.textContent = posText;
-  headerLeft.appendChild(posSpan);
-
   const cardId = getCardId(card, idxShown);
 
-  const headerRight = document.createElement("div");
-  headerRight.className = "flex items-center gap-2";
   const metaControls = $("#practiceMetaControls");
   if (metaControls) metaControls.innerHTML = "";
 
@@ -313,12 +302,26 @@ export function renderPractice() {
     mkSegBtn(t.smartModeShort, "smart")
   );
 
-  const controlsMount = metaControls || headerRight;
-  controlsMount.appendChild(seg);
-  header.append(headerLeft, headerRight);
+  const moreBtn = document.createElement("button");
+  moreBtn.type = "button";
+  moreBtn.className = "btn btn-ghost meta-more";
+  moreBtn.textContent = "⋯";
+  moreBtn.setAttribute("aria-label", LABEL[lang]?.ui?.moreStats || "More stats");
+  moreBtn.setAttribute("title", LABEL[lang]?.ui?.moreStats || "More stats");
+  moreBtn.onclick = () => {
+    const statsDetails = $("#statsDetails");
+    if (statsDetails) {
+      statsDetails.open = true;
+      statsDetails.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  if (metaControls) {
+    metaControls.append(seg, moreBtn);
+  }
 
   const summary = document.createElement("div");
-  summary.className = "flex flex-wrap items-center gap-2 mb-4";
+  summary.className = "practice-filter-summary flex flex-wrap items-center gap-2 mb-4";
 
   const addChip = (text, onClear) => {
     const c = document.createElement("button");
@@ -540,21 +543,9 @@ export function renderPractice() {
   });
   btnSkip.id = "btnSkip";
 
-  const btnShuffle = document.createElement("button");
-  btnShuffle.type = "button";
-  btnShuffle.className = "btn btn-shuffle";
-  btnShuffle.title = t.shuffleNowDesc || "";
-  btnShuffle.innerHTML = `<span aria-hidden="true">🔀</span><span>${esc(t.shuffleNow)}</span>`;
-  btnShuffle.onclick = () => { cardCallbacks.rebuildDeck?.(); cardCallbacks.render?.(); };
-
   primary.append(btnCheck);
   secondary.append(btnHint, btnReveal, btnSkip);
   main.append(primary, secondary);
-  if (metaControls) {
-    metaControls.appendChild(btnShuffle);
-  } else {
-    aux.append(btnShuffle);
-  }
   actions.append(main, aux);
 
   const buildFeedbackBox = ({ nextClass, showNext = true }) => {
@@ -710,7 +701,7 @@ export function renderPractice() {
   cardSurface.append(instruction, chips, answerBlock, createCardFooter());
   }
 
-  wrap.append(header, summary, cardSurface);
+  wrap.append(summary, cardSurface);
   host.appendChild(wrap);
 
   const mobileBar = $("#mobileBar");

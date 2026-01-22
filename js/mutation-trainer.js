@@ -250,6 +250,24 @@ const PRESET_DEFS = {
 
 const PRESET_ORDER = ["starter-preps","numbers-1-10","articles","place-names"];
 
+function getCustomFiltersLabelParts() {
+  const lang = state.lang || "en";
+  const parts = [];
+  const activeCategories = state.categories.filter(c => c !== "All");
+  if (state.families.length && state.families.length < 4) {
+    state.families.forEach(f => parts.push(label("rulefamily", f)));
+  }
+  if (activeCategories.length) {
+    activeCategories.forEach(ca => parts.push(label("categories", ca)));
+  }
+  if (state.triggerQuery && state.triggerQuery.trim()) {
+    const trigLabel = (lang === "cy" ? "Sbardun" : "Trigger");
+    parts.push(`${trigLabel}: ${state.triggerQuery.trim()}`);
+  }
+  if (state.nilOnly) parts.push(label("headings", "nilOnly"));
+  return parts;
+}
+
 function getProgressFocusLabel() {
   const lang = state.lang || "en";
   const key = state.activePackKey || state.activePreset;
@@ -260,16 +278,22 @@ function getProgressFocusLabel() {
     }
     return key;
   }
+  const customParts = getCustomFiltersLabelParts();
+  if (customParts.length) {
+    return customParts.join(", ");
+  }
   const fallbackKey = hasCustomFilters() ? "progressCustomFilters" : "progressAllCards";
   return LABEL?.[lang]?.ui?.[fallbackKey] || (hasCustomFilters() ? "Custom filters" : "All cards");
 }
 
 function updateProgressLine({ currentIndex, totalCards }) {
+  const lang = state.lang || "en";
   const lineEl = $("#practiceProgressLine");
   if (!lineEl) return;
   const safeCurrent = Number.isFinite(currentIndex) ? currentIndex : 0;
   const safeTotal = Number.isFinite(totalCards) ? totalCards : 0;
-  lineEl.textContent = `${getProgressFocusLabel()} · ${safeCurrent}/${safeTotal}`;
+  const activeFilterLabel = LABEL?.[lang]?.ui?.activeFilterLabel || (lang === "cy" ? "Hidl actif" : "Active Filter");
+  lineEl.textContent = `${activeFilterLabel}: ${getProgressFocusLabel()} · ${safeCurrent}/${safeTotal}`;
   const barFill = $("#practiceProgressBarFill");
   if (barFill) {
     const pct = safeTotal > 0 ? Math.min((safeCurrent / safeTotal) * 100, 100) : 0;
