@@ -554,6 +554,12 @@ body{
   flex-wrap: nowrap;
 }
 
+.practice-header{
+  display:flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
 .practice-meta-left{
   display:flex;
   align-items:center;
@@ -595,6 +601,13 @@ body{
   align-items:center;
   gap: 0.5rem;
   flex-shrink: 0;
+}
+
+.practice-meta-right .meta-more{
+  display: none;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 .practice-meta-bar .seg{
@@ -702,14 +715,51 @@ body{
 
 @media (max-width: 640px){
   .practice-meta-bar{
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
   .practice-meta-right{
-    width: 100%;
     justify-content: flex-start;
   }
+  .practice-meta-right::before{
+    content: "|";
+    margin-right: 0.5rem;
+    color: rgba(100,116,139,0.7);
+  }
+  .practice-meta-right .meta-more{
+    display: inline-flex;
+  }
+  .practice-meta-left{
+    font-size: 0.72rem;
+  }
+  .practice-meta-left .meta-label{
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 0.7rem;
+  }
+  .practice-meta-left .meta-streak .meta-label{
+    display: none;
+  }
+  .practice-meta-left .meta-value{
+    display:inline-flex;
+    align-items:center;
+    gap: 0.25rem;
+  }
+  .practice-meta-left .meta-reset{
+    display: none;
+  }
+  .practice-meta-bar .seg-btn{
+    height: 1.5rem;
+    font-size: 0.6rem;
+  }
   .practice-progress{
-    margin-bottom: 0.9rem;
+    order: -1;
+    margin-bottom: 0.3rem;
+  }
+  .practice-progress-bar{
+    height: 0.22rem;
+  }
+  .practice-filter-summary{
+    display: none;
   }
   .practice-card-surface{
     padding: 1.6rem 1.4rem;

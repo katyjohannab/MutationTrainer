@@ -141,25 +141,27 @@
         <!-- Left: practice card -->
         <div class="md:col-span-2 panel rounded-2xl p-6 md:p-7">
           <!-- Slim meta bar (Ticket 2.1) -->
-          <div id="practiceMetaBar" class="practice-meta-bar">
-            <div class="practice-meta-left">
-              <span class="meta-item">
-                <span id="practiceAccTitle" class="meta-label">Accuracy</span>
-                <span id="practiceAcc" class="meta-value">0%</span>
-              </span>
-              <span class="meta-sep" aria-hidden="true">·</span>
-              <span class="meta-item">
-                <span id="practiceStreakTitle" class="meta-label">Streak</span>
-                <span class="meta-value"><span id="practiceStreak">0</span> <span aria-hidden="true">🔥</span></span>
-              </span>
-              <button id="btnResetStreakTop" class="btn btn-ghost meta-reset" title="Reset streak" type="button">↺</button>
+          <div id="practiceHeader" class="practice-header">
+            <div id="practiceMetaBar" class="practice-meta-bar">
+              <div class="practice-meta-left">
+                <span class="meta-item meta-accuracy">
+                  <span id="practiceAccTitle" class="meta-label">Accuracy</span>
+                  <span id="practiceAcc" class="meta-value">0%</span>
+                </span>
+                <span class="meta-sep" aria-hidden="true">·</span>
+                <span class="meta-item meta-streak">
+                  <span id="practiceStreakTitle" class="meta-label">Streak</span>
+                  <span class="meta-value"><span aria-hidden="true">🔥</span><span id="practiceStreak">0</span></span>
+                </span>
+                <button id="btnResetStreakTop" class="btn btn-ghost meta-reset" title="Reset streak" type="button">↺</button>
+              </div>
+              <div id="practiceMetaControls" class="practice-meta-right"></div>
             </div>
-            <div id="practiceMetaControls" class="practice-meta-right"></div>
-          </div>
-          <div id="practiceProgress" class="practice-progress" aria-live="polite">
-            <div id="practiceProgressLine" class="practice-progress-line"></div>
-            <div id="practiceProgressBar" class="practice-progress-bar" aria-hidden="true">
-              <div id="practiceProgressBarFill" class="practice-progress-bar-fill"></div>
+            <div id="practiceProgress" class="practice-progress" aria-live="polite">
+              <div id="practiceProgressLine" class="practice-progress-line"></div>
+              <div id="practiceProgressBar" class="practice-progress-bar" aria-hidden="true">
+                <div id="practiceProgressBarFill" class="practice-progress-bar-fill"></div>
+              </div>
             </div>
           </div>
           <div id="practiceCard"></div>
