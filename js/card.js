@@ -258,6 +258,16 @@ export function renderPractice() {
   const idxShown = (state.revealed && state.freezeIdx != null) ? state.freezeIdx : idxNow;
   const card = state.filtered[idxShown];
   state.currentIdx = idxNow;
+  const isMobileCard = window.matchMedia("(max-width: 640px)").matches;
+
+  if (!["front","back"].includes(state.cardState)) state.cardState = "front";
+  if (!isMobileCard) {
+    state.cardState = "front";
+  } else if (!state.revealed) {
+    state.cardState = "front";
+  } else if (state.cardState !== "back") {
+    state.cardState = "back";
+  }
 
   const wrap = document.createElement("div");
 
@@ -442,6 +452,9 @@ export function renderPractice() {
       ab2.disabled = true;
       ab2.classList.add("opacity-70", "cursor-not-allowed");
     }
+    if (isMobileCard) {
+      state.cardState = "back";
+    }
     cardCallbacks.render?.();
     setTimeout(() => $("#inlineNext")?.focus({ preventScroll: true }), 0);
   };
@@ -471,6 +484,9 @@ export function renderPractice() {
     if (ab2) {
       ab2.disabled = true;
       ab2.classList.add("opacity-70", "cursor-not-allowed");
+    }
+    if (isMobileCard) {
+      state.cardState = "back";
     }
     cardCallbacks.render?.();
   };
@@ -512,6 +528,9 @@ export function renderPractice() {
       ab2.classList.add("opacity-70", "cursor-not-allowed");
     }
 
+    if (isMobileCard) {
+      state.cardState = "back";
+    }
     cardCallbacks.render?.();
   });
   btnSkip.id = "btnSkip";
@@ -533,12 +552,7 @@ export function renderPractice() {
   }
   actions.append(main, aux);
 
-  const feedback = document.createElement("div");
-  feedback.className = "practice-feedback";
-  feedback.setAttribute("aria-live", "polite");
-
-  if (state.revealed) {
-    feedback.classList.add("is-visible");
+  const buildFeedbackBox = ({ nextClass }) => {
     const ok = state.lastResult === "correct";
     const skipped = state.lastResult === "skipped";
     const revealed = state.lastResult === "revealed";
@@ -548,17 +562,16 @@ export function renderPractice() {
     const statusText = revealed ? t.statuses.revealed : (skipped ? t.statuses.skipped : (ok ? t.statuses.correct : t.statuses.wrong));
     const whyText = (state.lang === "cy" ? (card.WhyCym || card.Why) : card.Why) || "";
     const whyLabel = LABEL?.[lang]?.ui?.whyLabel || (lang === "cy" ? "Pam" : "Why");
-    const isMobile = window.matchMedia("(max-width: 640px)").matches;
     const whyMarkup = whyText
       ? `
-        <details class="feedback-why" ${isMobile ? "" : "open"}>
+        <details class="feedback-why" ${isMobileCard ? "" : "open"}>
           <summary>${esc(whyLabel)}</summary>
           <div class="feedback-why-body text-slate-700">${esc(whyText)}</div>
         </details>
       `
       : "";
 
-    feedback.innerHTML = `
+    return `
       <div class="feedback-box">
         <div class="flex items-center gap-2 ${statusColor} text-2xl md:text-3xl font-semibold">
           ${statusIcon} ${esc(statusText)}
@@ -584,7 +597,7 @@ export function renderPractice() {
 
         <div class="mt-4 flex justify-end">
           <button id="inlineNext"
-                  class="btn btn-primary shadow transition"
+                  class="${esc(nextClass)}"
                   type="button"
                   title="${esc(t.next)} (Enter)">
             ${esc(t.next)}
@@ -592,69 +605,119 @@ export function renderPractice() {
         </div>
       </div>
     `;
+  };
 
-    setTimeout(() => {
-      const hearBtn = $("#btnHear");
-      if (hearBtn) {
-        hearBtn.onclick = async () => {
-          try {
-            const sentence = buildCompleteSentence({ Before: card.Before, Answer: card.Answer, After: card.After });
-            await playPollySentence(sentence);
-          } catch (e) {
-            alert("Couldn't play audio: " + (e?.message || e));
-          }
-        };
-      }
-      if (typeof cardCallbacks.nextCard === "function") {
-        $("#inlineNext")?.addEventListener("click", () => cardCallbacks.nextCard(1));
-      }
-    }, 0);
+  const wireFeedbackActions = () => {
+    const hearBtn = $("#btnHear");
+    if (hearBtn) {
+      hearBtn.onclick = async () => {
+        try {
+          const sentence = buildCompleteSentence({ Before: card.Before, Answer: card.Answer, After: card.After });
+          await playPollySentence(sentence);
+        } catch (e) {
+          alert("Couldn't play audio: " + (e?.message || e));
+        }
+      };
+    }
+    if (typeof cardCallbacks.nextCard === "function") {
+      $("#inlineNext")?.addEventListener("click", () => cardCallbacks.nextCard(1));
+    }
+  };
+
+  const feedback = document.createElement("div");
+  feedback.className = "practice-feedback";
+  feedback.setAttribute("aria-live", "polite");
+
+  if (state.revealed) {
+    feedback.classList.add("is-visible");
+    feedback.innerHTML = buildFeedbackBox({ nextClass: "btn btn-primary shadow transition" });
+    if (!isMobileCard) {
+      setTimeout(wireFeedbackActions, 0);
+    }
   } else {
     feedback.classList.add("is-hidden");
   }
 
   const answerBlock = document.createElement("div");
   answerBlock.className = "practice-answerBlock";
-  answerBlock.append(row, actions, hint, feedback);
+  if (isMobileCard) {
+    answerBlock.append(row, actions, hint);
+  } else {
+    answerBlock.append(row, actions, hint, feedback);
+  }
+
+  const createCardFooter = () => {
+    const cardFooter = document.createElement("div");
+    cardFooter.className = "practice-card-footer";
+
+    const cardMeta = document.createElement("div");
+    cardMeta.className = "practice-card-meta";
+    cardMeta.textContent = `${LABEL[lang].ui.cardIdLabel}: ${cardId || "—"}`;
+
+    const reportLabel = LABEL[lang]?.ui?.reportIssue || (lang === "cy" ? "Adrodd problem" : "Report issue");
+    const reportBtn = document.createElement("button");
+    reportBtn.type = "button";
+    reportBtn.className = "btn btn-ghost practice-report-btn";
+    reportBtn.textContent = reportLabel;
+    reportBtn.title = reportLabel;
+    reportBtn.addEventListener("click", () => {
+      openReportModal(card, cardId);
+    });
+
+    cardFooter.append(cardMeta, reportBtn);
+    return cardFooter;
+  };
 
   const cardSurface = document.createElement("div");
-  cardSurface.className = "practice-card-surface";
+  cardSurface.className = "practice-card-surface practice-card-flip";
 
-  const cardFooter = document.createElement("div");
-  cardFooter.className = "practice-card-footer";
+  if (isMobileCard) {
+    cardSurface.classList.add(state.cardState === "back" ? "is-back" : "is-front");
+    const frontFace = document.createElement("div");
+    frontFace.className = "practice-card-face is-front";
+    frontFace.append(instruction, chips, answerBlock, createCardFooter());
 
-  const cardMeta = document.createElement("div");
-  cardMeta.className = "practice-card-meta";
-  cardMeta.textContent = `${LABEL[lang].ui.cardIdLabel}: ${cardId || "—"}`;
+    const backFace = document.createElement("div");
+    backFace.className = "practice-card-face is-back";
 
-  const reportLabel = LABEL[lang]?.ui?.reportIssue || (lang === "cy" ? "Adrodd problem" : "Report issue");
-  const reportBtn = document.createElement("button");
-  reportBtn.type = "button";
-  reportBtn.className = "btn btn-ghost practice-report-btn";
-  reportBtn.textContent = reportLabel;
-  reportBtn.title = reportLabel;
-  reportBtn.addEventListener("click", () => {
-    openReportModal(card, cardId);
-  });
+    if (state.revealed) {
+      const backFeedback = document.createElement("div");
+      backFeedback.className = "practice-feedback practice-feedback-back is-visible";
+      backFeedback.setAttribute("aria-live", "polite");
+      backFeedback.innerHTML = buildFeedbackBox({ nextClass: "btn btn-primary btn-next-big shadow transition" });
+      backFace.append(backFeedback, createCardFooter());
+      setTimeout(wireFeedbackActions, 0);
+    } else {
+      backFace.append(createCardFooter());
+    }
 
-  cardFooter.append(cardMeta, reportBtn);
-  cardSurface.append(instruction, chips, answerBlock, cardFooter);
+    cardSurface.append(frontFace, backFace);
+  } else {
+  cardSurface.append(instruction, chips, answerBlock, createCardFooter());
+  }
 
   wrap.append(header, summary, cardSurface);
   host.appendChild(wrap);
 
+  const mobileBar = $("#mobileBar");
+  if (mobileBar) {
+    mobileBar.classList.toggle("hidden", isMobileCard && state.cardState === "back");
+  }
+
   const ab = $("#answerBox");
   if (ab) {
     ab.value = state.guess;
-    ab.focus();
-    const scrollAnswerIntoView = () => {
-      if (!window.matchMedia("(max-width: 767px)").matches) return;
-      ab.scrollIntoView({ block: "center", behavior: "smooth" });
-    };
-    ab.addEventListener("focus", () => {
-      scrollAnswerIntoView();
-      setTimeout(scrollAnswerIntoView, 250);
-    });
+    if (!isMobileCard || state.cardState === "front") {
+      ab.focus();
+      const scrollAnswerIntoView = () => {
+        if (!window.matchMedia("(max-width: 767px)").matches) return;
+        ab.scrollIntoView({ block: "center", behavior: "smooth" });
+      };
+      ab.addEventListener("focus", () => {
+        scrollAnswerIntoView();
+        setTimeout(scrollAnswerIntoView, 250);
+      });
+    }
     ab.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); onCheck(); }
     });
