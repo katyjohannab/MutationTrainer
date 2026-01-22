@@ -182,22 +182,25 @@ body{
 @media (max-width: 767px){
   .site-header-inner{
     width: 100%;
-    min-height: 56px;
-    padding-top: 6px;
-    padding-bottom: 6px;
+    min-height: 52px;
+    padding-top: 4px;
+    padding-bottom: 4px;
     flex-direction: row;
     align-items: center;
+    justify-content: space-between;
     flex-wrap: nowrap;
     gap: 0.75rem;
   }
   .brand-lockup{
     gap: 0.5rem;
-    flex: 0 1 auto;
+    flex: 0 0 auto;
+    align-items: center;
   }
   .brand-dragon{
     width: 24px;
     height: 24px;
     filter: drop-shadow(0 6px 10px rgba(2,6,23,0.12));
+    transform: none;
   }
   .header-actions{
     margin-left: auto;
@@ -206,21 +209,25 @@ body{
     min-width: 0;
     flex: 0 1 auto;
   }
+  .header-actions .btn,
+  .header-actions .btn-lang,
+  .header-actions .onboard-help-btn{
+    height: 2.25rem;
+    padding: 0 0.65rem;
+    border-radius: 0.65rem;
+    line-height: 1;
+  }
   .btn-mobile-filters{
-    padding: 0.35rem 0.65rem;
     font-size: 0.85rem;
     line-height: 1.1;
   }
   .btn-lang{
-    padding: 0.2rem 0.45rem;
     font-size: 0.7rem;
   }
   .langtag{
     font-size: 0.7rem;
   }
   .onboard-help-btn{
-    width: 2rem;
-    height: 2rem;
     font-size: 0.95rem;
   }
   .cymru-red-bar{
@@ -1539,6 +1546,9 @@ body.onboard-modal-open{
   #app{
     overflow-x: hidden;
   }
+  #main{
+    padding-bottom: calc(var(--mobile-actions-height) + 1.5rem);
+  }
   #practiceSidebar{
     position: fixed;
     inset: 0;
@@ -1591,7 +1601,7 @@ body.onboard-modal-open{
     z-index: 2;
   }
   .mobile-filters-body{
-    padding: 0 1rem;
+    padding: 0 1rem 5rem;
     overflow-y: auto;
     flex: 1 1 auto;
     min-height: 0;
