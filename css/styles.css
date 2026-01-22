@@ -1472,8 +1472,11 @@ body.onboard-modal-open{
     z-index: 1;
     width: 100%;
     max-width: 36rem;
-    max-height: 85vh;
-    overflow: auto;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f8fafc;
     border-radius: 1.5rem 1.5rem 0 0;
     box-shadow: 0 -16px 30px rgba(15,23,42,0.18);
     transform: translateY(8%);
@@ -1493,8 +1496,18 @@ body.onboard-modal-open{
     padding: 0.55rem 0.75rem;
     box-shadow: 0 12px 26px rgba(2,6,23,0.14);
   }
+  .mobile-filters-body{
+    padding: 0 1rem;
+    overflow: auto;
+  }
   .mobile-filters-actions{
-    padding: 0 1rem 1rem;
+    position: sticky;
+    bottom: 0;
+    padding: 0 1rem calc(1rem + env(safe-area-inset-bottom));
+    background: #f8fafc;
+  }
+  .practice-filter-summary{
+    display: none;
   }
 }
 
