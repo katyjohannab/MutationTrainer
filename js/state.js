@@ -162,7 +162,7 @@ state.presetLimitComplexity = Boolean(state.presetLimitComplexity);
 /* ========= UI Translations ========= */
 export const LABEL = {
   en: {
-    headings: { focus:"Focus", rulefamily:"Mutation type", outcome:"Outcome", categories:"Categories", trigger:"Filter by Trigger", nilOnly:"Nil-cases only (no mutation expected)", presets:"Quick packs" },
+    headings: { focus:"Focus", rulefamily:"Mutation type", outcome:"Outcome", categories:"Categories", allCategories:"All categories", trigger:"Filter by Trigger", nilOnly:"Nil-cases only (no mutation expected)", presets:"Quick packs" },
     presets: {
       starterPrepsTitle: "Starter prepositions",
       starterPrepsDesc: "Common contact-mutation prepositions",
@@ -207,6 +207,7 @@ export const LABEL = {
     backToTop:"Back to top",
     ui: {
       coreFilters: "Filters",
+      coreFiltersTitle: "Core filters",
       advancedFilters: "More filters",
       advancedFiltersOpen: "Fewer filters",
       advancedFiltersClosed: "More filters",
@@ -269,7 +270,7 @@ export const LABEL = {
     },
   },
   cy: {
-    headings: { focus:"Ffocws", rulefamily:"Math treiglad", outcome:"Canlyniad", categories:"Categorïau", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)", presets:"Pecynnau cyflym" },
+    headings: { focus:"Ffocws", rulefamily:"Math treiglad", outcome:"Canlyniad", categories:"Categorïau", allCategories:"Pob categori", trigger:"Hidlo yn ôl y sbardun", nilOnly:"Achosion dim-treiglad yn unig (dim treiglad disgwyliedig)", presets:"Pecynnau cyflym" },
     presets: {
       starterPrepsTitle: "Arddodiaid dechreuol",
       starterPrepsDesc: "Arddodiaid treiglad-cyswllt cyffredin",
@@ -344,6 +345,7 @@ export const LABEL = {
       moreInfo: "Mwy o wybodaeth",
       statsAccuracyTitle: "Cywirdeb",
       statsByOutcomeTitle: "Yn ôl canlyniad",
+      coreFiltersTitle: "Hidlwyr craidd",
       filtersToggle: "Hidlwyr",
       filtersApply: "Gosod",
       filtersTitle: "Hidlwyr",
