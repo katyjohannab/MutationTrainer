@@ -53,7 +53,7 @@
     <div id="navbarMount"></div>
 
     <!-- Onboarding -->
-    <section id="onboard" class="max-w-6xl mx-auto p-4 mt-3">
+    <section id="onboard" class="max-w-6xl mx-auto p-4 mt-3 hidden md:block">
       <div class="panel rounded-2xl p-4 flex items-start gap-3">
         <div class="text-2xl">💡</div>
 
@@ -129,8 +129,7 @@
           </div>
 
           <div class="mt-3 flex gap-2">
-            <!-- IMPORTANT: only ONE dismiss button, unique id -->
-            <button id="onboardDismiss" class="btn btn-ghost"></button>
+            <button data-onboard-dismiss class="btn btn-ghost"></button>
           </div>
         </div>
       </div>
@@ -308,6 +307,99 @@
         </div>
       </div>
     </main>
+
+    <div id="onboardModal" class="fixed inset-0 z-[10040] hidden" aria-hidden="true">
+      <div class="absolute inset-0 bg-slate-900/60" data-onboard-close></div>
+      <div class="relative mx-auto flex min-h-full w-full items-end md:items-center px-4 py-6">
+        <div class="panel onboard-modal-sheet w-full rounded-2xl p-5 md:p-7" role="dialog" aria-modal="true" aria-labelledby="onboardModalTitle">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h2 id="onboardModalTitle" class="text-xl font-semibold">Help &amp; tips</h2>
+              <p id="onboardModalDesc" class="mt-1 text-sm text-slate-600">Keep this nearby when you need a refresher.</p>
+            </div>
+            <button type="button" class="btn btn-ghost" data-onboard-close aria-label="Close">
+              ✕
+            </button>
+          </div>
+
+          <div class="mt-4 text-sm text-slate-700">
+            <!-- EN -->
+            <div data-lang="en">
+              <div class="font-medium mb-2">Welcome! Get the most out of the trainer.</div>
+              <div class="space-y-3 leading-relaxed">
+                <div>
+                  <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">1. Pick a focus fast</div>
+                  <p>
+                    Start with a <b>Quick pack</b> for a curated guided set, or build your own focus with <b>Filters</b>.
+                    Use <b>More filters</b> to add trigger searches (e.g. <i>i</i>, <i>o</i>, <i>y</i>) or nil-cases only.
+                  </p>
+                </div>
+                <div>
+                  <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">2. Choose how cards repeat</div>
+                  <p>
+                    Use the card toggle to switch modes. <b>Random</b> shuffles the deck; <b>Smart</b> uses spaced repetition,
+                    bringing back mistakes sooner and letting mastered cards fade.
+                  </p>
+                </div>
+                <div>
+                  <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">3. Answer + learn quickly</div>
+                  <p>
+                    Type the correct mutation, then hit <b>Check</b>. Use <b>Hint</b> or <b>Reveal</b> when you’re stuck, and
+                    <b>Skip</b> to move on. Read the <b>Why</b> explanation, then <b>Next</b>.
+                  </p>
+                </div>
+                <div>
+                  <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">4. Listen and track progress</div>
+                  <p>
+                    Tap <b>Hear</b> to listen, and open <b>More stats</b> for accuracy, streaks, mastery by outcome/category,
+                    and deck progress.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- CY -->
+            <div data-lang="cy">
+              <div class="font-medium mb-2">Croeso! Manteisiwch ar yr hyfforddwr.</div>
+              <div class="space-y-3 leading-relaxed">
+                <div>
+                  <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">1. Dewiswch ffocws yn gyflym</div>
+                  <p>
+                    Dechreuwch gyda <b>Pecyn cyflym</b> ar gyfer set dywys wedi’i churadu, neu adeiladwch ffocws gyda <b>Hidlau</b>.
+                    Defnyddiwch <b>Mwy o hidlyddion</b> i chwilio am sbardunau (e.e. <i>i</i>, <i>o</i>, <i>y</i>) neu achosion dim-treiglad yn unig.
+                  </p>
+                </div>
+                <div>
+                  <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">2. Dewiswch sut mae cardiau’n ailadrodd</div>
+                  <p>
+                    Defnyddiwch y toglo ar y cerdyn. Mae <b>Ar hap</b> yn cymysgu’r dec; mae <b>Clyfar</b> yn defnyddio ailadrodd
+                    bylchog, gan ddod â chamgymeriadau’n ôl yn gynt a gadael cardiau a feistrolwyd i ymsuddo.
+                  </p>
+                </div>
+                <div>
+                  <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">3. Atebwch + dysgwch yn gyflym</div>
+                  <p>
+                    Teipiwch y treiglad cywir, yna <b>Gwirio</b>. Defnyddiwch <b>Awgrym</b> neu <b>Datgelu</b> pan fyddwch yn sownd,
+                    a <b>Hepgor</b> i symud ymlaen. Darllenwch yr esboniad <b>Pam</b>, yna <b>Nesaf</b>.
+                  </p>
+                </div>
+                <div>
+                  <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">4. Gwrandewch a thraciwch gynnydd</div>
+                  <p>
+                    Tapiwch <b>Gwrando</b> i glywed, a defnyddiwch <b>Mwy o ystadegau</b> ar gyfer cywirdeb, cyfresi, meistrolaeth
+                    yn ôl canlyniad/categori, a chynnydd y dec.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap justify-end gap-2">
+              <button data-onboard-dismiss class="btn btn-primary"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div id="reportModal" class="fixed inset-0 z-[10050] hidden" aria-hidden="true">
       <div class="absolute inset-0 bg-slate-900/60" data-report-close></div>
