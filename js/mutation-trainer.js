@@ -135,6 +135,9 @@ function applyLanguage() {
   if ($("#moreInfoSummary")) $("#moreInfoSummary").textContent = LABEL[lang].ui.moreInfo;
   if ($("#statsAccTitle")) $("#statsAccTitle").textContent = LABEL[lang].ui.statsAccuracyTitle;
   if ($("#statsByOutcomeTitle")) $("#statsByOutcomeTitle").textContent = LABEL[lang].ui.statsByOutcomeTitle;
+  if ($("#mobileFiltersToggle")) $("#mobileFiltersToggle").textContent = LABEL[lang].ui.filtersToggle;
+  if ($("#mobileFiltersClose")) $("#mobileFiltersClose").textContent = LABEL[lang].ui.filtersClose;
+  if ($("#mobileFiltersTitle")) $("#mobileFiltersTitle").textContent = LABEL[lang].ui.filtersTitle;
   applyReportModalLabels();
 
   buildFilters();
@@ -1201,6 +1204,14 @@ function wireUi() {
 
   initCardUi();
 
+  const setMobileFiltersOpen = (isOpen) => {
+    const sidebar = $("#practiceSidebar");
+    if (!sidebar) return;
+    sidebar.classList.toggle("is-open", isOpen);
+    document.body.classList.toggle("mobile-filters-open", isOpen);
+    $("#mobileFiltersToggle")?.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  };
+
   $("#onboardDismiss")?.addEventListener("click", () => $("#onboard")?.classList.add("hidden"));
 
   $$("[data-report-close]").forEach((btn) => {
@@ -1253,6 +1264,14 @@ function wireUi() {
   $("#mbCheck")?.addEventListener("click", () => $("#btnCheck")?.click());
   $("#mbNext")?.addEventListener("click", () => $("#inlineNext")?.click() || nextCard(1));
   $("#mbHint")?.addEventListener("click", () => $("#btnHint")?.click());
+
+  $("#mobileFiltersToggle")?.addEventListener("click", () => setMobileFiltersOpen(true));
+  $("#mobileFiltersClose")?.addEventListener("click", () => setMobileFiltersOpen(false));
+  $("#mobileFiltersBackdrop")?.addEventListener("click", () => setMobileFiltersOpen(false));
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth >= 768) setMobileFiltersOpen(false);
+  });
 
 }
 

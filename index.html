@@ -163,12 +163,21 @@
               <div id="practiceProgressBarFill" class="practice-progress-bar-fill"></div>
             </div>
           </div>
+          <div class="md:hidden mb-3">
+            <button id="mobileFiltersToggle" class="btn btn-ghost w-full" type="button" aria-controls="practiceSidebar" aria-expanded="false">Filters</button>
+          </div>
           <div id="practiceCard"></div>
         </div>
 
         <!-- Right: filters + session -->
-        <div class="md:col-span-1 flex flex-col gap-4">
-          <div id="filtersPanel" class="panel rounded-2xl p-4">
+        <div id="practiceSidebar" class="practice-sidebar md:col-span-1 flex flex-col gap-4">
+          <button id="mobileFiltersBackdrop" class="mobile-filters-backdrop md:hidden" type="button" aria-label="Close filters"></button>
+          <div class="practice-sidebar-sheet flex flex-col gap-4">
+            <div class="mobile-filters-header md:hidden flex items-center justify-between gap-2">
+              <span id="mobileFiltersTitle" class="text-sm font-semibold">Filters</span>
+              <button id="mobileFiltersClose" class="btn btn-ghost px-3 py-1.5" type="button">Close</button>
+            </div>
+            <div id="filtersPanel" class="panel rounded-2xl p-4">
             <!-- Focus section -->
             <div id="focusSection" class="mb-4">
               <div id="focusTitle" class="text-sm font-medium mb-2">Focus</div>
@@ -271,6 +280,7 @@
                 </details>
               </div>
             </details>
+          </div>
         </div>
       </div>
 

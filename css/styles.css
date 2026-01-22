@@ -669,6 +669,9 @@ body{
     flex-direction: column;
     align-items: flex-start;
   }
+  #practiceCard .practice-actions{
+    gap: 0.75rem;
+  }
 }
 
 /* Instruction spacing */
@@ -792,6 +795,10 @@ body{
   #practiceCard .practice-actions-primary{
     width: 100%;
   }
+  #practiceCard .practice-actions-primary .btn{
+    min-height: 2.85rem;
+    font-size: 1rem;
+  }
   #practiceCard .practice-actions-primary .btn-check{
     width: 100%;
     justify-content: center;
@@ -801,8 +808,9 @@ body{
     justify-content: flex-start;
   }
   #practiceCard .practice-actions-secondary .btn{
-    padding: .45rem .75rem;
-    font-size: 0.9rem;
+    padding: .65rem .95rem;
+    font-size: 0.95rem;
+    min-height: 2.6rem;
   }
   #practiceCard .practice-actions-secondary .btn-skip{
     margin-left: auto;
@@ -1127,6 +1135,49 @@ body{
     border-radius: 999px;
     border: 3px solid rgba(255,255,255,0.70);
   }
+}
+
+@media (max-width: 767px){
+  #practiceSidebar{
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 10040;
+  }
+  #practiceSidebar.is-open{
+    display: flex;
+  }
+  .mobile-filters-backdrop{
+    position: absolute;
+    inset: 0;
+    background: rgba(15,23,42,0.45);
+    border: 0;
+    padding: 0;
+  }
+  .practice-sidebar-sheet{
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 34rem;
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
+  }
+  .mobile-filters-header{
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.98);
+    border: 1px solid rgba(15,23,42,0.12);
+    border-radius: 1rem;
+    padding: 0.55rem 0.75rem;
+    box-shadow: 0 12px 26px rgba(2,6,23,0.14);
+  }
+}
+
+body.mobile-filters-open{
+  overflow: hidden;
 }
 
 /* =========================================================
