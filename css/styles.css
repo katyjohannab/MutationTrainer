@@ -817,6 +817,30 @@ body{
   }
 }
 
+:root{
+  --keyboard-offset: 0px;
+  --mobile-actions-height: 0px;
+}
+
+.mobile-action-bar{
+  z-index: 10030;
+  transform: translateY(calc(-1 * var(--keyboard-offset)));
+  transition: transform 0.2s ease;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+}
+
+@media (max-width: 767px){
+  #practiceCard .practice-actions{
+    display: none;
+  }
+  #answerBox{
+    scroll-margin-bottom: calc(var(--mobile-actions-height) + 2.5rem);
+  }
+  #practiceCard .practice-answerBlock{
+    scroll-margin-bottom: calc(var(--mobile-actions-height) + 2.5rem);
+  }
+}
+
 /*fix button alignment*/
 
 #practiceCard .practice-feedback .btn-hear{

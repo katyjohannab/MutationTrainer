@@ -476,6 +476,7 @@ export function renderPractice() {
   };
 
   const btnReveal = btn(t.reveal, "btn-ghost", revealCard);
+  btnReveal.id = "btnReveal";
 
   const btnSkip = btn(t.skip, "btn-ghost btn-muted btn-skip", () => {
     state.guess = "";
@@ -513,6 +514,7 @@ export function renderPractice() {
 
     cardCallbacks.render?.();
   });
+  btnSkip.id = "btnSkip";
 
   const btnShuffle = document.createElement("button");
   btnShuffle.type = "button";
@@ -645,6 +647,14 @@ export function renderPractice() {
   if (ab) {
     ab.value = state.guess;
     ab.focus();
+    const scrollAnswerIntoView = () => {
+      if (!window.matchMedia("(max-width: 767px)").matches) return;
+      ab.scrollIntoView({ block: "center", behavior: "smooth" });
+    };
+    ab.addEventListener("focus", () => {
+      scrollAnswerIntoView();
+      setTimeout(scrollAnswerIntoView, 250);
+    });
     ab.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); onCheck(); }
     });
