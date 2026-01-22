@@ -1402,6 +1402,7 @@ function wireUi() {
   bindMobileFiltersToggle();
   document.addEventListener("wm:navbar-ready", bindMobileFiltersToggle);
   $("#mobileFiltersApply")?.addEventListener("click", () => setMobileFiltersOpen(false));
+  $("#mobileFiltersClose")?.addEventListener("click", () => setMobileFiltersOpen(false));
   $("#mobileFiltersBackdrop")?.addEventListener("click", () => setMobileFiltersOpen(false));
   $("#mobileClearFocus")?.addEventListener("click", () => clearFocusAndRender());
   $("#mobileClearFilters")?.addEventListener("click", () => clearFiltersAndRender());
