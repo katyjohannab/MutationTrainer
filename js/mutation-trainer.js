@@ -115,6 +115,8 @@ function applyLanguage() {
   if ($("#sessionTitle")) $("#sessionTitle").textContent = LABEL[lang].ui.sessionTitle;
   if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].ui.newSession;
   if ($("#btnCoreClear")) $("#btnCoreClear").textContent = `${LABEL[lang].ui.clearFilters} ✕`;
+  if ($("#mobileClearFocus")) $("#mobileClearFocus").textContent = LABEL[lang].ui.clearFocus;
+  if ($("#mobileClearFilters")) $("#mobileClearFilters").textContent = LABEL[lang].ui.clearFilters;
   if ($("#accTitle")) $("#accTitle").textContent = LABEL[lang].ui.accuracyTitle;
   if ($("#streakTitle")) $("#streakTitle").textContent = LABEL[lang].ui.streakTitle;
   if ($("#practiceAccTitle")) $("#practiceAccTitle").textContent = LABEL[lang].ui.accuracyTitle;
@@ -136,7 +138,7 @@ function applyLanguage() {
   if ($("#statsAccTitle")) $("#statsAccTitle").textContent = LABEL[lang].ui.statsAccuracyTitle;
   if ($("#statsByOutcomeTitle")) $("#statsByOutcomeTitle").textContent = LABEL[lang].ui.statsByOutcomeTitle;
   if ($("#mobileFiltersToggle")) $("#mobileFiltersToggle").textContent = LABEL[lang].ui.filtersToggle;
-  if ($("#mobileFiltersClose")) $("#mobileFiltersClose").textContent = LABEL[lang].ui.filtersClose;
+  if ($("#mobileFiltersApply")) $("#mobileFiltersApply").textContent = LABEL[lang].ui.filtersApply;
   if ($("#mobileFiltersTitle")) $("#mobileFiltersTitle").textContent = LABEL[lang].ui.filtersTitle;
   applyReportModalLabels();
 
@@ -328,6 +330,27 @@ function updateFocusIndicator() {
 
   el.textContent = `${focusLabel}: ${title}`;
   el.classList.remove("hidden");
+}
+
+function clearFiltersAndRender() {
+  resetFilters();
+  applyFilters();
+  rebuildDeck();
+  buildFilters();
+  render();
+  refreshFilterPills();
+  updatePresetActiveClasses();
+  updateFocusIndicator();
+}
+
+function clearFocusAndRender() {
+  clearPresetLayer();
+  applyFilters();
+  rebuildDeck();
+  render();
+  refreshFilterPills();
+  updatePresetActiveClasses();
+  updateFocusIndicator();
 }
 
 function renderPresetTiles() {
@@ -953,14 +976,7 @@ function buildFilters() {
   if (clearBtn && clearBtn.dataset._wmClearBound !== "1") {
     clearBtn.dataset._wmClearBound = "1";
     clearBtn.onclick = () => {
-      resetFilters();
-      applyFilters();
-      rebuildDeck();
-      buildFilters();
-      render();
-      refreshFilterPills();
-      updatePresetActiveClasses();
-      updateFocusIndicator();
+      clearFiltersAndRender();
     };
   }
 
@@ -1266,8 +1282,10 @@ function wireUi() {
   $("#mbHint")?.addEventListener("click", () => $("#btnHint")?.click());
 
   $("#mobileFiltersToggle")?.addEventListener("click", () => setMobileFiltersOpen(true));
-  $("#mobileFiltersClose")?.addEventListener("click", () => setMobileFiltersOpen(false));
+  $("#mobileFiltersApply")?.addEventListener("click", () => setMobileFiltersOpen(false));
   $("#mobileFiltersBackdrop")?.addEventListener("click", () => setMobileFiltersOpen(false));
+  $("#mobileClearFocus")?.addEventListener("click", () => clearFocusAndRender());
+  $("#mobileClearFilters")?.addEventListener("click", () => clearFiltersAndRender());
 
   window.addEventListener("resize", () => {
     if (window.innerWidth >= 768) setMobileFiltersOpen(false);
