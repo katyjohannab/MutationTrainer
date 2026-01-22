@@ -462,6 +462,11 @@ export function renderPractice() {
   const btnCheck = btn(t.check, "btn-primary btn-check shadow", onCheck);
   btnCheck.id = "btnCheck";
   btnCheck.title = `${t.check} (Enter)`;
+  if (isMobileCard) {
+    btnCheck.classList.add("hidden");
+    btnCheck.setAttribute("aria-hidden", "true");
+    btnCheck.tabIndex = -1;
+  }
 
   const hint = document.createElement("div");
   hint.className = "hidden practice-hint text-sm text-slate-600";

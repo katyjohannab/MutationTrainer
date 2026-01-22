@@ -1251,6 +1251,15 @@ function wireUi() {
     document.body.classList.toggle("mobile-filters-open", isOpen);
     $("#mobileFiltersToggle")?.setAttribute("aria-expanded", isOpen ? "true" : "false");
   };
+  const bindMobileFiltersToggle = () => {
+    const toggle = $("#mobileFiltersToggle");
+    if (!toggle || toggle.dataset.wmBound === "1") return;
+    toggle.dataset.wmBound = "1";
+    toggle.addEventListener("click", () => {
+      const isOpen = $("#practiceSidebar")?.classList.contains("is-open");
+      setMobileFiltersOpen(!isOpen);
+    });
+  };
 
   $("#onboardDismiss")?.addEventListener("click", () => $("#onboard")?.classList.add("hidden"));
 
@@ -1307,12 +1316,8 @@ function wireUi() {
   $("#mbSkip")?.addEventListener("click", () => $("#btnSkip")?.click());
   $("#mbNext")?.addEventListener("click", () => nextCard(1));
 
-  document.addEventListener("click", (e) => {
-    const toggle = e.target?.closest?.("#mobileFiltersToggle");
-    if (!toggle) return;
-    const isOpen = $("#practiceSidebar")?.classList.contains("is-open");
-    setMobileFiltersOpen(!isOpen);
-  });
+  bindMobileFiltersToggle();
+  document.addEventListener("wm:navbar-ready", bindMobileFiltersToggle);
   $("#mobileFiltersApply")?.addEventListener("click", () => setMobileFiltersOpen(false));
   $("#mobileFiltersBackdrop")?.addEventListener("click", () => setMobileFiltersOpen(false));
   $("#mobileClearFocus")?.addEventListener("click", () => clearFocusAndRender());
