@@ -1,6 +1,6 @@
 <header id="siteHeader" class="sticky top-0 z-50">
   <div class="bg-white/95 backdrop-blur">
-    <div class="site-header-inner max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+    <div class="site-header-inner max-w-6xl mx-auto px-4 py-2 md:py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
 
       <a class="brand-lockup grow min-w-0" href="./home.html" aria-label="Home">
         <img
@@ -9,7 +9,7 @@
           aria-hidden="true"
           src="https://katyjohannab.github.io/welsh-mutation-trainer/images/dragon.png"
         />
-        <h1 class="bbh-bogle-regular brand-title text-3xl md:text-4xl lg:text-5xl tracking-tight">
+        <h1 class="bbh-bogle-regular brand-title hidden md:flex text-3xl md:text-4xl lg:text-5xl tracking-tight">
           <span class="title-hy">Hyfforddwr</span><span class="title-trei">Treiglad</span>
         </h1>
       </a>
@@ -18,10 +18,13 @@
         <nav class="flex flex-wrap items-center gap-2" aria-label="Primary">
         </nav>
 
-        <button id="onboardHelpBtn" class="btn btn-ghost onboard-help-btn md:hidden" type="button" aria-haspopup="dialog" aria-controls="onboardModal" aria-label="Help">?</button>
-        <button id="mobileFiltersToggle" class="btn btn-ghost btn-mobile-filters md:hidden" type="button" aria-controls="practiceSidebar" aria-expanded="false">Filters</button>
         <div class="hidden md:block h-6 w-px bg-slate-200/80"></div>
         <button id="btnLangToggle" class="btn-lang" aria-label="Switch language" title="Switch language"></button>
+        <button id="mobileFiltersToggle" class="btn btn-ghost btn-mobile-filters md:hidden" type="button" aria-controls="practiceSidebar" aria-expanded="false">Filters</button>
+        <button id="onboardHelpBtn" class="btn btn-ghost onboard-help-btn md:hidden" type="button" aria-haspopup="dialog" aria-controls="onboardModal" aria-label="More options">
+          <span aria-hidden="true">⋯</span>
+          <span class="sr-only">More</span>
+        </button>
       </div>
     </div>
 
