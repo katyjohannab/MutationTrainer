@@ -1216,7 +1216,14 @@ function updateViewportMetrics() {
   const keyboardOffset = vv
     ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0))
     : 0;
-  document.documentElement.style.setProperty("--keyboard-offset", `${keyboardOffset}px`);
+  const active = document.activeElement;
+  const isTyping = active
+    && (active.tagName === "INPUT"
+      || active.tagName === "TEXTAREA"
+      || active.isContentEditable);
+  const effectiveOffset = isTyping ? keyboardOffset : 0;
+  document.documentElement.style.setProperty("--keyboard-offset", `${effectiveOffset}px`);
+  document.body.classList.toggle("keyboard-open", effectiveOffset > 0);
   const bar = $("#mobileBar");
   if (bar) {
     document.documentElement.style.setProperty("--mobile-actions-height", `${bar.offsetHeight}px`);
