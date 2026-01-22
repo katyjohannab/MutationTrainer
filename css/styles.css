@@ -81,6 +81,14 @@ body{
   color:var(--text);
 }
 
+@media (max-width: 767px){
+  body,
+  #app{
+    min-height: 100svh;
+    min-height: 100dvh;
+  }
+}
+
 /* ---------- Panels ---------- */
 .panel{
   background:var(--surface);
@@ -545,6 +553,11 @@ body{
   margin-inline: auto;
 }
 
+.practice-panel{
+  display: flex;
+  flex-direction: column;
+}
+
 .practice-meta-bar{
   display:flex;
   align-items:center;
@@ -753,6 +766,22 @@ body{
 }
 
 @media (max-width: 640px){
+  #main.practice-layout{
+    display: flex;
+    flex-direction: column;
+  }
+  #practiceView{
+    flex: 1;
+  }
+  .practice-panel{
+    padding: 1.25rem;
+  }
+  #practiceCard{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
   .practice-meta-bar{
     flex-wrap: nowrap;
   }
@@ -801,7 +830,7 @@ body{
     display: none;
   }
   .practice-card-surface{
-    padding: 1.6rem 1.4rem;
+    padding: 1.25rem 1.1rem;
   }
   #practiceCard .practice-card-flip.is-front .practice-card-face.is-front{
     position: relative;
