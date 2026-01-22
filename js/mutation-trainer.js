@@ -61,6 +61,7 @@ function wmGetLangLocal() {
 /* ========= Smart review (Leitner) ========= */
 const LEITNER_LS_KEY = "wm_leitner_boxes_v1";
 const PRACTICE_MODE_LS_KEY = "wm_practice_mode_v1";
+const AUTOPLAY_HEAR_LS_KEY = "wm_autoplay_hear_v1";
 const LEITNER_MAX_BOX = 5;
 const LEITNER_WEIGHTS = [0, 50, 25, 15, 7, 3]; // index 1..5
 
@@ -207,6 +208,7 @@ const state = {
   nilOnly: loadLS("wm_nil", false),
   mode: loadLS("wm_mode", "practice"),
   practiceMode: loadLS(PRACTICE_MODE_LS_KEY, "shuffle"),
+  autoplayHear: loadLS(AUTOPLAY_HEAR_LS_KEY, true),
   leitner: loadLS(LEITNER_LS_KEY, {}),
   streakResetAt: loadLS("wm_streak_reset", 0),
   smartIdx: null,
@@ -224,6 +226,7 @@ const state = {
   currentIdx: 0,
   currentDeckPos: -1,
   reportContext: null,
+  autoplayPending: false,
 };
 function normalizeCategoryList(list) {
   return Array.from(new Set((list || []).filter(Boolean).filter(c => c !== "All")));
@@ -393,6 +396,9 @@ const LABEL = {
       reportSuccess: "Issue draft opened in a new tab.",
       reportIssueTitlePrefix: "Card issue: Card ID",
       whyLabel: "Why",
+      autoplayLabel: "Autoplay",
+      autoplayOn: "On",
+      autoplayOff: "Off",
     },
   },
   cy: {
@@ -491,6 +497,9 @@ const LABEL = {
       reportSuccess: "Agorwyd drafft mater mewn tab newydd.",
       reportIssueTitlePrefix: "Problem gyda cherdyn: ID Cerdyn",
       whyLabel: "Pam",
+      autoplayLabel: "Awtochwarae",
+      autoplayOn: "Ymlaen",
+      autoplayOff: "I ffwrdd",
     },
   }
 };
@@ -1696,8 +1705,22 @@ function renderPractice() {
     mkSegBtn(t.smartModeShort, "smart")
   );
 
+  const autoplayBtn = document.createElement("button");
+  autoplayBtn.type = "button";
+  autoplayBtn.className = `pill pill-core ${state.autoplayHear ? "pill-on" : ""}`;
+  autoplayBtn.setAttribute("aria-pressed", state.autoplayHear ? "true" : "false");
+  autoplayBtn.textContent = `${t.ui.autoplayLabel}: ${state.autoplayHear ? t.ui.autoplayOn : t.ui.autoplayOff}`;
+  autoplayBtn.onclick = () => {
+    state.autoplayHear = !state.autoplayHear;
+    saveLS(AUTOPLAY_HEAR_LS_KEY, state.autoplayHear);
+    autoplayBtn.classList.toggle("pill-on", state.autoplayHear);
+    autoplayBtn.setAttribute("aria-pressed", state.autoplayHear ? "true" : "false");
+    autoplayBtn.textContent = `${t.ui.autoplayLabel}: ${state.autoplayHear ? t.ui.autoplayOn : t.ui.autoplayOff}`;
+  };
+
   const controlsMount = metaControls || headerRight;
   controlsMount.appendChild(seg);
+  controlsMount.appendChild(autoplayBtn);
   header.append(headerLeft, headerRight);
 
   const summary = document.createElement("div");
@@ -1803,6 +1826,7 @@ function renderPractice() {
     const ok = normalize(state.guess) === normalize(card.Answer);
     state.revealed = true;
     state.lastResult = ok ? "correct" : "wrong";
+    state.autoplayPending = true;
     state.freezeIdx = idxNow;
     state.freezePos = state.currentDeckPos;
 
@@ -1855,6 +1879,7 @@ function renderPractice() {
     if (state.revealed) return;
     state.revealed = true;
     if (!state.lastResult) state.lastResult = "revealed";
+    state.autoplayPending = true;
     state.freezeIdx = idxNow;
     state.freezePos = state.currentDeckPos;
     const ab2 = $("#answerBox");
@@ -1871,6 +1896,7 @@ function renderPractice() {
     state.guess = "";
     state.revealed = true;
     state.lastResult = "skipped";
+    state.autoplayPending = true;
     state.freezeIdx = idxNow;
     state.freezePos = state.currentDeckPos;
 
@@ -1983,15 +2009,26 @@ function renderPractice() {
 
     setTimeout(() => {
       const hearBtn = $("#btnHear");
+      const playSentence = async () => {
+        const sentence = buildCompleteSentence({ Before: card.Before, Answer: card.Answer, After: card.After });
+        await playPollySentence(sentence);
+      };
       if (hearBtn) {
         hearBtn.onclick = async () => {
           try {
-            const sentence = buildCompleteSentence({ Before: card.Before, Answer: card.Answer, After: card.After });
-            await playPollySentence(sentence);
+            await playSentence();
           } catch (e) {
             alert("Couldn't play audio: " + (e?.message || e));
           }
         };
+      }
+      if (state.autoplayPending) {
+        state.autoplayPending = false;
+        if (state.autoplayHear) {
+          playSentence().catch((e) => {
+            console.warn("Autoplay failed", e);
+          });
+        }
       }
       $("#inlineNext")?.addEventListener("click", () => nextCard(1));
     }, 0);
