@@ -747,8 +747,8 @@ body{
   padding-top: 0.85rem;
   border-top: 1px solid rgba(15,23,42,0.08);
   color: var(--muted);
-  font-size: 0.75rem;
-  letter-spacing: 0.02em;
+  font-size: 0.72rem;
+  letter-spacing: 0.015em;
 }
 
 .practice-card-meta{
@@ -759,10 +759,25 @@ body{
 }
 
 .practice-report-btn{
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 0.6rem;
-  padding: 0.2rem 0.5rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: 0.03em;
+  font-size: 0.7rem;
+  padding: 0;
+  color: var(--muted);
+}
+.practice-report-btn:hover{
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: rgba(71,85,105,0.9);
+  text-decoration: underline;
+}
+.practice-report-btn:focus-visible{
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 @media (max-width: 640px){
@@ -875,8 +890,13 @@ body{
     font-size: 1.05rem;
   }
   .practice-card-footer{
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1.1rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.01em;
   }
   #practiceCard .practice-actions{
     gap: 0.75rem;
