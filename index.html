@@ -212,6 +212,10 @@
                       </div>
                     </div>
                     <div id="moreFiltersPanel" class="filters-extra is-hidden">
+                      <div class="col-span-1 mb-3">
+                        <div id="allCategoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">All categories</div>
+                        <div id="allCategoryChips" class="flex flex-wrap gap-1"></div>
+                      </div>
                       <div class="mt-2">
                         <label id="triggerLabel" class="text-xs uppercase tracking-wide text-slate-500">Filter by Trigger</label>
                         <input id="triggerFilter" class="mt-1 w-full border rounded-xl px-3 py-1.5" placeholder="e.g. i, o, dwy, tri, y (article), neu" />
@@ -220,6 +224,12 @@
                         <input id="nilOnly" type="checkbox" />
                         <span id="nilOnlyText">Nil-cases only (no mutation expected)</span>
                       </label>
+                      <div class="mt-3 flex flex-wrap gap-1">
+                        <button id="moreFiltersClose" class="pill pill-close" type="button">Close filters</button>
+                      </div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-1">
+                      <button id="moreFiltersToggle" class="pill pill-more" type="button">More filters</button>
                     </div>
                     <div class="mt-3 flex flex-wrap gap-1">
                       <button id="btnFiltersClear" class="pill pill-clear" type="button">Clear filters</button>

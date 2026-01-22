@@ -808,8 +808,8 @@ function buildFilters() {
   if ($("#focusHelper")) $("#focusHelper").textContent = LABEL[lang].ui.focusHelper;
   if ($("#quickPacksSummary")) $("#quickPacksSummary").textContent = LABEL[lang].headings.presets;
   if ($("#coreFiltersSummary")) $("#coreFiltersSummary").textContent = LABEL[lang].ui.coreFiltersTitle;
-  const moreFiltersToggle = $("#moreFiltersToggle");
-  if (moreFiltersToggle) moreFiltersToggle.textContent = LABEL[lang].ui.advancedFiltersClosed;
+  if ($("#moreFiltersToggle")) $("#moreFiltersToggle").textContent = LABEL[lang].ui.advancedFiltersClosed;
+  if ($("#moreFiltersClose")) $("#moreFiltersClose").textContent = LABEL[lang].ui.closeFilters;
   if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
@@ -882,7 +882,7 @@ function buildFilters() {
     }
   }
 
-  const bindCategoryButtons = (container, categoryList, { includeAll = true, variant = "core" } = {}) => {
+  const bindCategoryButtons = (container, categoryList, { includeClear = false, includeAll = true, variant = "core" } = {}) => {
     if (!container) return;
     container.innerHTML = "";
     const categoriesAllActive = state.categories.length === 0;
@@ -933,8 +933,8 @@ function buildFilters() {
 
   };
 
-  bindCategoryButtons($("#coreCategoryChips"), coreCats, { includeAll: true, variant: "core" });
-  bindCategoryButtons($("#extraCategoryChips"), extraCats, { includeAll: false, variant: "extra" });
+  bindCategoryButtons($("#coreCategoryChips"), coreCats, { includeClear: true, includeAll: true, variant: "core" });
+  bindCategoryButtons($("#allCategoryChips"), extraCats, { includeAll: false, variant: "extra" });
 
   const trigEl = $("#triggerFilter");
   if (trigEl) {
@@ -988,22 +988,18 @@ function buildFilters() {
   }
 
   const moreFiltersPanel = $("#moreFiltersPanel");
-  const moreFiltersToggleBtn = $("#moreFiltersToggle");
-  const extraCategoryChips = $("#extraCategoryChips");
+  const moreFiltersToggle = $("#moreFiltersToggle");
+  const moreFiltersClose = $("#moreFiltersClose");
   const setMoreFiltersOpen = (isOpen, { save = false } = {}) => {
     if (moreFiltersPanel) {
       moreFiltersPanel.classList.toggle("is-hidden", !isOpen);
     }
-    if (extraCategoryChips) {
-      extraCategoryChips.classList.toggle("is-hidden", !isOpen);
+    if (moreFiltersToggle) {
+      moreFiltersToggle.classList.toggle("is-hidden", isOpen);
+      moreFiltersToggle.setAttribute("aria-expanded", String(isOpen));
     }
-    if (moreFiltersToggleBtn) {
-      moreFiltersToggleBtn.classList.toggle("pill-more", !isOpen);
-      moreFiltersToggleBtn.classList.toggle("pill-close", isOpen);
-      moreFiltersToggleBtn.textContent = isOpen
-        ? LABEL[lang].ui.closeFilters
-        : LABEL[lang].ui.advancedFiltersClosed;
-      moreFiltersToggleBtn.setAttribute("aria-expanded", String(isOpen));
+    if (moreFiltersClose) {
+      moreFiltersClose.setAttribute("aria-expanded", String(isOpen));
     }
     if (save) {
       state.showMoreFilters = isOpen;
@@ -1013,10 +1009,16 @@ function buildFilters() {
 
   setMoreFiltersOpen(Boolean(state.showMoreFilters));
 
-  if (moreFiltersToggleBtn && moreFiltersToggleBtn.dataset._wmBound !== "1") {
-    moreFiltersToggleBtn.dataset._wmBound = "1";
-    moreFiltersToggleBtn.addEventListener("click", () => {
-      setMoreFiltersOpen(!state.showMoreFilters, { save: true });
+  if (moreFiltersToggle && moreFiltersToggle.dataset._wmBound !== "1") {
+    moreFiltersToggle.dataset._wmBound = "1";
+    moreFiltersToggle.addEventListener("click", () => {
+      setMoreFiltersOpen(true, { save: true });
+    });
+  }
+  if (moreFiltersClose && moreFiltersClose.dataset._wmBound !== "1") {
+    moreFiltersClose.dataset._wmBound = "1";
+    moreFiltersClose.addEventListener("click", () => {
+      setMoreFiltersOpen(false, { save: true });
     });
   }
 
