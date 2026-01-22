@@ -118,9 +118,7 @@ function applyLanguage() {
 
   // New UI translations
   if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
-  if ($("#coreFiltersTitle")) $("#coreFiltersTitle").textContent = LABEL[lang].ui.coreFilters;
   if ($("#coreFiltersHelper")) $("#coreFiltersHelper").textContent = LABEL[lang].ui.coreFiltersHelper;
-  if ($("#advToggle")) $("#advToggle").textContent = LABEL[lang].ui.advancedFiltersClosed;
   if ($("#sessionTitle")) $("#sessionTitle").textContent = LABEL[lang].ui.sessionTitle;
   if ($("#btnNewSession")) $("#btnNewSession").textContent = LABEL[lang].ui.newSession;
   if ($("#btnCoreClear")) $("#btnCoreClear").textContent = `${LABEL[lang].ui.clearFilters} ✕`;
@@ -805,19 +803,22 @@ function toggleBtn(text, active, onClick) {
     categoriesAllActive = false;
     categoryKeys = [];
   }
-  applyPillState($("#categoryChips"), categoryKeys, categoriesAllActive);
+  applyPillState($("#coreCategoryChips"), categoryKeys, categoriesAllActive);
+  applyPillState($("#allCategoryChips"), categoryKeys, categoriesAllActive);
 }
 function buildFilters() {
   const lang = state.lang || "en";
 
 
   // Titles
-  if ($("#focusTitle")) $("#focusTitle").textContent = LABEL[lang].headings.focus;
   if ($("#focusHelper")) $("#focusHelper").textContent = LABEL[lang].ui.focusHelper;
-  if ($("#presetsTitle")) $("#presetsTitle").textContent = LABEL[lang].headings.presets;
+  if ($("#quickPacksSummary")) $("#quickPacksSummary").textContent = LABEL[lang].headings.presets;
+  if ($("#coreFiltersSummary")) $("#coreFiltersSummary").textContent = LABEL[lang].ui.coreFiltersTitle;
+  if ($("#moreFiltersSummary")) $("#moreFiltersSummary").textContent = LABEL[lang].ui.advancedFilters;
   if ($("#presetsHelper")) $("#presetsHelper").textContent = LABEL[lang].ui.presetsHelper;
   if ($("#rulefamilyTitle")) $("#rulefamilyTitle").textContent = LABEL[lang].headings.rulefamily;
   if ($("#categoriesTitle")) $("#categoriesTitle").textContent = LABEL[lang].headings.categories;
+  if ($("#allCategoriesTitle")) $("#allCategoriesTitle").textContent = LABEL[lang].headings.allCategories;
   if ($("#triggerLabel")) $("#triggerLabel").textContent = LABEL[lang].headings.trigger;
   if ($("#nilOnlyText")) $("#nilOnlyText").textContent = LABEL[lang].headings.nilOnly;
   if ($("#triggerFilter")) $("#triggerFilter").setAttribute("placeholder", LABEL[lang].ui.triggerPlaceholder);
@@ -831,7 +832,6 @@ function buildFilters() {
   for (const r of state.rows) if (r.RuleCategory) cats.add(r.RuleCategory);
   const allCats = Array.from(cats).sort();
   const coreCats = CORE_CATEGORIES.filter(c => allCats.includes(c));
-  const extraCats = allCats.filter(c => !coreCats.includes(c) && c !== "All");
 
   /* -----------------------------
      RULE FAMILY (with All)
@@ -887,7 +887,7 @@ function buildFilters() {
     }
   }
 
-  const bindCategoryButtons = (container, coreCategories, extraCategories) => {
+  const bindCategoryButtons = (container, categoryList, { includeClear = false, variant = "core" } = {}) => {
     if (!container) return;
     container.innerHTML = "";
     const categoriesAllActive = state.categories.length === 0;
@@ -903,10 +903,10 @@ function buildFilters() {
       updatePresetActiveClasses();
     });
     allBtn.dataset.key = "__ALL__";
-    allBtn.classList.add("pill-core");
+    allBtn.classList.add(variant === "core" ? "pill-core" : "pill-extra");
     container.appendChild(allBtn);
 
-    for (const c of coreCategories) {
+    for (const c of categoryList) {
       const isOn = !categoriesAllActive && state.categories.includes(c);
       const b = toggleBtn(label("categories", c), isOn, () => {
         clearPresetLayer();
@@ -930,69 +930,22 @@ function buildFilters() {
         updatePresetActiveClasses();
       });
       b.dataset.key = c;
-      b.classList.add("pill-core");
+      b.classList.add(variant === "core" ? "pill-core" : "pill-extra");
       container.appendChild(b);
     }
 
-    const moreBtn = document.createElement("button");
-    moreBtn.type = "button";
-    moreBtn.id = "moreFiltersChip";
-    moreBtn.className = "pill pill-more";
-    moreBtn.textContent = state.showMoreFilters
-      ? LABEL[lang].ui.categoriesFewerFilters
-      : LABEL[lang].ui.categoriesMoreFilters;
-    moreBtn.onclick = () => {
-      state.showMoreFilters = !state.showMoreFilters;
-      saveLS("wm_show_more_filters", state.showMoreFilters);
-      buildFilters();
-      refreshFilterPills();
-    };
-    container.appendChild(moreBtn);
-
-    if (state.showMoreFilters) {
-      for (const c of extraCategories) {
-        const isOn = !categoriesAllActive && state.categories.includes(c);
-        const b = toggleBtn(label("categories", c), isOn, () => {
-          clearPresetLayer();
-          let cats = Array.isArray(state.categories) ? [...state.categories] : [];
-          const noneSelected = cats.length === 0;
-          if (noneSelected) {
-            cats = [c];
-          } else if (cats.includes(c)) {
-            cats = cats.filter(x => x !== c);
-          } else {
-            cats.push(c);
-          }
-          if (!cats.length) cats = [];
-
-          state.categories = cats;
-          saveLS("wm_categories", state.categories);
-          applyFilters();
-          rebuildDeck();
-          refreshFilterPills();
-          render();
-          updatePresetActiveClasses();
-        });
-        b.dataset.key = c;
-        b.classList.add("pill-extra");
-        container.appendChild(b);
-      }
+    if (includeClear) {
+      const clearBtn = document.createElement("button");
+      clearBtn.type = "button";
+      clearBtn.id = "btnCoreClear";
+      clearBtn.className = "pill pill-clear";
+      clearBtn.textContent = `${LABEL[lang].ui.clearFilters} ✕`;
+      container.appendChild(clearBtn);
     }
-
-    const clearBtn = document.createElement("button");
-    clearBtn.type = "button";
-    clearBtn.id = "btnCoreClear";
-    clearBtn.className = "pill pill-clear";
-    clearBtn.textContent = `${LABEL[lang].ui.clearFilters} ✕`;
-    container.appendChild(clearBtn);
   };
 
-  bindCategoryButtons($("#categoryChips"), coreCats, extraCats);
-
-  const categoryExtras = $("#categoryExtras");
-  if (categoryExtras) {
-    categoryExtras.classList.toggle("hidden", !state.showMoreFilters);
-  }
+  bindCategoryButtons($("#coreCategoryChips"), coreCats, { includeClear: true, variant: "core" });
+  bindCategoryButtons($("#allCategoryChips"), allCats, { variant: "extra" });
 
   const trigEl = $("#triggerFilter");
   if (trigEl) {
@@ -1033,6 +986,18 @@ function buildFilters() {
     clearBtn.onclick = () => {
       clearFiltersAndRender();
     };
+  }
+
+  const moreFiltersDetails = $("#moreFiltersDetails");
+  if (moreFiltersDetails) {
+    moreFiltersDetails.open = Boolean(state.showMoreFilters);
+    if (moreFiltersDetails.dataset._wmBound !== "1") {
+      moreFiltersDetails.dataset._wmBound = "1";
+      moreFiltersDetails.addEventListener("toggle", () => {
+        state.showMoreFilters = moreFiltersDetails.open;
+        saveLS("wm_show_more_filters", state.showMoreFilters);
+      });
+    }
   }
 
   updateFocusIndicator();
