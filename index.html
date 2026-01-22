@@ -144,21 +144,15 @@
           <div id="practiceHeader" class="practice-header">
             <div id="practiceMetaBar" class="practice-meta-bar">
               <div class="practice-meta-left">
-                <div class="statsRow" aria-label="Stats">
-                  <div class="statPill" id="statAccuracy" aria-label="Accuracy">
-                    <div class="statValue">
-                      <span id="practiceAcc">0</span><span class="statUnit">%</span>
-                    </div>
-                    <div id="practiceAccTitle" class="statLabel">Accuracy</div>
-                  </div>
-                  <div class="statPill" id="statStreak" aria-label="Streak">
-                    <div class="statValue">
-                      <span class="statIcon" aria-hidden="true">🔥</span>
-                      <span id="practiceStreak">0</span>
-                    </div>
-                    <div id="practiceStreakTitle" class="statLabel">Streak</div>
-                  </div>
-                </div>
+                <span class="meta-item meta-accuracy">
+                  <span id="practiceAccTitle" class="meta-label">Accuracy</span>
+                  <span id="practiceAcc" class="meta-value">0%</span>
+                </span>
+                <span class="meta-sep" aria-hidden="true">·</span>
+                <span class="meta-item meta-streak">
+                  <span id="practiceStreakTitle" class="meta-label">Streak</span>
+                  <span class="meta-value"><span aria-hidden="true">🔥</span><span id="practiceStreak">0</span></span>
+                </span>
                 <button id="btnResetStreakTop" class="btn btn-ghost meta-reset" title="Reset streak" type="button">↺</button>
               </div>
               <div id="practiceMetaControls" class="practice-meta-right"></div>

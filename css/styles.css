@@ -643,61 +643,9 @@ body{
 .practice-meta-left{
   display:flex;
   align-items:center;
-  gap: 0.6rem;
+  gap: 0.45rem;
   color: var(--muted);
   font-size: 0.75rem;
-}
-
-.statsRow{
-  display:flex;
-  gap: 10px;
-  align-items:center;
-}
-
-.statPill{
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  padding: 10px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.65);
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-  min-width: 92px;
-}
-
-.statValue{
-  display:flex;
-  align-items:baseline;
-  gap: 6px;
-  font-weight: 800;
-  font-size: 18px;
-  letter-spacing: -0.01em;
-  color: inherit;
-  line-height: 1.05;
-}
-
-.statUnit{
-  font-size: 12px;
-  font-weight: 700;
-  opacity: 0.75;
-}
-
-.statLabel{
-  margin-top: 2px;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.55;
-}
-
-.statIcon{
-  transform: translateY(-1px);
-  opacity: 0.9;
-}
-
-.practice-meta-left .meta-reset{
-  align-self: center;
 }
 
 .practice-meta-left .meta-item{
@@ -740,17 +688,6 @@ body{
   padding: 0.15rem 0.45rem;
   font-size: 0.9rem;
   line-height: 1;
-}
-
-@media (hover:hover){
-  .statPill{
-    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-  }
-  .statPill:hover{
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-    border-color: rgba(0,0,0,0.10);
-  }
 }
 
 .meta-more-wrap{
@@ -1052,23 +989,7 @@ body{
   }
 }
 
-@media (max-width: 768px){
-  .statPill{
-    padding: 8px 10px;
-    min-width: 78px;
-  }
-  .statValue{
-    font-size: 16px;
-  }
-  .statLabel{
-    font-size: 10px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce){
-  .statPill{
-    transition: none !important;
-  }
   #practiceCard .practice-card-face{
     transition: none;
   }
@@ -1077,18 +998,6 @@ body{
   #practiceCard .practice-card-flip.is-front .practice-card-face.is-back,
   #practiceCard .practice-card-flip.is-back .practice-card-face.is-front{
     transform: none;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference){
-  .pulse{
-    animation: pulsePop 420ms ease-out;
-  }
-
-  @keyframes pulsePop{
-    0%{ transform: scale(1); }
-    40%{ transform: scale(1.06); }
-    100%{ transform: scale(1); }
   }
 }
 
