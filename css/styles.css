@@ -925,6 +925,7 @@ body{
   flex: 0 1 clamp(10rem, 22vw, 16rem) !important;
   flex-shrink: 1 !important;
   line-height: 1.15;
+  max-width: 100%;
 }
 #answerBox::placeholder{ color: rgba(100,116,139,0.85); }
 #answerBox:focus{
@@ -1049,11 +1050,20 @@ body{
   #practiceCard .practice-actions{
     display: none;
   }
+  #practiceCard .practice-sentenceLine{
+    width: 100%;
+    max-width: 100%;
+  }
   #answerBox{
-    scroll-margin-bottom: calc(var(--mobile-actions-height) + 2.5rem);
+    width: min(100%, 18rem) !important;
+    flex: 0 0 min(100%, 18rem) !important;
+    min-width: 12.5rem;
+  }
+  #answerBox{
+    scroll-margin-bottom: calc(var(--mobile-actions-height) + var(--keyboard-offset) + 2.5rem);
   }
   #practiceCard .practice-answerBlock{
-    scroll-margin-bottom: calc(var(--mobile-actions-height) + 2.5rem);
+    scroll-margin-bottom: calc(var(--mobile-actions-height) + var(--keyboard-offset) + 2.5rem);
   }
 }
 
