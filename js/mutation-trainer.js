@@ -140,6 +140,10 @@ function applyLanguage() {
   if ($("#mobileFiltersToggle")) $("#mobileFiltersToggle").textContent = LABEL[lang].ui.filtersToggle;
   if ($("#mobileFiltersApply")) $("#mobileFiltersApply").textContent = LABEL[lang].ui.filtersApply;
   if ($("#mobileFiltersTitle")) $("#mobileFiltersTitle").textContent = LABEL[lang].ui.filtersTitle;
+  if ($("#mbCheck")) $("#mbCheck").textContent = LABEL[lang].check;
+  if ($("#mbHint")) $("#mbHint").textContent = LABEL[lang].hint;
+  if ($("#mbReveal")) $("#mbReveal").textContent = LABEL[lang].reveal;
+  if ($("#mbSkip")) $("#mbSkip").textContent = LABEL[lang].skip;
   applyReportModalLabels();
 
   buildFilters();
@@ -1156,6 +1160,18 @@ function renderStatsPanels() {
   }
 }
 
+function updateViewportMetrics() {
+  const vv = window.visualViewport;
+  const keyboardOffset = vv
+    ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0))
+    : 0;
+  document.documentElement.style.setProperty("--keyboard-offset", `${keyboardOffset}px`);
+  const bar = $("#mobileBar");
+  if (bar) {
+    document.documentElement.style.setProperty("--mobile-actions-height", `${bar.offsetHeight}px`);
+  }
+}
+
 function render() {
   $("#practiceView")?.classList.toggle("hidden", state.mode !== "practice");
   $("#browseView")?.classList.toggle("hidden", state.mode !== "browse");
@@ -1164,6 +1180,7 @@ function render() {
   renderPractice();
   if (state.mode === "browse") renderBrowse();
   renderStatsPanels();
+  requestAnimationFrame(updateViewportMetrics);
 }
 
 function nextCard(offset = 1) {
@@ -1278,10 +1295,14 @@ function wireUi() {
   });
 
   $("#mbCheck")?.addEventListener("click", () => $("#btnCheck")?.click());
-  $("#mbNext")?.addEventListener("click", () => $("#inlineNext")?.click() || nextCard(1));
   $("#mbHint")?.addEventListener("click", () => $("#btnHint")?.click());
+  $("#mbReveal")?.addEventListener("click", () => $("#btnReveal")?.click());
+  $("#mbSkip")?.addEventListener("click", () => $("#btnSkip")?.click());
 
-  $("#mobileFiltersToggle")?.addEventListener("click", () => setMobileFiltersOpen(true));
+  $("#mobileFiltersToggle")?.addEventListener("click", () => {
+    const isOpen = $("#practiceSidebar")?.classList.contains("is-open");
+    setMobileFiltersOpen(!isOpen);
+  });
   $("#mobileFiltersApply")?.addEventListener("click", () => setMobileFiltersOpen(false));
   $("#mobileFiltersBackdrop")?.addEventListener("click", () => setMobileFiltersOpen(false));
   $("#mobileClearFocus")?.addEventListener("click", () => clearFocusAndRender());
@@ -1290,6 +1311,11 @@ function wireUi() {
   window.addEventListener("resize", () => {
     if (window.innerWidth >= 768) setMobileFiltersOpen(false);
   });
+  const scheduleViewportUpdate = () => requestAnimationFrame(updateViewportMetrics);
+  scheduleViewportUpdate();
+  window.addEventListener("resize", scheduleViewportUpdate);
+  window.visualViewport?.addEventListener("resize", scheduleViewportUpdate);
+  window.visualViewport?.addEventListener("scroll", scheduleViewportUpdate);
 
 }
 

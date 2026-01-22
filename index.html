@@ -376,11 +376,14 @@
     </div>
 
     <!-- Mobile action bar -->
-    <div id="mobileBar" class="fixed md:hidden bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t shadow-lg p-2">
-      <div class="max-w-6xl mx-auto flex gap-2">
-        <button id="mbHint" title="Hint (H)" class="flex-1 btn btn-ghost px-3 py-2">Hint</button>
-        <button id="mbCheck" title="Check (Enter)" class="flex-1 btn btn-primary px-3 py-2">Check</button>
-        <button id="mbNext" title="Next (Enter)" class="flex-1 btn btn-ghost px-3 py-2">Next</button>
+    <div id="mobileBar" class="mobile-action-bar fixed md:hidden bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t shadow-lg">
+      <div class="max-w-6xl mx-auto flex flex-col gap-2 px-3 pt-3 pb-4">
+        <button id="mbCheck" title="Check (Enter)" class="w-full btn btn-primary px-3 py-3">Check</button>
+        <div class="flex gap-2">
+          <button id="mbHint" title="Hint (H)" class="flex-1 btn btn-ghost px-3 py-2">Hint</button>
+          <button id="mbReveal" title="Reveal (R)" class="flex-1 btn btn-ghost px-3 py-2">Reveal</button>
+          <button id="mbSkip" title="Skip (S)" class="flex-1 btn btn-muted px-3 py-2">Skip</button>
+        </div>
       </div>
     </div>
 
