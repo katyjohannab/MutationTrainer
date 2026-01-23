@@ -190,6 +190,64 @@
 
         <!-- Right: filters + session -->
         <div class="md:col-span-1 flex flex-col gap-4">
+            <div id="filtersPanelHost" class="hidden md:block">
+              <div id="filtersPanel" class="panel rounded-2xl p-4">
+                <div class="flex flex-col gap-3">
+                  <details id="quickPacksSection" open>
+                    <summary id="quickPacksSummary" class="cursor-pointer text-sm font-semibold select-none">Quick packs</summary>
+                    <div class="mt-3">
+                      <div id="focusHelper" class="text-xs text-slate-500 mb-3"></div>
+                      <div id="presetsHelper" class="text-xs text-slate-500 mb-2"></div>
+                      <div id="presetBtns" class="grid grid-cols-2 gap-2"></div>
+                      <!-- Focus indicator shows which preset/pack is active (set by JS) -->
+                      <div id="focusIndicator" class="text-xs font-medium text-slate-600 hidden mt-1"></div>
+                    </div>
+                  </details>
+
+                  <details id="coreFiltersSection" open>
+                    <summary id="coreFiltersSummary" class="cursor-pointer text-sm font-semibold select-none">Core filters</summary>
+                    <div class="filters-section-body">
+                      <div id="coreFiltersHelper" class="text-xs text-slate-500 mb-2"></div>
+                      <div id="basicFocus">
+                        <div class="grid grid-cols-1 gap-2 text-sm">
+                          <div id="familyCol">
+                            <div id="rulefamilyTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Mutation type</div>
+                            <div id="familyBtns" class="flex flex-wrap gap-1"></div>
+                          </div>
+                          <div class="col-span-1">
+                            <div id="categoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Categories</div>
+                            <div id="categoryPills" class="flex flex-wrap gap-1 items-center">
+                              <div id="coreCategoryChips" class="pill-group"></div>
+                              <button id="moreFiltersToggle" class="pill pill-more" type="button" aria-expanded="false" aria-controls="moreFiltersInline">
+                                <span class="pill-label">More filters</span>
+                                <span class="pill-icon" aria-hidden="true">▾</span>
+                              </button>
+                              <div id="moreFiltersInline" class="more-filters-inline flex flex-wrap gap-1 items-center">
+                                <div id="extraCategoryChips" class="pill-group is-hidden"></div>
+                                <div id="allCategoryChips" class="pill-group is-hidden"></div>
+                                <div id="moreFiltersPanel" class="filters-extra is-hidden">
+                                  <div class="mt-2">
+                                    <label id="triggerLabel" class="text-xs uppercase tracking-wide text-slate-500">Filter by Trigger</label>
+                                    <input id="triggerFilter" class="mt-1 w-full border rounded-xl px-3 py-1.5" placeholder="e.g. i, o, dwy, tri, y (article), neu" />
+                                  </div>
+                                  <div class="mt-3 flex flex-wrap gap-1"></div>
+                                </div>
+                              </div>
+                              <button id="btnFiltersClear" class="pill pill-clear" type="button">
+                                <span class="pill-label">Clear filters</span>
+                                <span class="pill-icon" aria-hidden="true">×</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+
+                  <section id="moreFiltersSection" class="hidden"></section>
+                </div>
+              </div>
+            </div>
             <!-- Session stats hidden under details -->
             <details id="statsDetails" class="panel rounded-2xl p-4 hidden md:block">
               <summary id="moreStatsSummary" class="cursor-pointer text-sm font-medium select-none">More stats</summary>
@@ -465,64 +523,7 @@
       <div class="drawer-title" id="mobileFiltersTitle">Filters</div>
       <button id="mobileFiltersApply" class="btn btn-primary btn-compact mobile-filters-apply" type="button" data-close-drawer>Apply</button>
     </div>
-    <div id="filtersDrawerBody" class="drawer-body">
-      <div id="filtersPanel" class="panel rounded-2xl p-4">
-        <div class="flex flex-col gap-3">
-          <details id="quickPacksSection" open>
-            <summary id="quickPacksSummary" class="cursor-pointer text-sm font-semibold select-none">Quick packs</summary>
-            <div class="mt-3">
-              <div id="focusHelper" class="text-xs text-slate-500 mb-3"></div>
-              <div id="presetsHelper" class="text-xs text-slate-500 mb-2"></div>
-              <div id="presetBtns" class="grid grid-cols-2 gap-2"></div>
-              <!-- Focus indicator shows which preset/pack is active (set by JS) -->
-              <div id="focusIndicator" class="text-xs font-medium text-slate-600 hidden mt-1"></div>
-            </div>
-          </details>
-
-          <details id="coreFiltersSection" open>
-            <summary id="coreFiltersSummary" class="cursor-pointer text-sm font-semibold select-none">Core filters</summary>
-            <div class="filters-section-body">
-              <div id="coreFiltersHelper" class="text-xs text-slate-500 mb-2"></div>
-              <div id="basicFocus">
-                <div class="grid grid-cols-1 gap-2 text-sm">
-                  <div id="familyCol">
-                    <div id="rulefamilyTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Mutation type</div>
-                    <div id="familyBtns" class="flex flex-wrap gap-1"></div>
-                  </div>
-                  <div class="col-span-1">
-                    <div id="categoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Categories</div>
-                    <div id="categoryPills" class="flex flex-wrap gap-1 items-center">
-                      <div id="coreCategoryChips" class="pill-group"></div>
-                      <button id="moreFiltersToggle" class="pill pill-more" type="button" aria-expanded="false" aria-controls="moreFiltersInline">
-                        <span class="pill-label">More filters</span>
-                        <span class="pill-icon" aria-hidden="true">▾</span>
-                      </button>
-                      <div id="moreFiltersInline" class="more-filters-inline flex flex-wrap gap-1 items-center">
-                        <div id="extraCategoryChips" class="pill-group is-hidden"></div>
-                        <div id="allCategoryChips" class="pill-group is-hidden"></div>
-                        <div id="moreFiltersPanel" class="filters-extra is-hidden">
-                          <div class="mt-2">
-                            <label id="triggerLabel" class="text-xs uppercase tracking-wide text-slate-500">Filter by Trigger</label>
-                            <input id="triggerFilter" class="mt-1 w-full border rounded-xl px-3 py-1.5" placeholder="e.g. i, o, dwy, tri, y (article), neu" />
-                          </div>
-                          <div class="mt-3 flex flex-wrap gap-1"></div>
-                        </div>
-                      </div>
-                      <button id="btnFiltersClear" class="pill pill-clear" type="button">
-                        <span class="pill-label">Clear filters</span>
-                        <span class="pill-icon" aria-hidden="true">×</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </details>
-
-          <section id="moreFiltersSection" class="hidden"></section>
-        </div>
-      </div>
-    </div>
+    <div id="filtersDrawerBody" class="drawer-body"></div>
     <div class="drawer-footer">
       <button id="mobileClearFocus" class="btn btn-ghost flex-1" type="button">Clear focus</button>
       <button id="mobileClearFilters" class="btn btn-ghost flex-1" type="button">Clear filters</button>
