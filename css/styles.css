@@ -212,6 +212,7 @@ body{
     height: 28px;
     filter: drop-shadow(0 6px 10px rgba(2,6,23,0.12));
     transform: none;
+    align-self: center;
   }
   .brand-title{
     font-size: clamp(1.05rem, 4.2vw, 1.45rem);
@@ -221,14 +222,13 @@ body{
     margin-left: auto;
     gap: 0.5rem;
     flex-wrap: nowrap;
+    align-items: center;
     min-width: 0;
     flex: 0 1 auto;
   }
-  .header-actions .btn,
-  .header-actions .btn-lang,
-  .header-actions .onboard-help-btn{
+  .header-actions .header-btn{
     min-height: 44px;
-    padding: 0 0.5rem;
+    padding: 0 0.55rem;
     border-radius: 0.65rem;
     line-height: 1;
   }
@@ -254,6 +254,12 @@ body{
   .cymru-red-bar{
     height: 2px;
   }
+}
+
+.header-btn{
+  min-height: 2.5rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.7rem;
 }
 
 @media (max-width: 767px){
@@ -569,8 +575,8 @@ body{
   border: 1px solid rgba(15,23,42,0.14);
   color: rgba(15,23,42,0.92);
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  padding: 0.28rem 0.60rem;
-  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.7rem;
   font-weight: 650;
   font-size: 0.78rem;
   line-height: 1;
@@ -1217,7 +1223,7 @@ body{
 :root{
   --keyboard-offset: 0px;
   --mobile-bar-height: 78px;
-  --mobile-header-height: 60px;
+  --mobile-header-height: 54px;
 }
 
 .mobile-action-bar{
