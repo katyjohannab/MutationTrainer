@@ -607,7 +607,7 @@ function wirePresetUi() {
 // Listen for clicks on the navbar language toggle.
 // Use CAPTURE so we can run after navbar.js has handled the click.
 document.addEventListener("click", (e) => {
-  const btn = e.target?.closest?.("#btnLangToggle");
+  const btn = e.target?.closest?.("[data-lang-toggle]");
   if (!btn) return;
 
   // navbar.js will update localStorage + hide/show [data-lang] immediately.
@@ -1338,7 +1338,7 @@ setCardCallbacks({
 
 /* ========= Event wiring ========= */
 function wireUi() {
-  // NOTE: Do NOT bind #btnLangToggle here. navbar.js owns that button.
+  // NOTE: Do NOT bind the language buttons here. navbar.js owns those buttons.
 
   initCardUi();
 

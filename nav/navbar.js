@@ -51,32 +51,35 @@
   }
 
   function wmSyncLangToggleUI() {
-    const btn = document.getElementById("btnLangToggle");
-    if (!btn) return;
     const lang = wmGetLang();
-    const isEnglish = lang === "en";
-    btn.innerHTML = `
-      <span class="lang-icon" aria-hidden="true">🌐</span>
-      <span class="lang-seg" aria-hidden="true">
-        <span class="lang-seg-btn ${isEnglish ? "is-on" : ""}">EN</span>
-        <span class="lang-seg-btn ${isEnglish ? "" : "is-on"}">CY</span>
-      </span>
-    `;
-    btn.title = (lang === "en") ? "Switch language from English to Cymraeg" : "Switch language from Cymraeg to English";
-    btn.setAttribute("aria-label", (lang === "en") ? "Switch language from English to Cymraeg" : "Switch language from Cymraeg to English");
+    const labelMap = {
+      en: "English",
+      cy: "Cymraeg",
+    };
+
+    document.querySelectorAll("[data-lang-toggle]").forEach((btn) => {
+      const btnLang = btn.getAttribute("data-lang");
+      const isActive = btnLang === lang;
+      const languageLabel = labelMap[btnLang] || "Language";
+      btn.classList.toggle("is-active", isActive);
+      btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+      btn.title = isActive ? `Current language: ${languageLabel}` : `Switch to ${languageLabel}`;
+      btn.setAttribute("aria-label", isActive ? `Current language: ${languageLabel}` : `Switch to ${languageLabel}`);
+    });
   }
 
   function wmBindLangToggle() {
-    const btn = document.getElementById("btnLangToggle");
-    if (!btn) return;
-    if (btn.dataset.wmBound === "1") return;
-    btn.dataset.wmBound = "1";
+    document.querySelectorAll("[data-lang-toggle]").forEach((btn) => {
+      if (btn.dataset.wmBound === "1") return;
+      btn.dataset.wmBound = "1";
 
-    btn.addEventListener("click", () => {
-      const next = (wmGetLang() === "en") ? "cy" : "en";
-      wmSetLang(next);
-      wmApplyLangToPage();
-      wmSyncLangToggleUI();
+      btn.addEventListener("click", () => {
+        const next = btn.getAttribute("data-lang");
+        if (!next) return;
+        wmSetLang(next);
+        wmApplyLangToPage();
+        wmSyncLangToggleUI();
+      });
     });
   }
 
