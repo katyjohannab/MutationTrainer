@@ -1360,6 +1360,9 @@ function wireUi() {
   };
 
   $("#onboardHelpBtn")?.addEventListener("click", openOnboardModal);
+  $$("[data-onboard-open]").forEach((btn) => {
+    btn.addEventListener("click", openOnboardModal);
+  });
   $$("[data-onboard-close]").forEach((btn) => {
     btn.addEventListener("click", closeOnboardModal);
   });
