@@ -991,6 +991,7 @@ function buildFilters() {
   const moreFiltersPanel = $("#moreFiltersPanel");
   const moreFiltersToggle = $("#moreFiltersToggle");
   const allCategoryChips = $("#allCategoryChips");
+  const moreFiltersSection = $("#moreFiltersSection");
   const setMoreFiltersOpen = (isOpen, { save = false } = {}) => {
     if (moreFiltersPanel) {
       moreFiltersPanel.classList.toggle("is-hidden", !isOpen);
@@ -1003,6 +1004,9 @@ function buildFilters() {
       moreFiltersToggle.textContent = isOpen
         ? LABEL[lang].ui.advancedFiltersOpen
         : LABEL[lang].ui.advancedFiltersClosed;
+    }
+    if (moreFiltersSection) {
+      moreFiltersSection.open = isOpen;
     }
     if (save) {
       state.showMoreFilters = isOpen;
