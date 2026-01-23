@@ -139,9 +139,15 @@ function applyLanguage() {
   }
   const moreFiltersToggle = $("#moreFiltersToggle");
   if (moreFiltersToggle) {
-    moreFiltersToggle.textContent = state.showMoreFilters
+    const label = state.showMoreFilters
       ? LABEL[lang].ui.advancedFiltersOpen
       : LABEL[lang].ui.advancedFiltersClosed;
+    const icon = state.showMoreFilters ? "▴" : "▾";
+    const labelEl = moreFiltersToggle.querySelector(".pill-label");
+    const iconEl = moreFiltersToggle.querySelector(".pill-icon");
+    if (labelEl) labelEl.textContent = label;
+    if (iconEl) iconEl.textContent = icon;
+    if (!labelEl && !iconEl) moreFiltersToggle.textContent = `${label} ${icon}`;
   }
   if ($("#mobileClearFocus")) $("#mobileClearFocus").textContent = LABEL[lang].ui.clearFocus;
   if ($("#mobileClearFilters")) $("#mobileClearFilters").textContent = LABEL[lang].ui.clearFilters;
@@ -168,7 +174,6 @@ function applyLanguage() {
   if ($("#statsAccTitle")) $("#statsAccTitle").textContent = LABEL[lang].ui.statsAccuracyTitle;
   if ($("#statsByOutcomeTitle")) $("#statsByOutcomeTitle").textContent = LABEL[lang].ui.statsByOutcomeTitle;
   setButtonLabel($("#mobileFiltersToggle"), LABEL[lang].ui.filtersToggle);
-  setButtonLabel($("#mobileFiltersToggleShell"), LABEL[lang].ui.filtersToggle);
   if ($("#mobileFiltersApply")) $("#mobileFiltersApply").textContent = LABEL[lang].ui.filtersApply;
   if ($("#mobileFiltersTitle")) $("#mobileFiltersTitle").textContent = LABEL[lang].ui.filtersTitle;
   if ($("#mbCheck")) $("#mbCheck").textContent = LABEL[lang].check;
@@ -1001,6 +1006,7 @@ function buildFilters() {
   const moreFiltersPanel = $("#moreFiltersPanel");
   const moreFiltersToggle = $("#moreFiltersToggle");
   const allCategoryChips = $("#allCategoryChips");
+  const extraCategoryChips = $("#extraCategoryChips");
   const setMoreFiltersOpen = (isOpen, { save = false } = {}) => {
     state.showMoreFilters = isOpen;
     if (moreFiltersPanel) {
@@ -1009,11 +1015,20 @@ function buildFilters() {
     if (allCategoryChips) {
       allCategoryChips.classList.toggle("is-hidden", !isOpen);
     }
+    if (extraCategoryChips) {
+      extraCategoryChips.classList.toggle("is-hidden", !isOpen);
+    }
     if (moreFiltersToggle) {
       moreFiltersToggle.setAttribute("aria-expanded", String(isOpen));
-      moreFiltersToggle.textContent = isOpen
+      const label = isOpen
         ? LABEL[lang].ui.advancedFiltersOpen
         : LABEL[lang].ui.advancedFiltersClosed;
+      const icon = isOpen ? "▴" : "▾";
+      const labelEl = moreFiltersToggle.querySelector(".pill-label");
+      const iconEl = moreFiltersToggle.querySelector(".pill-icon");
+      if (labelEl) labelEl.textContent = label;
+      if (iconEl) iconEl.textContent = icon;
+      if (!labelEl && !iconEl) moreFiltersToggle.textContent = `${label} ${icon}`;
     }
     if (save) {
       saveLS("wm_show_more_filters", state.showMoreFilters);
@@ -1325,7 +1340,7 @@ function wireUi() {
 
   initCardUi();
 
-  const getMobileFiltersToggles = () => [$("#mobileFiltersToggle"), $("#mobileFiltersToggleShell")].filter(Boolean);
+  const getMobileFiltersToggles = () => [$("#mobileFiltersToggle")].filter(Boolean);
   const setMobileFiltersOpen = (isOpen) => {
     const sidebar = $("#practiceSidebar");
     if (!sidebar) return;
@@ -1334,24 +1349,14 @@ function wireUi() {
     getMobileFiltersToggles().forEach((toggle) => {
       toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
     });
-    if (isOpen) {
-      lockScroll("mobile-filters");
-      $(".mobile-filters-body")?.scrollTo({ top: 0 });
-    } else {
-      unlockScroll("mobile-filters");
-      $(".mobile-filters-body")?.scrollTo({ top: 0 });
-    }
+    $(".mobile-filters-body")?.scrollTo({ top: 0 });
   };
-  const bindMobileFiltersToggle = () => {
-    getMobileFiltersToggles().forEach((toggle) => {
-      if (toggle.dataset.wmBound === "1") return;
-      toggle.dataset.wmBound = "1";
-      toggle.addEventListener("click", () => {
-        const isOpen = $("#practiceSidebar")?.classList.contains("is-open");
-        setMobileFiltersOpen(!isOpen);
-      });
-    });
-  };
+  document.addEventListener("click", (event) => {
+    const toggle = event.target?.closest?.("#mobileFiltersToggle");
+    if (!toggle) return;
+    const isOpen = $("#practiceSidebar")?.classList.contains("is-open");
+    setMobileFiltersOpen(!isOpen);
+  });
 
   applyOnboardDismissedState();
   const openOnboardModal = () => {
@@ -1445,8 +1450,6 @@ function wireUi() {
   $("#mbSkip")?.addEventListener("click", () => $("#btnSkip")?.click());
   $("#mbNext")?.addEventListener("click", () => nextCard(1));
 
-  bindMobileFiltersToggle();
-  document.addEventListener("wm:navbar-ready", bindMobileFiltersToggle);
   $("#mobileFiltersApply")?.addEventListener("click", () => setMobileFiltersOpen(false));
   $("#mobileFiltersClose")?.addEventListener("click", () => setMobileFiltersOpen(false));
   $("#mobileFiltersBackdrop")?.addEventListener("click", () => setMobileFiltersOpen(false));
