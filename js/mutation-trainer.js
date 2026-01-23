@@ -158,6 +158,7 @@ function applyLanguage() {
   if ($("#statsAccTitle")) $("#statsAccTitle").textContent = LABEL[lang].ui.statsAccuracyTitle;
   if ($("#statsByOutcomeTitle")) $("#statsByOutcomeTitle").textContent = LABEL[lang].ui.statsByOutcomeTitle;
   if ($("#mobileFiltersToggle")) $("#mobileFiltersToggle").textContent = LABEL[lang].ui.filtersToggle;
+  if ($("#mobileFiltersToggleShell")) $("#mobileFiltersToggleShell").textContent = LABEL[lang].ui.filtersToggle;
   if ($("#mobileFiltersApply")) $("#mobileFiltersApply").textContent = LABEL[lang].ui.filtersApply;
   if ($("#mobileFiltersTitle")) $("#mobileFiltersTitle").textContent = LABEL[lang].ui.filtersTitle;
   if ($("#mbCheck")) $("#mbCheck").textContent = LABEL[lang].check;
@@ -1318,11 +1319,14 @@ function wireUi() {
 
   initCardUi();
 
+  const getMobileFiltersToggles = () => [$("#mobileFiltersToggle"), $("#mobileFiltersToggleShell")].filter(Boolean);
   const setMobileFiltersOpen = (isOpen) => {
     const sidebar = $("#practiceSidebar");
     if (!sidebar) return;
     sidebar.classList.toggle("is-open", isOpen);
-    $("#mobileFiltersToggle")?.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    getMobileFiltersToggles().forEach((toggle) => {
+      toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
     if (isOpen) {
       lockScroll("mobile-filters");
       $(".mobile-filters-body")?.scrollTo({ top: 0 });
@@ -1331,12 +1335,13 @@ function wireUi() {
     }
   };
   const bindMobileFiltersToggle = () => {
-    const toggle = $("#mobileFiltersToggle");
-    if (!toggle || toggle.dataset.wmBound === "1") return;
-    toggle.dataset.wmBound = "1";
-    toggle.addEventListener("click", () => {
-      const isOpen = $("#practiceSidebar")?.classList.contains("is-open");
-      setMobileFiltersOpen(!isOpen);
+    getMobileFiltersToggles().forEach((toggle) => {
+      if (toggle.dataset.wmBound === "1") return;
+      toggle.dataset.wmBound = "1";
+      toggle.addEventListener("click", () => {
+        const isOpen = $("#practiceSidebar")?.classList.contains("is-open");
+        setMobileFiltersOpen(!isOpen);
+      });
     });
   };
 
