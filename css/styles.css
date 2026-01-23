@@ -316,9 +316,11 @@ body{
 .pill{
   display:inline-flex;
   align-items:center;
+  justify-content:center;
   gap:.35rem;
-  border-radius:999px;
+  border-radius:0.85rem;
   padding:var(--tap-target-pad-y) var(--tap-target-pad-x);
+  min-width:2.5rem;
   min-height:var(--tap-target-min-height);
   font-weight:650;
   font-size:10px;
@@ -359,7 +361,7 @@ body{
 }
 
 .pill-more{
-  font-weight: 700;
+  font-weight: 650;
   border-style: dashed;
   background: rgba(241,245,249,.95);
   color: #0f172a;
@@ -373,7 +375,7 @@ body{
 }
 
 .pill-clear{
-  font-weight: 700;
+  font-weight: 650;
   border-color: transparent;
   background: rgba(185,28,28,0.08);
   color: var(--cymru-red-ink);
