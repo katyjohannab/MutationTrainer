@@ -158,11 +158,11 @@ body{
 .brand-title{
   display:flex;
   align-items:center;
-  line-height:1;
+  line-height:1.1;
   white-space:nowrap;
   min-width: 0;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  text-overflow: initial;
+  overflow: visible;
 }
 .title-hy{ color:var(--emerald-ink); }
 .title-trei{ color:var(--cymru-red-ink); margin-left:.06em; }
@@ -638,11 +638,17 @@ body{
   border: 1px solid rgba(15,23,42,0.16);
   background: rgba(255,255,255,0.9);
   color: rgba(15,23,42,0.9);
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  min-width: 3.1rem;
+  min-width: 2.6rem;
+  min-height: 2.3rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .header-actions-lang .btn:hover{
   background: rgba(255,255,255,1);
@@ -655,6 +661,19 @@ body{
   border-color: rgba(6,78,59,0.4);
   background: linear-gradient(135deg, var(--primary-from) 0%, var(--primary-mid) 45%, var(--primary-to) 100%);
   box-shadow: 0 8px 16px rgba(2,6,23,0.14), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+@media (min-width: 768px){
+  .header-actions{
+    width: auto;
+    flex: 0 0 auto;
+  }
+  .brand-lockup{
+    flex: 1 1 auto;
+  }
+  .brand-title{
+    white-space: normal;
+  }
 }
 
 /* ---------- Segmented control (Random / Smart) ---------- */
