@@ -54,9 +54,14 @@
     const btn = document.getElementById("btnLangToggle");
     if (!btn) return;
     const lang = wmGetLang();
-    const current = (lang === "en") ? "EN" : "CY";
-    const next = (lang === "en") ? "CY" : "EN";
-    btn.innerHTML = `<span aria-hidden="true">🌐</span><span class="langtag">${current}→${next}</span>`;
+    const isEnglish = lang === "en";
+    btn.innerHTML = `
+      <span class="lang-icon" aria-hidden="true">🌐</span>
+      <span class="lang-seg" aria-hidden="true">
+        <span class="lang-seg-btn ${isEnglish ? "is-on" : ""}">EN</span>
+        <span class="lang-seg-btn ${isEnglish ? "" : "is-on"}">CY</span>
+      </span>
+    `;
     btn.title = (lang === "en") ? "Switch language from English to Cymraeg" : "Switch language from Cymraeg to English";
     btn.setAttribute("aria-label", (lang === "en") ? "Switch language from English to Cymraeg" : "Switch language from Cymraeg to English");
   }
