@@ -521,7 +521,7 @@ function wirePresetUi() {
       const p = PRESET_DEFS[id];
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = `preset-btn pill ${state.activePreset === id ? "preset-on" : ""}`;
+      btn.className = `preset-btn pill pill-primary ${state.activePreset === id ? "preset-on" : ""}`;
       btn.dataset.preset = id;
       btn.setAttribute("aria-pressed", state.activePreset === id ? "true" : "false");
 
