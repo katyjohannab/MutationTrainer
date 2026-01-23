@@ -285,6 +285,28 @@ body{
   }
 }
 
+@media (max-width: 359px){
+  .site-header-inner{
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.15rem;
+    padding-bottom: 0.15rem;
+    gap: 0.5rem;
+  }
+  .header-actions{
+    gap: 0.25rem;
+  }
+  .header-actions .header-btn{
+    padding: 0 0.4rem;
+  }
+  .btn-lang{
+    gap: 0.35rem;
+  }
+  .btn-mobile-filters{
+    gap: 0.3rem;
+  }
+}
+
 .header-btn{
   min-height: 2.5rem;
   padding: 0.45rem 0.85rem;

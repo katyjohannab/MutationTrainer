@@ -14,26 +14,29 @@
         </h1>
       </a>
 
-      <div class="header-actions flex flex-wrap items-center justify-start md:justify-end gap-2 md:gap-3">
-        <nav class="flex flex-wrap items-center gap-2" aria-label="Primary">
-        </nav>
-
-        <div class="hidden md:block h-6 w-px bg-slate-200/80"></div>
-        <button id="btnLangToggle" class="btn-lang header-btn" aria-label="Switch language" title="Switch language">
-          <span class="lang-icon" aria-hidden="true">🌐</span>
-          <span class="lang-seg" aria-hidden="true">
-            <span class="lang-seg-btn is-on">EN</span>
-            <span class="lang-seg-btn">CY</span>
-          </span>
-        </button>
-        <button id="mobileFiltersToggle" class="btn btn-ghost btn-mobile-filters header-btn md:hidden" type="button" aria-controls="practiceSidebar" aria-expanded="false">
-          <span class="btn-icon" aria-hidden="true">🎛️</span>
-          <span class="btn-label">Filters</span>
-        </button>
-        <button id="onboardHelpBtn" class="btn btn-ghost onboard-help-btn header-btn md:hidden" type="button" aria-haspopup="dialog" aria-controls="onboardModal" aria-label="Help">
-          <span class="onboard-help-icon" aria-hidden="true">?</span>
-          <span class="onboard-help-label">Help</span>
-        </button>
+      <div class="header-actions grid grid-cols-2 gap-2 w-full sm:flex sm:flex-nowrap sm:items-center sm:justify-start md:justify-end md:gap-3">
+        <div class="header-actions-lang flex items-center">
+          <button id="btnLangToggle" class="btn-lang header-btn" aria-label="Switch language" title="Switch language">
+            <span class="lang-icon" aria-hidden="true">🌐</span>
+            <span class="lang-seg" aria-hidden="true">
+              <span class="lang-seg-btn is-on">EN</span>
+              <span class="lang-seg-btn">CY</span>
+            </span>
+          </button>
+        </div>
+        <div class="header-actions-controls flex items-center justify-end gap-2 sm:gap-2">
+          <nav class="hidden md:flex items-center gap-2" aria-label="Primary">
+          </nav>
+          <div class="hidden md:block h-6 w-px bg-slate-200/80"></div>
+          <button id="mobileFiltersToggle" class="btn btn-ghost btn-mobile-filters header-btn md:hidden" type="button" aria-controls="practiceSidebar" aria-expanded="false">
+            <span class="btn-icon" aria-hidden="true">🎛️</span>
+            <span class="btn-label">Filters</span>
+          </button>
+          <button id="onboardHelpBtn" class="btn btn-ghost onboard-help-btn header-btn md:hidden" type="button" aria-haspopup="dialog" aria-controls="onboardModal" aria-label="Help">
+            <span class="onboard-help-icon" aria-hidden="true">?</span>
+            <span class="onboard-help-label">Help</span>
+          </button>
+        </div>
       </div>
     </div>
 
