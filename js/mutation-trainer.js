@@ -1269,6 +1269,8 @@ function updateViewportMetrics() {
       || active.tagName === "TEXTAREA"
       || active.isContentEditable);
   const effectiveOffset = isTyping ? keyboardOffset : 0;
+  const viewportHeight = vv?.height || window.innerHeight;
+  document.documentElement.style.setProperty("--viewport-height", `${viewportHeight}px`);
   document.documentElement.style.setProperty("--keyboard-offset", `${effectiveOffset}px`);
   document.body.classList.toggle("keyboard-open", effectiveOffset > 0);
 }
@@ -1349,7 +1351,6 @@ function wireUi() {
     getMobileFiltersToggles().forEach((toggle) => {
       toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
     });
-    $(".mobile-filters-body")?.scrollTo({ top: 0 });
   };
   document.addEventListener("click", (event) => {
     const toggle = event.target?.closest?.("#mobileFiltersToggle");
