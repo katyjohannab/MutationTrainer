@@ -6,6 +6,8 @@
   <title>Welsh Mutation Trainer</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/themes/light.css">
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.14.0/cdn/shoelace.js"></script>
   <link rel="stylesheet" href="css/styles.css" />
 
   <style>
@@ -529,6 +531,20 @@
       </div>
     </footer>
   </div>
+
+  <sl-drawer id="filtersDrawer" placement="bottom" label="Filters">
+    <div class="drawer-header">
+      <div class="drawer-title">Filters</div>
+      <button type="button" class="pill drawer-close" data-close-drawer>Close</button>
+    </div>
+    <div id="filtersDrawerBody" class="drawer-body">
+      <!-- placeholder only for now -->
+    </div>
+    <div class="drawer-footer">
+      <button type="button" class="pill pill-primary" data-apply-filters>Apply</button>
+      <button type="button" class="pill" data-clear-filters>Clear</button>
+    </div>
+  </sl-drawer>
 <script type="module" src="js/mutation-trainer.js"></script>
 
 </body>

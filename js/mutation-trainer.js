@@ -1342,6 +1342,8 @@ function wireUi() {
 
   initCardUi();
 
+  const filtersDrawer = $("#filtersDrawer");
+  const mobileFiltersToggle = $("#mobileFiltersToggle");
   const getMobileFiltersToggles = () => [$("#mobileFiltersToggle")].filter(Boolean);
   const setMobileFiltersOpen = (isOpen) => {
     const sidebar = $("#practiceSidebar");
@@ -1355,8 +1357,19 @@ function wireUi() {
   document.addEventListener("click", (event) => {
     const toggle = event.target?.closest?.("#mobileFiltersToggle");
     if (!toggle) return;
+    if (filtersDrawer) {
+      filtersDrawer.show();
+      toggle.setAttribute("aria-expanded", "true");
+      return;
+    }
     const isOpen = $("#practiceSidebar")?.classList.contains("is-open");
     setMobileFiltersOpen(!isOpen);
+  });
+  filtersDrawer?.addEventListener("sl-after-hide", () => {
+    mobileFiltersToggle?.setAttribute("aria-expanded", "false");
+  });
+  $("[data-close-drawer]")?.addEventListener("click", () => {
+    filtersDrawer?.hide();
   });
 
   applyOnboardDismissedState();
