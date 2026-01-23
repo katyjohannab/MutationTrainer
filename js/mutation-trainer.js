@@ -14,7 +14,8 @@ import {
   resetFilters,
   hasCustomFilters,
   LABEL,
-  label
+  label,
+  getOnboardHelpLabel
 } from "./state.js";
 import { pickNextSmartIdx } from "./leitner.js";
 import { buildCompleteSentence } from "./tts.js";
@@ -95,8 +96,12 @@ function applyLanguage() {
   });
   const helpBtn = $("#onboardHelpBtn");
   if (helpBtn) {
-    helpBtn.setAttribute("aria-label", LABEL[lang].ui.onboardHelp);
-    helpBtn.setAttribute("title", LABEL[lang].ui.onboardHelp);
+    const helpLabel = getOnboardHelpLabel(lang);
+    helpBtn.setAttribute("aria-label", helpLabel);
+    helpBtn.setAttribute("title", helpLabel);
+    const helpLabelEl = helpBtn.querySelector(".onboard-help-label");
+    if (helpLabelEl) helpLabelEl.textContent = helpLabel;
+    else helpBtn.textContent = helpLabel;
   }
   if ($("#onboardModalTitle")) $("#onboardModalTitle").textContent = LABEL[lang].ui.onboardModalTitle;
   if ($("#onboardModalDesc")) $("#onboardModalDesc").textContent = LABEL[lang].ui.onboardModalDesc;

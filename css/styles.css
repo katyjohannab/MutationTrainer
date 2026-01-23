@@ -220,7 +220,7 @@ body{
   .header-actions .btn-lang,
   .header-actions .onboard-help-btn{
     height: 2.25rem;
-    padding: 0 0.65rem;
+    padding: 0 0.55rem;
     border-radius: 0.65rem;
     line-height: 1;
   }
@@ -235,7 +235,13 @@ body{
     font-size: 0.7rem;
   }
   .onboard-help-btn{
-    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+  }
+  .onboard-help-label{
+    white-space: nowrap;
   }
   .cymru-red-bar{
     height: 2px;
@@ -1572,12 +1578,23 @@ body:not(.keyboard-open) .mobile-action-bar{
 
 /* ---------- Onboarding help ---------- */
 .onboard-help-btn{
-  width: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   height: 2.25rem;
-  padding: 0;
+  padding: 0 0.65rem;
   border-radius: 999px;
   font-weight: 700;
   font-size: 1rem;
+}
+
+.onboard-help-icon{
+  font-weight: 800;
+  line-height: 1;
+}
+
+.onboard-help-label{
+  line-height: 1;
 }
 
 .onboard-card{
