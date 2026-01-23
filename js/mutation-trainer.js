@@ -1324,6 +1324,7 @@ function wireUi() {
     const sidebar = $("#practiceSidebar");
     if (!sidebar) return;
     sidebar.classList.toggle("is-open", isOpen);
+    document.body.classList.toggle("mobile-filters-open", isOpen);
     getMobileFiltersToggles().forEach((toggle) => {
       toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
     });
@@ -1332,6 +1333,7 @@ function wireUi() {
       $(".mobile-filters-body")?.scrollTo({ top: 0 });
     } else {
       unlockScroll("mobile-filters");
+      $(".mobile-filters-body")?.scrollTo({ top: 0 });
     }
   };
   const bindMobileFiltersToggle = () => {
