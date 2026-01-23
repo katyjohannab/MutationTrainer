@@ -1344,6 +1344,18 @@ function wireUi() {
 
   const filtersDrawer = $("#filtersDrawer");
   const mobileFiltersToggle = $("#mobileFiltersToggle");
+  const filtersPanel = $("#filtersPanel");
+  const filtersPanelHost = $("#filtersPanelHost");
+  const filtersDrawerBody = $("#filtersDrawerBody");
+  const syncFiltersPanelPlacement = () => {
+    if (!filtersPanel || !filtersPanelHost || !filtersDrawerBody) return;
+    const target = window.innerWidth < 768 ? filtersDrawerBody : filtersPanelHost;
+    if (filtersPanel.parentElement !== target) {
+      target.appendChild(filtersPanel);
+    }
+  };
+  syncFiltersPanelPlacement();
+  window.addEventListener("resize", syncFiltersPanelPlacement);
   document.addEventListener("click", (event) => {
     const toggle = event.target?.closest?.("#mobileFiltersToggle");
     if (!toggle) return;
