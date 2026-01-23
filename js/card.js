@@ -380,7 +380,7 @@ export function renderPractice() {
   const addChip = (text, onClear) => {
     const c = document.createElement("button");
     c.type = "button";
-    c.className = "chip";
+    c.className = "chip pill";
     c.innerHTML = `<span>${esc(text)}</span>`;
     if (onClear) {
       const x = document.createElement("span");
