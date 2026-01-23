@@ -156,7 +156,10 @@
     <!-- Main panels -->
     <main id="main" class="practice-layout grow max-w-6xl mx-auto p-4 pb-24 md:pb-4">
       <div class="md:hidden flex justify-end mb-2">
-        <button id="mobileFiltersToggleShell" class="btn btn-ghost btn-compact" type="button" aria-expanded="false" aria-controls="practiceSidebar">Filters</button>
+        <button id="mobileFiltersToggleShell" class="btn btn-ghost btn-compact btn-mobile-filters" type="button" aria-expanded="false" aria-controls="practiceSidebar">
+          <span class="btn-icon" aria-hidden="true">🎛️</span>
+          <span class="btn-label">Filters</span>
+        </button>
       </div>
       <div id="practiceView" class="grid md:grid-cols-3 gap-4 items-start">
         <!-- Left: practice card -->
