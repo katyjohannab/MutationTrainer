@@ -1222,7 +1222,9 @@ body{
 
 :root{
   --keyboard-offset: 0px;
-  --mobile-bar-height: 78px;
+  --mobile-bar-height: 88px;
+  --mobile-bar-safe-area: env(safe-area-inset-bottom);
+  --mobile-bar-total: calc(var(--mobile-bar-height) + var(--mobile-bar-safe-area));
   --mobile-header-height: 54px;
 }
 
@@ -1230,8 +1232,8 @@ body{
   z-index: 10030;
   transform: translateY(calc(-1 * var(--keyboard-offset)));
   transition: transform 0.2s ease;
-  height: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
+  height: var(--mobile-bar-total);
+  padding-bottom: var(--mobile-bar-safe-area);
   background: rgba(255,255,255,0.92);
   border-top-color: rgba(15,23,42,0.08);
   box-shadow: 0 -3px 10px rgba(15,23,42,0.05);
@@ -1244,9 +1246,11 @@ body:not(.keyboard-open) .mobile-action-bar{
 }
 
 .mobile-action-bar-inner{
-  padding-bottom: 0.5rem;
+  height: var(--mobile-bar-height);
+  padding-bottom: 0;
   width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .mobile-action-bar .btn{
@@ -1286,10 +1290,10 @@ body:not(.keyboard-open) .mobile-action-bar{
     min-width: 12.5rem;
   }
   #answerBox{
-    scroll-margin-bottom: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom) + var(--keyboard-offset) + 2.5rem);
+    scroll-margin-bottom: calc(var(--mobile-bar-total) + var(--keyboard-offset) + 2.5rem);
   }
   #practiceCard .practice-answerBlock{
-    scroll-margin-bottom: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom) + var(--keyboard-offset) + 2.5rem);
+    scroll-margin-bottom: calc(var(--mobile-bar-total) + var(--keyboard-offset) + 2.5rem);
   }
   .mobile-action-bar-inner{
     gap: 0.35rem;
@@ -1713,7 +1717,7 @@ body.scroll-locked{
     width: 100%;
     min-height: 0;
     padding-top: var(--mobile-header-height);
-    padding-bottom: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom));
+    padding-bottom: var(--mobile-bar-total);
   }
   #practiceView,
   .practice-panel{
