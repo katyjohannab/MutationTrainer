@@ -1480,7 +1480,7 @@ function wireUi() {
     if (!(target instanceof HTMLElement)) return;
     const isTextField = target.matches("input, textarea, [contenteditable='true']");
     if (!isTextField) return;
-    const mobileFiltersBody = target.closest(".mobile-filters-body");
+    const mobileFiltersBody = target.closest(".mobile-filters-body, #filtersDrawerBody");
     if (!mobileFiltersBody) return;
     requestAnimationFrame(() => {
       target.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });

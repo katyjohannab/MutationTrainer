@@ -113,7 +113,7 @@ sl-drawer#filtersDrawer::part(body){
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: min(80vh, 34rem);
+  max-height: 100dvh;
   overflow: hidden;
 }
 .drawer-header{
@@ -130,7 +130,8 @@ sl-drawer#filtersDrawer::part(body){
 .drawer-body{
   flex: 1 1 auto;
   min-height: 3rem;
-  overflow-y: auto;
+  max-height: calc(100dvh - 160px);
+  overflow: auto;
   padding-right: 0.25rem;
   -webkit-overflow-scrolling: touch;
 }
