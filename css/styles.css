@@ -701,11 +701,11 @@ body{
 
 .practice-meta-bar{
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content: space-between;
   gap: 0.85rem;
   margin-bottom: 0.4rem;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .practice-header{
@@ -717,9 +717,10 @@ body{
 .practice-meta-left{
   display:flex;
   align-items:center;
-  gap: 0.45rem;
-  color: var(--muted);
-  font-size: 0.75rem;
+  gap: 0.4rem;
+  color: rgba(100,116,139,0.85);
+  font-size: 0.78rem;
+  flex-wrap: wrap;
 }
 
 .practice-meta-left .meta-item{
@@ -744,15 +745,15 @@ body{
 
 .practice-meta-left .meta-value{
   font-weight: 600;
-  color: rgba(30,41,59,0.82);
+  color: rgba(51,65,85,0.9);
 }
 
 .practice-meta-left .statNum{
-  font-weight: 800;
-  font-size: 1.15rem;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  color: rgba(15,23,42,0.95);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  color: rgba(51,65,85,0.9);
 }
 
 .practice-meta-left .meta-sep{
@@ -763,6 +764,12 @@ body{
   padding: 0.1rem 0.35rem;
   font-size: 0.7rem;
   color: rgba(100,116,139,0.7);
+}
+
+.practice-meta-summary .practice-progress-line{
+  margin: 0;
+  font-size: inherit;
+  color: inherit;
 }
 
 .practice-meta-right{
@@ -851,7 +858,7 @@ body{
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  margin-bottom: 1.1rem;
+  margin-bottom: 0.9rem;
 }
 
 .practice-progress-line{

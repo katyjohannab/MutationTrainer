@@ -161,14 +161,16 @@
           <!-- Slim meta bar (Ticket 2.1) -->
           <div id="practiceHeader" class="practice-header">
             <div id="practiceMetaBar" class="practice-meta-bar">
-              <div class="practice-meta-left">
+              <div class="practice-meta-left practice-meta-summary">
+                <span id="practiceProgressLine" class="practice-progress-line"></span>
+                <span class="meta-sep" aria-hidden="true">·</span>
                 <span class="meta-item meta-accuracy">
-                  <span id="practiceAccTitle" class="meta-label statLab">Accuracy</span>
+                  <span id="practiceAccTitle" class="meta-label statLab sr-only">Accuracy</span>
                   <span id="practiceAcc" class="meta-value statNum">0%</span>
                 </span>
                 <span class="meta-sep" aria-hidden="true">·</span>
                 <span class="meta-item meta-streak">
-                  <span id="practiceStreakTitle" class="meta-label statLab">Streak</span>
+                  <span id="practiceStreakTitle" class="meta-label statLab sr-only">Streak</span>
                   <span class="meta-value"><span aria-hidden="true">🔥</span><span id="practiceStreak" class="statNum">0</span></span>
                 </span>
                 <button id="btnResetStreakTop" class="btn btn-ghost meta-reset" title="Reset streak" type="button">↺</button>
@@ -176,7 +178,6 @@
               <div id="practiceMetaControls" class="practice-meta-right"></div>
             </div>
             <div id="practiceProgress" class="practice-progress" aria-live="polite">
-              <div id="practiceProgressLine" class="practice-progress-line"></div>
               <div id="practiceProgressBar" class="practice-progress-bar" aria-hidden="true">
                 <div id="practiceProgressBarFill" class="practice-progress-bar-fill"></div>
               </div>
