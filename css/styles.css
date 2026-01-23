@@ -661,9 +661,37 @@ body{
   color: rgba(100,116,139,0.85);
 }
 
+.practice-meta-left .statLab{
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
 .practice-meta-left .meta-value{
   font-weight: 600;
   color: rgba(30,41,59,0.82);
+}
+
+.practice-meta-left .statNum{
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: rgba(15,23,42,0.95);
+}
+
+.practice-meta-left .statUnit{
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin-left: 0.08rem;
+}
+
+.practice-meta-left .statIcon{
+  font-size: 1.15rem;
+  line-height: 1;
 }
 
 .practice-meta-left .meta-sep{
@@ -893,6 +921,12 @@ body{
     font-size: 0.7rem;
     color: rgba(148,163,184,0.85);
   }
+  .practice-meta-left .statLab{
+    font-size: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    opacity: 1;
+  }
   .practice-meta-left .meta-streak .meta-label{
     display: none;
   }
@@ -900,6 +934,22 @@ body{
     display:inline-flex;
     align-items:center;
     gap: 0.25rem;
+  }
+  .practice-meta-left .statNum{
+    font-size: inherit;
+    letter-spacing: inherit;
+    font-weight: inherit;
+    color: inherit;
+  }
+  .practice-meta-left .statUnit{
+    font-size: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    opacity: inherit;
+  }
+  .practice-meta-left .statIcon{
+    font-size: inherit;
+    line-height: inherit;
   }
   .practice-meta-left .meta-reset{
     display: none;
