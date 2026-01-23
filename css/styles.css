@@ -1776,14 +1776,32 @@ body.scroll-locked{
     top: 0;
     background: #f8fafc;
     border-bottom: 1px solid rgba(15,23,42,0.12);
+    box-shadow: 0 1px 0 rgba(15,23,42,0.04);
     padding: 0.65rem 1rem;
     z-index: 3;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.5rem;
   }
   .mobile-filters-close{
     gap: .35rem;
+    justify-self: start;
   }
   .mobile-filters-close-text{
     font-size: .75rem;
+  }
+  .mobile-filters-title{
+    justify-self: center;
+    text-align: center;
+  }
+  .mobile-filters-apply{
+    justify-self: end;
+    padding: 0.35rem 0.65rem;
+    min-height: 1.8rem;
+    font-size: 0.75rem;
+    border-radius: 0.6rem;
+    line-height: 1;
   }
   .mobile-filters-body{
     padding: 0 1rem calc(1.5rem + var(--keyboard-offset));

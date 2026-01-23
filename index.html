@@ -189,13 +189,13 @@
         <div id="practiceSidebar" class="practice-sidebar md:col-span-1 flex flex-col gap-4">
           <button id="mobileFiltersBackdrop" class="mobile-filters-backdrop md:hidden" type="button" aria-label="Close filters"></button>
           <div class="practice-sidebar-sheet flex flex-col gap-4">
-            <div class="mobile-filters-header md:hidden flex items-center gap-2">
+            <div class="mobile-filters-header md:hidden">
               <button id="mobileFiltersClose" class="btn btn-ghost btn-compact mobile-filters-close" type="button" aria-label="Close filters">
                 <span aria-hidden="true">✕</span>
                 <span class="mobile-filters-close-text">Close</span>
               </button>
-              <span id="mobileFiltersTitle" class="text-sm font-semibold flex-1 text-center">Filters</span>
-              <button id="mobileFiltersApply" class="btn btn-primary btn-compact" type="button">Apply</button>
+              <span id="mobileFiltersTitle" class="mobile-filters-title text-sm font-semibold">Filters</span>
+              <button id="mobileFiltersApply" class="btn btn-primary btn-compact mobile-filters-apply" type="button">Apply</button>
             </div>
             <div class="mobile-filters-body">
               <div id="filtersPanel" class="panel rounded-2xl p-4">
