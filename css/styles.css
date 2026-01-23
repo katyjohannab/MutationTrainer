@@ -1616,7 +1616,7 @@ body:not(.keyboard-open) .mobile-action-bar{
   box-shadow: 0 18px 40px rgba(15,23,42,0.16);
 }
 
-body.onboard-modal-open{
+body.scroll-locked{
   overflow: hidden;
 }
 
@@ -1761,9 +1761,6 @@ body.onboard-modal-open{
   }
 }
 
-body.mobile-filters-open{
-  overflow: hidden;
-}
 
 /* =========================================================
    Tailwind utility overrides (KEEP LAST)
