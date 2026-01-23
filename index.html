@@ -213,7 +213,7 @@
 
                   <details id="coreFiltersSection" open>
                     <summary id="coreFiltersSummary" class="cursor-pointer text-sm font-semibold select-none">Core filters</summary>
-                    <div class="mt-3">
+                    <div class="filters-section-body">
                       <div id="coreFiltersHelper" class="text-xs text-slate-500 mb-2"></div>
                       <div id="basicFocus">
                         <div class="grid grid-cols-1 gap-2 text-sm">
@@ -225,9 +225,6 @@
                             <div id="categoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Categories</div>
                             <div id="categoryPills" class="flex flex-wrap gap-1 items-center">
                               <div id="coreCategoryChips" class="pill-group"></div>
-                              <div id="extraCategoryChips" class="pill-group is-hidden"></div>
-                              <div id="allCategoryChips" class="pill-group is-hidden"></div>
-                              <button id="moreFiltersToggle" class="pill pill-more" type="button">More filters</button>
                               <button id="btnFiltersClear" class="pill pill-clear" type="button">
                                 <span class="pill-label">Clear filters</span>
                                 <span class="pill-icon" aria-hidden="true">×</span>
@@ -237,12 +234,22 @@
                         </div>
                       </div>
                     </div>
-                    <div id="moreFiltersPanel" class="filters-extra is-hidden">
-                      <div class="mt-2">
-                        <label id="triggerLabel" class="text-xs uppercase tracking-wide text-slate-500">Filter by Trigger</label>
-                        <input id="triggerFilter" class="mt-1 w-full border rounded-xl px-3 py-1.5" placeholder="e.g. i, o, dwy, tri, y (article), neu" />
+                  </details>
+
+                  <details id="moreFiltersSection">
+                    <summary id="moreFiltersToggle" class="cursor-pointer text-sm font-semibold select-none">More filters</summary>
+                    <div class="filters-section-body">
+                      <div class="flex flex-wrap gap-1 items-center">
+                        <div id="extraCategoryChips" class="pill-group is-hidden"></div>
+                        <div id="allCategoryChips" class="pill-group is-hidden"></div>
                       </div>
-                      <div class="mt-3 flex flex-wrap gap-1"></div>
+                      <div id="moreFiltersPanel" class="filters-extra is-hidden">
+                        <div class="mt-2">
+                          <label id="triggerLabel" class="text-xs uppercase tracking-wide text-slate-500">Filter by Trigger</label>
+                          <input id="triggerFilter" class="mt-1 w-full border rounded-xl px-3 py-1.5" placeholder="e.g. i, o, dwy, tri, y (article), neu" />
+                        </div>
+                        <div class="mt-3 flex flex-wrap gap-1"></div>
+                      </div>
                     </div>
                   </details>
                 </div>

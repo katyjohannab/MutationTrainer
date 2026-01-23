@@ -363,8 +363,19 @@ body{
   color: var(--cymru-red-ink);
 }
 
+.filters-section-body{
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .filters-extra{
   margin-top: 0.75rem;
+}
+
+.filters-section-body .filters-extra{
+  margin-top: 0;
 }
 
 .is-hidden{
@@ -1693,6 +1704,10 @@ body.scroll-locked{
     cursor: default;
     list-style: none;
     pointer-events: none;
+  }
+  #filtersPanel #moreFiltersSection > summary{
+    cursor: pointer;
+    pointer-events: auto;
   }
   #filtersPanel details > summary::-webkit-details-marker{
     display: none;
