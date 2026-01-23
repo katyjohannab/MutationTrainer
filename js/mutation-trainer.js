@@ -1344,6 +1344,17 @@ function wireUi() {
 
   const filtersDrawer = $("#filtersDrawer");
   const mobileFiltersToggle = $("#mobileFiltersToggle");
+  const filtersPanel = $("#filtersPanel");
+  const filtersDrawerBody = $("#filtersDrawerBody");
+  const desktopFiltersHost = $("#desktopFiltersHost");
+  const placeFiltersPanel = () => {
+    if (!filtersPanel) return;
+    const isDesktop = window.innerWidth >= 768;
+    const target = isDesktop ? desktopFiltersHost : filtersDrawerBody;
+    if (!target || filtersPanel.parentElement === target) return;
+    target.appendChild(filtersPanel);
+  };
+  placeFiltersPanel();
   document.addEventListener("click", (event) => {
     const toggle = event.target?.closest?.("#mobileFiltersToggle");
     if (!toggle) return;
@@ -1456,6 +1467,7 @@ function wireUi() {
 
   window.addEventListener("resize", () => {
     if (window.innerWidth >= 768) filtersDrawer?.hide();
+    placeFiltersPanel();
   });
   const scheduleViewportUpdate = () => requestAnimationFrame(updateViewportMetrics);
   const handleFocusIn = (event) => {
