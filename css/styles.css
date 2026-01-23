@@ -98,6 +98,11 @@ body{
     min-height: 100svh;
     min-height: 100dvh;
   }
+  #app{
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 /* ---------- Panels ---------- */
@@ -183,9 +188,12 @@ body{
 }
 
 @media (max-width: 767px){
+  #siteHeader{
+    height: var(--mobile-header-height);
+  }
   .site-header-inner{
     width: 100%;
-    min-height: 52px;
+    min-height: var(--mobile-header-height);
     padding-top: 4px;
     padding-bottom: 4px;
     flex-direction: row;
@@ -1209,6 +1217,7 @@ body{
 :root{
   --keyboard-offset: 0px;
   --mobile-bar-height: 78px;
+  --mobile-header-height: 60px;
 }
 
 .mobile-action-bar{
@@ -1692,8 +1701,12 @@ body.scroll-locked{
     overflow-x: hidden;
   }
   #main{
+    flex: 1 1 auto;
+    overflow-y: auto;
     max-width: 100%;
     width: 100%;
+    min-height: 0;
+    padding-top: var(--mobile-header-height);
     padding-bottom: calc(var(--mobile-bar-height) + env(safe-area-inset-bottom));
   }
   #practiceView,
@@ -1701,6 +1714,10 @@ body.scroll-locked{
     max-width: 100%;
     width: 100%;
     min-width: 0;
+  }
+  #practiceView,
+  #practiceCard{
+    min-height: 0;
   }
   #practiceSidebar{
     position: fixed;
