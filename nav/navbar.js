@@ -62,6 +62,7 @@
       const isActive = btnLang === lang;
       const languageLabel = labelMap[btnLang] || "Language";
       btn.classList.toggle("is-active", isActive);
+      btn.classList.toggle("pill-active", isActive);
       btn.setAttribute("aria-pressed", isActive ? "true" : "false");
       btn.title = isActive ? `Current language: ${languageLabel}` : `Switch to ${languageLabel}`;
       btn.setAttribute("aria-label", isActive ? `Current language: ${languageLabel}` : `Switch to ${languageLabel}`);
