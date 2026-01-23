@@ -1441,10 +1441,25 @@ function wireUi() {
     if (window.innerWidth >= 768) setMobileFiltersOpen(false);
   });
   const scheduleViewportUpdate = () => requestAnimationFrame(updateViewportMetrics);
+  const handleFocusIn = (event) => {
+    scheduleViewportUpdate();
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const isTextField = target.matches("input, textarea, [contenteditable='true']");
+    if (!isTextField) return;
+    const mobileFiltersBody = target.closest(".mobile-filters-body");
+    if (!mobileFiltersBody) return;
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    });
+  };
+  const handleFocusOut = () => scheduleViewportUpdate();
   scheduleViewportUpdate();
   window.addEventListener("resize", scheduleViewportUpdate);
   window.visualViewport?.addEventListener("resize", scheduleViewportUpdate);
   window.visualViewport?.addEventListener("scroll", scheduleViewportUpdate);
+  document.addEventListener("focusin", handleFocusIn);
+  document.addEventListener("focusout", handleFocusOut);
 
 }
 
