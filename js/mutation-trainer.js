@@ -1344,32 +1344,19 @@ function wireUi() {
 
   const filtersDrawer = $("#filtersDrawer");
   const mobileFiltersToggle = $("#mobileFiltersToggle");
-  const getMobileFiltersToggles = () => [$("#mobileFiltersToggle")].filter(Boolean);
-  const setMobileFiltersOpen = (isOpen) => {
-    const sidebar = $("#practiceSidebar");
-    if (!sidebar) return;
-    sidebar.classList.toggle("is-open", isOpen);
-    document.body.classList.toggle("mobile-filters-open", isOpen);
-    getMobileFiltersToggles().forEach((toggle) => {
-      toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-    });
-  };
   document.addEventListener("click", (event) => {
     const toggle = event.target?.closest?.("#mobileFiltersToggle");
     if (!toggle) return;
-    if (filtersDrawer) {
-      filtersDrawer.show();
-      toggle.setAttribute("aria-expanded", "true");
-      return;
-    }
-    const isOpen = $("#practiceSidebar")?.classList.contains("is-open");
-    setMobileFiltersOpen(!isOpen);
+    filtersDrawer?.show();
+  });
+  filtersDrawer?.addEventListener("sl-after-show", () => {
+    mobileFiltersToggle?.setAttribute("aria-expanded", "true");
   });
   filtersDrawer?.addEventListener("sl-after-hide", () => {
     mobileFiltersToggle?.setAttribute("aria-expanded", "false");
   });
-  $("[data-close-drawer]")?.addEventListener("click", () => {
-    filtersDrawer?.hide();
+  $$("[data-close-drawer]").forEach((btn) => {
+    btn.addEventListener("click", () => filtersDrawer?.hide());
   });
 
   applyOnboardDismissedState();
@@ -1464,14 +1451,11 @@ function wireUi() {
   $("#mbSkip")?.addEventListener("click", () => $("#btnSkip")?.click());
   $("#mbNext")?.addEventListener("click", () => nextCard(1));
 
-  $("#mobileFiltersApply")?.addEventListener("click", () => setMobileFiltersOpen(false));
-  $("#mobileFiltersClose")?.addEventListener("click", () => setMobileFiltersOpen(false));
-  $("#mobileFiltersBackdrop")?.addEventListener("click", () => setMobileFiltersOpen(false));
   $("#mobileClearFocus")?.addEventListener("click", () => clearFocusAndRender());
   $("#mobileClearFilters")?.addEventListener("click", () => clearFiltersAndRender());
 
   window.addEventListener("resize", () => {
-    if (window.innerWidth >= 768) setMobileFiltersOpen(false);
+    if (window.innerWidth >= 768) filtersDrawer?.hide();
   });
   const scheduleViewportUpdate = () => requestAnimationFrame(updateViewportMetrics);
   const handleFocusIn = (event) => {
@@ -1480,7 +1464,7 @@ function wireUi() {
     if (!(target instanceof HTMLElement)) return;
     const isTextField = target.matches("input, textarea, [contenteditable='true']");
     if (!isTextField) return;
-    const mobileFiltersBody = target.closest(".mobile-filters-body, #filtersDrawerBody");
+    const mobileFiltersBody = target.closest("#filtersDrawerBody");
     if (!mobileFiltersBody) return;
     requestAnimationFrame(() => {
       target.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
