@@ -302,8 +302,7 @@ function updateProgressLine({ currentIndex, totalCards }) {
   if (!lineEl) return;
   const safeCurrent = Number.isFinite(currentIndex) ? currentIndex : 0;
   const safeTotal = Number.isFinite(totalCards) ? totalCards : 0;
-  const activeFilterLabel = LABEL?.[lang]?.ui?.activeFilterLabel || (lang === "cy" ? "Hidl actif" : "Active Filter");
-  lineEl.textContent = `${activeFilterLabel}: ${getProgressFocusLabel()} · ${safeCurrent}/${safeTotal}`;
+  lineEl.textContent = `${getProgressFocusLabel()} · ${safeCurrent}/${safeTotal}`;
   const barFill = $("#practiceProgressBarFill");
   if (barFill) {
     const pct = safeTotal > 0 ? Math.min((safeCurrent / safeTotal) * 100, 100) : 0;
