@@ -90,6 +90,7 @@ body{
   --pill-gap: 8px;
   --pill-font: 14px;
   --pill-line: 1.1;
+  --drawer-pad: 1rem;
 
   /* Layout heights */
   --header-h: 56px;
@@ -100,6 +101,44 @@ body{
   --tap-target-min-height: 2.5rem;
   --tap-target-pad-y: 0.45rem;
   --tap-target-pad-x: 0.75rem;
+}
+
+/* ---------- Mobile filters drawer (Shoelace) ---------- */
+sl-drawer#filtersDrawer::part(panel){
+  border-radius: 1.5rem 1.5rem 0 0;
+  box-shadow: 0 -18px 40px rgba(15,23,42,0.18);
+}
+sl-drawer#filtersDrawer::part(body){
+  padding: var(--drawer-pad);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: min(80vh, 34rem);
+  overflow: hidden;
+}
+.drawer-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.drawer-title{
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.drawer-body{
+  flex: 1 1 auto;
+  min-height: 3rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+.drawer-footer{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 /* ---------- Page background ---------- */
