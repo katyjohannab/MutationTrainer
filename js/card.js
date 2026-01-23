@@ -375,7 +375,7 @@ export function renderPractice() {
   }
 
   const summary = document.createElement("div");
-  summary.className = "practice-filter-summary flex flex-wrap items-center gap-2 mb-4";
+  summary.className = "practice-filter-summary hidden md:flex flex-wrap items-center gap-2 mb-4";
 
   const addChip = (text, onClear) => {
     const c = document.createElement("button");

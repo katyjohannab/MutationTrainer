@@ -155,12 +155,6 @@
 
     <!-- Main panels -->
     <main id="main" class="practice-layout grow max-w-6xl mx-auto p-4 pb-24 md:pb-4">
-      <div class="md:hidden flex justify-end mb-2">
-        <button id="mobileFiltersToggleShell" class="btn btn-ghost btn-compact btn-mobile-filters" type="button" aria-expanded="false" aria-controls="practiceSidebar">
-          <span class="btn-icon" aria-hidden="true">🎛️</span>
-          <span class="btn-label">Filters</span>
-        </button>
-      </div>
       <div id="practiceView" class="grid md:grid-cols-3 gap-4 items-start">
         <!-- Left: practice card -->
         <div class="practice-panel md:col-span-2 panel rounded-2xl p-6 md:p-7">
@@ -197,6 +191,7 @@
           <button id="mobileFiltersBackdrop" class="mobile-filters-backdrop md:hidden" type="button" aria-label="Close filters"></button>
           <div class="practice-sidebar-sheet flex flex-col gap-4">
             <div class="mobile-filters-header md:hidden">
+              <div class="mobile-filters-handle" aria-hidden="true"></div>
               <button id="mobileFiltersClose" class="btn btn-ghost btn-compact mobile-filters-close" type="button" aria-label="Close filters">
                 <span aria-hidden="true">✕</span>
                 <span class="mobile-filters-close-text">Close</span>
@@ -232,6 +227,21 @@
                             <div id="categoriesTitle" class="text-xs uppercase tracking-wide text-slate-500 mb-1">Categories</div>
                             <div id="categoryPills" class="flex flex-wrap gap-1 items-center">
                               <div id="coreCategoryChips" class="pill-group"></div>
+                              <button id="moreFiltersToggle" class="pill pill-more" type="button" aria-expanded="false" aria-controls="moreFiltersInline">
+                                <span class="pill-label">More filters</span>
+                                <span class="pill-icon" aria-hidden="true">▾</span>
+                              </button>
+                              <div id="moreFiltersInline" class="more-filters-inline flex flex-wrap gap-1 items-center">
+                                <div id="extraCategoryChips" class="pill-group is-hidden"></div>
+                                <div id="allCategoryChips" class="pill-group is-hidden"></div>
+                                <div id="moreFiltersPanel" class="filters-extra is-hidden">
+                                  <div class="mt-2">
+                                    <label id="triggerLabel" class="text-xs uppercase tracking-wide text-slate-500">Filter by Trigger</label>
+                                    <input id="triggerFilter" class="mt-1 w-full border rounded-xl px-3 py-1.5" placeholder="e.g. i, o, dwy, tri, y (article), neu" />
+                                  </div>
+                                  <div class="mt-3 flex flex-wrap gap-1"></div>
+                                </div>
+                              </div>
                               <button id="btnFiltersClear" class="pill pill-clear" type="button">
                                 <span class="pill-label">Clear filters</span>
                                 <span class="pill-icon" aria-hidden="true">×</span>
@@ -243,24 +253,7 @@
                     </div>
                   </details>
 
-                  <section id="moreFiltersSection">
-                    <button id="moreFiltersToggle" class="cursor-pointer text-sm font-semibold select-none" type="button" aria-expanded="false" aria-controls="allCategoryChips moreFiltersPanel">
-                      More filters
-                    </button>
-                    <div class="filters-section-body">
-                      <div class="flex flex-wrap gap-1 items-center">
-                        <div id="extraCategoryChips" class="pill-group is-hidden"></div>
-                        <div id="allCategoryChips" class="pill-group is-hidden"></div>
-                      </div>
-                      <div id="moreFiltersPanel" class="filters-extra is-hidden">
-                        <div class="mt-2">
-                          <label id="triggerLabel" class="text-xs uppercase tracking-wide text-slate-500">Filter by Trigger</label>
-                          <input id="triggerFilter" class="mt-1 w-full border rounded-xl px-3 py-1.5" placeholder="e.g. i, o, dwy, tri, y (article), neu" />
-                        </div>
-                        <div class="mt-3 flex flex-wrap gap-1"></div>
-                      </div>
-                    </div>
-                  </section>
+                  <section id="moreFiltersSection" class="hidden"></section>
                 </div>
               </div>
             </div>
