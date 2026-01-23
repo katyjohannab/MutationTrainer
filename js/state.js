@@ -381,3 +381,7 @@ export function label(section, key) {
   const lang = state.lang || "en";
   return (LABEL?.[lang]?.[section]?.[key]) || key;
 }
+
+export function getOnboardHelpLabel(lang = state.lang || "en") {
+  return LABEL?.[lang]?.ui?.onboardHelp || "Help";
+}
