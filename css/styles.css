@@ -1742,13 +1742,7 @@ body.scroll-locked{
     overscroll-behavior: contain;
   }
   #filtersPanel details > summary{
-    cursor: default;
     list-style: none;
-    pointer-events: none;
-  }
-  #filtersPanel #moreFiltersSection > summary{
-    cursor: pointer;
-    pointer-events: auto;
   }
   #filtersPanel details > summary::-webkit-details-marker{
     display: none;
@@ -1759,6 +1753,16 @@ body.scroll-locked{
     border-radius: 999px;
     border: 3px solid rgba(255,255,255,0.70);
   }
+}
+
+#moreFiltersToggle{
+  background: transparent;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
 }
 
 @media (max-width: 767px){

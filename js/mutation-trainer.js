@@ -991,8 +991,8 @@ function buildFilters() {
   const moreFiltersPanel = $("#moreFiltersPanel");
   const moreFiltersToggle = $("#moreFiltersToggle");
   const allCategoryChips = $("#allCategoryChips");
-  const moreFiltersSection = $("#moreFiltersSection");
   const setMoreFiltersOpen = (isOpen, { save = false } = {}) => {
+    state.showMoreFilters = isOpen;
     if (moreFiltersPanel) {
       moreFiltersPanel.classList.toggle("is-hidden", !isOpen);
     }
@@ -1005,11 +1005,7 @@ function buildFilters() {
         ? LABEL[lang].ui.advancedFiltersOpen
         : LABEL[lang].ui.advancedFiltersClosed;
     }
-    if (moreFiltersSection) {
-      moreFiltersSection.open = isOpen;
-    }
     if (save) {
-      state.showMoreFilters = isOpen;
       saveLS("wm_show_more_filters", state.showMoreFilters);
     }
   };
