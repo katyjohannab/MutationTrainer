@@ -681,19 +681,6 @@ body{
   color: rgba(15,23,42,0.95);
 }
 
-.practice-meta-left .statUnit{
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.55;
-  margin-left: 0.08rem;
-}
-
-.practice-meta-left .statIcon{
-  font-size: 1.15rem;
-  line-height: 1;
-}
-
 .practice-meta-left .meta-sep{
   color: rgba(100,116,139,0.65);
 }
@@ -940,16 +927,6 @@ body{
     letter-spacing: inherit;
     font-weight: inherit;
     color: inherit;
-  }
-  .practice-meta-left .statUnit{
-    font-size: inherit;
-    letter-spacing: inherit;
-    text-transform: inherit;
-    opacity: inherit;
-  }
-  .practice-meta-left .statIcon{
-    font-size: inherit;
-    line-height: inherit;
   }
   .practice-meta-left .meta-reset{
     display: none;
