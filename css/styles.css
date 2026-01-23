@@ -1789,8 +1789,8 @@ body.scroll-locked{
     position: fixed;
     inset: 0;
     display: none;
-    align-items: flex-end;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: flex-start;
     padding: 0;
     z-index: 10040;
     max-width: 100vw;
@@ -1809,12 +1809,16 @@ body.scroll-locked{
     cursor: pointer;
   }
   .practice-sidebar-sheet{
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     z-index: 1;
     width: 100%;
     max-width: 100%;
-    height: min(95dvh, calc(100dvh - var(--mobile-header-height)));
-    max-height: min(95dvh, calc(100dvh - var(--mobile-header-height) - var(--keyboard-offset)));
+    height: 100dvh;
+    max-height: 100dvh;
+    padding-top: env(safe-area-inset-top);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1826,6 +1830,12 @@ body.scroll-locked{
   }
   #practiceSidebar.is-open .practice-sidebar-sheet{
     opacity: 1;
+  }
+  body.mobile-filters-open #siteHeader{
+    display: none;
+  }
+  body.mobile-filters-open #main{
+    padding-top: 0;
   }
   .mobile-filters-header{
     position: sticky;
