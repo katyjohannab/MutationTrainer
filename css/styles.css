@@ -219,8 +219,8 @@ body{
   .header-actions .btn,
   .header-actions .btn-lang,
   .header-actions .onboard-help-btn{
-    height: 2.25rem;
-    padding: 0 0.55rem;
+    min-height: 44px;
+    padding: 0 0.5rem;
     border-radius: 0.65rem;
     line-height: 1;
   }
@@ -245,6 +245,27 @@ body{
   }
   .cymru-red-bar{
     height: 2px;
+  }
+}
+
+@media (max-width: 767px){
+  .btn,
+  .btn-compact,
+  .onboard-help-btn,
+  .mobile-filters-close{
+    min-height: 44px;
+  }
+
+  .btn{
+    padding: 0.6rem 1rem;
+  }
+
+  .btn-compact{
+    padding: 0.5rem 0.85rem;
+  }
+
+  .mobile-filters-close{
+    padding: 0.5rem 0.75rem;
   }
 }
 
@@ -1635,7 +1656,7 @@ body.scroll-locked{
     font-size: 0.85rem;
   }
   .onboard-card-content .btn-compact{
-    padding: 0.35rem 0.7rem;
+    padding: 0.5rem 0.85rem;
   }
   .onboard-modal-sheet{
     border-radius: 1.5rem 1.5rem 0 0;
