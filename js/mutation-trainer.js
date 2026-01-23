@@ -27,6 +27,7 @@ import {
   initCardUi,
   setCardCallbacks
 } from "./card.js";
+import { lockScroll, unlockScroll } from "./scroll-lock.js";
 
 /* ========= Data coercion ========= */
 const PREP = new Set(["am","ar","at","dan","dros","tros","drwy","trwy","gan","heb","hyd","i","o","tan","wrth","yng","yn","gyda","hefo","â"]);
@@ -1314,28 +1315,16 @@ function wireUi() {
 
   initCardUi();
 
-  let mobileFiltersScrollY = 0;
   const setMobileFiltersOpen = (isOpen) => {
     const sidebar = $("#practiceSidebar");
     if (!sidebar) return;
     sidebar.classList.toggle("is-open", isOpen);
-    document.body.classList.toggle("mobile-filters-open", isOpen);
     $("#mobileFiltersToggle")?.setAttribute("aria-expanded", isOpen ? "true" : "false");
     if (isOpen) {
-      mobileFiltersScrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${mobileFiltersScrollY}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
-      document.body.style.width = "100%";
+      lockScroll("mobile-filters");
       $(".mobile-filters-body")?.scrollTo({ top: 0 });
     } else {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.width = "";
-      window.scrollTo(0, mobileFiltersScrollY);
+      unlockScroll("mobile-filters");
     }
   };
   const bindMobileFiltersToggle = () => {
@@ -1354,14 +1343,14 @@ function wireUi() {
     if (!modal) return;
     modal.classList.remove("hidden");
     modal.setAttribute("aria-hidden", "false");
-    document.body.classList.add("onboard-modal-open");
+    lockScroll("onboard-modal");
   };
   const closeOnboardModal = () => {
     const modal = $("#onboardModal");
     if (!modal) return;
     modal.classList.add("hidden");
     modal.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("onboard-modal-open");
+    unlockScroll("onboard-modal");
   };
 
   $("#onboardHelpBtn")?.addEventListener("click", openOnboardModal);

@@ -12,6 +12,7 @@ import {
 } from "./state.js";
 import { getCardId, pickNextSmartIdx, updateLeitner } from "./leitner.js";
 import { buildCompleteSentence, playPollySentence } from "./tts.js";
+import { lockScroll, unlockScroll } from "./scroll-lock.js";
 
 const REPORT_ISSUE_BASE_URL = "https://github.com/katyjohannab/mutationtrainer/issues/new";
 
@@ -148,7 +149,7 @@ export function openReportModal(card, cardId) {
 
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
-  document.body.classList.add("overflow-hidden");
+  lockScroll("report-modal");
   $("#reportDetails")?.focus();
 }
 
@@ -157,7 +158,7 @@ export function closeReportModal() {
   if (!modal) return;
   modal.classList.add("hidden");
   modal.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("overflow-hidden");
+  unlockScroll("report-modal");
 }
 
 export function submitReportIssue(detailsText) {
