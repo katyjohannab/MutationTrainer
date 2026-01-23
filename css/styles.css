@@ -232,13 +232,27 @@ body{
   }
   .header-actions .header-btn{
     min-height: 44px;
-    padding: 0 0.55rem;
-    border-radius: 0.65rem;
+    padding: 0 0.7rem;
+    border-radius: 0.6rem;
+    font-size: 0.82rem;
     line-height: 1;
+    background: rgba(248,250,252,0.9);
+    border: 1px solid rgba(148,163,184,0.45);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
   }
   .btn-mobile-filters{
-    font-size: 0.85rem;
-    line-height: 1.1;
+    min-height: 44px;
+    padding: 0 0.7rem;
+    border-radius: 0.6rem;
+    font-size: 0.82rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .btn-mobile-filters .btn-icon{
+    font-size: 1rem;
+    line-height: 1;
   }
   .btn-lang{
     font-size: 0.7rem;

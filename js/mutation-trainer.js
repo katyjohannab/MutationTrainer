@@ -77,6 +77,16 @@ function coerceRow(row) {
   };
 }
 
+function setButtonLabel(el, text) {
+  if (!el) return;
+  const labelEl = el.querySelector(".btn-label");
+  if (labelEl) {
+    labelEl.textContent = text;
+    return;
+  }
+  el.textContent = text;
+}
+
 /* IMPORTANT: This does NOT toggle the navbar. navbar.js owns that.
    This only updates dynamic UI and labels to match state.lang. */
 function applyLanguage() {
@@ -157,8 +167,8 @@ function applyLanguage() {
   if ($("#moreInfoSummary")) $("#moreInfoSummary").textContent = LABEL[lang].ui.moreInfo;
   if ($("#statsAccTitle")) $("#statsAccTitle").textContent = LABEL[lang].ui.statsAccuracyTitle;
   if ($("#statsByOutcomeTitle")) $("#statsByOutcomeTitle").textContent = LABEL[lang].ui.statsByOutcomeTitle;
-  if ($("#mobileFiltersToggle")) $("#mobileFiltersToggle").textContent = LABEL[lang].ui.filtersToggle;
-  if ($("#mobileFiltersToggleShell")) $("#mobileFiltersToggleShell").textContent = LABEL[lang].ui.filtersToggle;
+  setButtonLabel($("#mobileFiltersToggle"), LABEL[lang].ui.filtersToggle);
+  setButtonLabel($("#mobileFiltersToggleShell"), LABEL[lang].ui.filtersToggle);
   if ($("#mobileFiltersApply")) $("#mobileFiltersApply").textContent = LABEL[lang].ui.filtersApply;
   if ($("#mobileFiltersTitle")) $("#mobileFiltersTitle").textContent = LABEL[lang].ui.filtersTitle;
   if ($("#mbCheck")) $("#mbCheck").textContent = LABEL[lang].check;
